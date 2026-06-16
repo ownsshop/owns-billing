@@ -9,47 +9,47 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #f0f2f5; }
-    .hidden { display: none!important; }
-    .login-container { display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 400px; }
-    .google-btn { background: #4285f4; color: white; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; margin: 0 auto; }
-    .header { background: #1a73e8; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-    .user-info { display: flex; align-items: center; gap: 15px; }
-    .user-info img { width: 40px; height: 40px; border-radius: 50%; }
-    .logout-btn { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-    .container { max-width: 1600px; margin: 20px auto; padding: 0 20px; }
-    .card { background: white; border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .form-group { margin-bottom: 15px; }
-    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+       .hidden { display: none!important; }
+       .login-container { display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+       .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 400px; }
+       .google-btn { background: #4285f4; color: white; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; margin: 0 auto; }
+       .header { background: #1a73e8; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+       .user-info { display: flex; align-items: center; gap: 15px; }
+       .user-info img { width: 40px; height: 40px; border-radius: 50%; }
+       .logout-btn { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+       .container { max-width: 1600px; margin: 20px auto; padding: 0 20px; }
+       .card { background: white; border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+       .form-group { margin-bottom: 15px; }
+       .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
         label { display: block; margin-bottom: 5px; color: #333; font-weight: 500; font-size: 14px; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-    .btn { background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
-    .btn:hover { background: #1557b0; }
-    .btn-success { background: #34a853; }
-    .btn-danger { background: #ea4335; }
-    .btn-warning { background: #f9ab00; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
+       .btn { background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
+       .btn:hover { background: #1557b0; }
+       .btn-success { background: #34a853; }
+       .btn-danger { background: #ea4335; }
+       .btn-warning { background: #f9ab00; }
+       .btn-sm { padding: 6px 12px; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #f8f9fa; font-weight: 600; position: sticky; top: 70px; }
-    .admin-badge { background: #ea4335; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 10px; }
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; }
-    .stat-card h3 { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
-    .stat-card.number { font-size: 28px; font-weight: bold; }
-    .tabs { display: flex; gap: 10px; border-bottom: 2px solid #ddd; margin-bottom: 20px; overflow-x: auto; }
-    .tab { padding: 12px 20px; cursor: pointer; border: none; background: none; font-size: 15px; white-space: nowrap; }
-    .tab.active { border-bottom: 3px solid #1a73e8; color: #1a73e8; font-weight: 600; }
-    .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
-    .badge-pending { background: #fef3c7; color: #92400e; }
-    .badge-approved { background: #d1fae5; color: #065f46; }
-    .badge-due { background: #fee2e2; color: #991b1b; }
-    .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
-    .search-box input { flex: 1; }
-    .grid-2 { display: grid; grid-template-columns: 450px 1fr; gap: 20px; }
+       .admin-badge { background: #ea4335; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 10px; }
+       .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+       .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; }
+       .stat-card h3 { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
+       .stat-card.number { font-size: 28px; font-weight: bold; }
+       .tabs { display: flex; gap: 10px; border-bottom: 2px solid #ddd; margin-bottom: 20px; overflow-x: auto; }
+       .tab { padding: 12px 20px; cursor: pointer; border: none; background: none; font-size: 15px; white-space: nowrap; }
+       .tab.active { border-bottom: 3px solid #1a73e8; color: #1a73e8; font-weight: 600; }
+       .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+       .badge-pending { background: #fef3c7; color: #92400e; }
+       .badge-approved { background: #d1fae5; color: #065f46; }
+       .badge-due { background: #fee2e2; color: #991b1b; }
+       .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
+       .search-box input { flex: 1; }
+       .grid-2 { display: grid; grid-template-columns: 450px 1fr; gap: 20px; }
         #invoicePreview { background: white; padding: 40px; min-height: 800px; }
-      .invoice-header { display: flex; justify-content: space-between; border-bottom: 3px solid #1a73e8; padding-bottom: 20px; margin-bottom: 30px; }
-      .company-logo { width: 60px; height: 60px; background: #1a73e8; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; border-radius: 8px; }
+       .invoice-header { display: flex; justify-content: space-between; border-bottom: 3px solid #1a73e8; padding-bottom: 20px; margin-bottom: 30px; }
+       .company-logo { width: 60px; height: 60px; background: #1a73e8; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; border-radius: 8px; }
         @media print {.no-print,.tabs,.header { display: none!important; }.grid-2 { display: block; } }
         @media (max-width: 1100px) {.grid-2 { grid-template-columns: 1fr; } }
     </style>
@@ -149,7 +149,7 @@
                             <div class="form-group"><label>Due Date</label><input type="date" id="dueDate"></div>
                         </div>
                         <button class="btn btn-success" id="saveBillBtn">💾 Save Bill</button>
-                        <button class="btn btn-warning" id="savePrintBtn">💾 Print Bill</button>
+                        <button class="btn btn-warning" id="savePrintBtn">🖨️ Save & Print</button>
                         <button class="btn" id="saveCustomerBtn">👤 Save Customer</button>
                     </div>
                 </div>
@@ -163,10 +163,11 @@
                                 <p id="previewCompanyAddress" style="margin:5px 0;color:#666">Company Address</p>
                                 <p id="previewCompanyContact" style="margin:5px 0;color:#666">Phone | Email</p>
                             </div>
+                        </div>
                         <div style="text-align:right">
                             <h2 style="margin:0">INVOICE</h2>
                             <p style="color:#666">ইনভয়েস</p>
-                            <p style="margin-top:10px"><strong>Invoice #:</strong> <span id="previewInvoiceNo">INV-0000</span></p>
+                            <p style="margin-top:10px"><strong>Invoice #:</strong> <span id="previewInvoiceNo">INV-1000</span></p>
                             <p><strong>Issue Date:</strong> <span id="previewIssueDate">-</span></p>
                         </div>
                     </div>
@@ -267,7 +268,7 @@
         <div id="settings" class="tab-content hidden">
             <div class="card">
                 <h2>⚙️ System Settings</h2>
-                <p>Company info is managed in Invoice Generator tab. This section for future: SMS API, Payment Gateway, etc.</p>
+                <p>Company info is managed in Invoice Generator tab. SMS API, Payment Gateway coming soon.</p>
             </div>
         </div>
     </div>
@@ -294,7 +295,7 @@
     const ADMIN_EMAIL = "ownslink@gmail.com";
     let currentUser = null;
     let isAdmin = false;
-    let billCounter = 0;
+    let billCounter = 1000;
     let revenueChart = null;
     let companyData = {};
     let customers = [];
@@ -356,7 +357,7 @@
         document.getElementById('previewInvoiceNo').textContent = `INV-${billCounter}`;
     }
 
-    // Company Data - Save to Firestore
+    // Company Data
     document.getElementById('saveCompanyBtn').onclick = async () => {
         companyData = {
             name: document.getElementById('companyName').value,
@@ -383,7 +384,7 @@
         }
     }
 
-    // Customers - Save to Firestore
+    // Customers
     document.getElementById('saveCustomerBtn').onclick = async () => {
         const customer = {
             name: document.getElementById('customerName').value,
@@ -392,7 +393,7 @@
             address: document.getElementById('customerAddress').value,
             connectionType: document.getElementById('connectionType').value,
             package: document.getElementById('package').value,
-            createdAt: new Date().toISOString()
+            updatedAt: new Date().toISOString()
         };
         if (!customer.name ||!customer.phone ||!customer.area) {
             alert('Please fill Name, Phone and Area');
@@ -439,7 +440,7 @@
         }
     };
 
-    // Save Bill to Firestore
+    // Save Bill
     document.getElementById('saveBillBtn').onclick = () => saveBill(false);
     document.getElementById('savePrintBtn').onclick = () => saveBill(true);
 
@@ -483,418 +484,418 @@
         if (shouldPrint) window.print();
 
         // WhatsApp
-        const waMsg = `*${companyData.name || 'OWNS'} Internet Bill*%0A%0ABill No: ${billData.billNo}%0ACustomer: ${customerName}%0AMonth: ${billMonth}%0AAmount: ৳${packageAmount}%0ADue: ${dueDate}%0A%0AThank you!`;
+        const waMsg = `*${companyData.name || 'OWNS'} Internet Bill*%0A%0ABill No: ${billData.billNo}%0ACustomer: ${customerName}%0AArea: ${customerArea}%0AMonth: ${billMonth}%0AAmount: ৳${packageAmount}%0ADue: ${dueDate}%0A%0AThank you!`;
         window.open(`https://wa.me/88${customerPhone}?text=${waMsg}`, '_blank');
 
-        // Clear form
+        // Clear
         document.getElementById('customerSelect').value = '';
         document.querySelectorAll('#invoice input, #invoice select, #invoice textarea').forEach(el => {
             if (el.id!== 'billMonth' && el.id!== 'dueDate') el.value = '';
         });
-        document.getElementById('billMonth').dispatchEvent(new Event('change'));
+               document.getElementById('billMonth').dispatchEvent(new Event('change'));
         await loadBills();
         await loadDueList();
     }
 
     async function loadBills(filter = '') {
-    const billsBody = document.getElementById('billsBody');
-    billsBody.innerHTML = '<tr><td colspan="9">Loading...</td></tr>';
+        const billsBody = document.getElementById('billsBody');
+        billsBody.innerHTML = '<tr><td colspan="9">Loading...</td></tr>';
 
-    let q = query(collection(db, 'bills'), orderBy('createdAt', 'desc'));
-    if (!isAdmin) {
-        q = query(collection(db, 'bills'), where('staffEmail', '==', currentUser.email), orderBy('createdAt', 'desc'));
-    }
-
-    const querySnapshot = await getDocs(q);
-    let totalRevenue = 0, pendingCount = 0;
-    billsBody.innerHTML = '';
-
-    querySnapshot.forEach((docSnap) => {
-        const bill = docSnap.data();
-        if (filter &&!bill.customerName.toLowerCase().includes(filter.toLowerCase()) &&!bill.customerPhone.includes(filter)) return;
-
-        if (bill.status === 'approved') totalRevenue += bill.amount;
-        if (bill.status === 'pending') pendingCount++;
-
-        const statusBadge = bill.status === 'approved'? '<span class="badge badge-approved">Approved</span>' : '<span class="badge badge-pending">Pending</span>';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${new Date(bill.createdAt).toLocaleDateString()}</td>
-            <td>${bill.billNo}</td>
-            <td>${bill.customerName}</td>
-            <td>${bill.customerPhone}</td>
-            <td><span class="badge badge-due">${bill.customerArea || '-'}</span></td>
-            <td>৳${bill.amount}</td>
-            <td>${statusBadge}</td>
-            ${isAdmin? `<td>${bill.staffName}</td>` : ''}
-            <td class="no-print">
-                <button class="btn btn-sm" onclick='printBill(${JSON.stringify(bill).replace(/'/g, "&apos;")})'>Print</button>
-                ${isAdmin && bill.status === 'pending'? `<button class="btn btn-sm btn-success" onclick='approveBill("${docSnap.id}")'>Approve</button>` : ''}
-                ${isAdmin? `<button class="btn btn-sm btn-danger" onclick='deleteBill("${docSnap.id}", "${bill.billNo}")'>Delete</button>` : ''}
-            </td>
-        `;
-        billsBody.appendChild(tr);
-    });
-
-    document.getElementById('totalBills').textContent = querySnapshot.size;
-    document.getElementById('totalRevenue').textContent = totalRevenue;
-    document.getElementById('pendingCount').textContent = pendingCount;
-}
-
-window.approveBill = async (id) => {
-    await updateDoc(doc(db, 'bills', id), { status: 'approved', updatedAt: new Date().toISOString() });
-    await logActivity('APPROVE_BILL', id);
-    loadBills();
-    loadDueList();
-};
-
-window.deleteBill = async (id, billNo) => {
-    if (confirm(`Delete ${billNo}?`)) {
-        await deleteDoc(doc(db, 'bills', id));
-        await logActivity('DELETE_BILL', billNo);
-        loadBills();
-        loadDueList();
-    }
-};
-
-window.printBill = (bill) => {
-    const billHTML = `
-        <div style="max-width:800px;margin:0 auto;font-family:Arial">
-            <div style="text-align:center;border-bottom:3px solid #1a73e8;padding-bottom:20px;margin-bottom:30px">
-                <h1 style="color:#1a73e8;margin:0">${companyData.name || 'OWNS Internet'}</h1>
-                <p style="margin:5px 0">${companyData.address || 'ISP Reseller Billing System'}</p>
-                <p style="margin:5px 0;font-size:14px">${companyData.phone || 'Munshiganj'} | ${companyData.email || 'WhatsApp: 019XXXXXXXX'}</p>
-            </div>
-            <table style="width:100%;margin-bottom:30px">
-                <tr><td><strong>Bill No:</strong> ${bill.billNo}</td><td style="text-align:right"><strong>Date:</strong> ${new Date(bill.createdAt).toLocaleDateString()}</td></tr>
-                <tr><td><strong>Customer:</strong> ${bill.customerName}</td><td style="text-align:right"><strong>Month:</strong> ${bill.month}</td></tr>
-                <tr><td><strong>Phone:</strong> ${bill.customerPhone}</td><td style="text-align:right"><strong>Area:</strong> ${bill.customerArea || '-'}</td></tr>
-                <tr><td colspan="2"><strong>Address:</strong> ${bill.customerAddress || '-'}</td></tr>
-            </table>
-            <table style="width:100%;border-collapse:collapse">
-                <tr style="background:#1a73e8;color:white"><th style="padding:12px;text-align:left">Description</th><th style="padding:12px;text-align:right">Amount</th></tr>
-                <tr><td style="padding:12px;border-bottom:1px solid #ddd">Internet Package - ${bill.month} (${bill.connectionType || 'PPPoE'})</td><td style="padding:12px;text-align:right;border-bottom:1px solid #ddd">৳${bill.amount}</td></tr>
-                <tr style="font-weight:bold;font-size:18px"><td style="padding:12px">Total</td><td style="padding:12px;text-align:right">৳${bill.amount}</td></tr>
-            </table>
-            <div style="margin-top:50px;text-align:center;color:#666;font-size:12px">
-                <p>Thank you for choosing ${companyData.name || 'OWNS Internet'}</p>
-                <p>Billed by: ${bill.staffName} | Status: ${bill.status}</p>
-                <p style="color:#ea4335;margin-top:10px">Due Date: ${bill.dueDate || '-'}</p>
-            </div>
-        </div>
-    `;
-    const printWindow = window.open('', '', 'width=800,height=600');
-    printWindow.document.write(`<html><head><title>Invoice</title></head><body>${billHTML}</body></html>`);
-    printWindow.document.close();
-    printWindow.print();
-};
-
-// Search
-document.getElementById('searchBtn').onclick = () => loadBills(document.getElementById('searchInput').value);
-document.getElementById('clearSearch').onclick = () => { document.getElementById('searchInput').value = ''; loadBills(); };
-
-// Due List with Area Filter
-async function loadDueList(areaFilter = '') {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const allBills = await getDocs(query(collection(db, 'bills'), where('status', '==', 'approved')));
-    const paidCustomers = new Set();
-    allBills.forEach(doc => {
-        const bill = doc.data();
-        if (bill.month === currentMonth) paidCustomers.add(bill.customerPhone);
-    });
-
-    const allCustomers = {};
-    allBills.forEach(doc => {
-        const bill = doc.data();
-        if (!allCustomers[bill.customerPhone]) {
-            allCustomers[bill.customerPhone] = bill;
+        let q = query(collection(db, 'bills'), orderBy('createdAt', 'desc'));
+        if (!isAdmin) {
+            q = query(collection(db, 'bills'), where('staffEmail', '==', currentUser.email), orderBy('createdAt', 'desc'));
         }
-    });
 
-    const dueListBody = document.getElementById('dueListBody');
-    dueListBody.innerHTML = '';
-    let dueCount = 0;
+        const querySnapshot = await getDocs(q);
+        let totalRevenue = 0, pendingCount = 0;
+        billsBody.innerHTML = '';
 
-    Object.values(allCustomers).forEach(customer => {
-        if (!paidCustomers.has(customer.customerPhone)) {
-            if (areaFilter && customer.customerArea!== areaFilter) return;
-            dueCount++;
+        querySnapshot.forEach((docSnap) => {
+            const bill = docSnap.data();
+            if (filter &&!bill.customerName.toLowerCase().includes(filter.toLowerCase()) &&!bill.customerPhone.includes(filter)) return;
+
+            if (bill.status === 'approved') totalRevenue += bill.amount;
+            if (bill.status === 'pending') pendingCount++;
+
+            const statusBadge = bill.status === 'approved'? '<span class="badge badge-approved">Approved</span>' : '<span class="badge badge-pending">Pending</span>';
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${customer.customerName}</td>
-                <td>${customer.customerPhone}</td>
-                <td><span class="badge badge-due">${customer.customerArea || '-'}</span></td>
-                <td>৳${customer.amount}</td>
-                <td>${customer.customerAddress || '-'}</td>
-                <td>${new Date(customer.createdAt).toLocaleDateString()}</td>
-                <td class="no-print"><button class="btn btn-sm btn-warning" onclick='sendReminder("${customer.customerPhone}", "${customer.customerName}", "${customer.customerArea}")'>Send Reminder</button></td>
+                <td>${new Date(bill.createdAt).toLocaleDateString()}</td>
+                <td>${bill.billNo}</td>
+                <td>${bill.customerName}</td>
+                <td>${bill.customerPhone}</td>
+                <td><span class="badge badge-due">${bill.customerArea || '-'}</span></td>
+                <td>৳${bill.amount}</td>
+                <td>${statusBadge}</td>
+                ${isAdmin? `<td>${bill.staffName}</td>` : ''}
+                <td class="no-print">
+                    <button class="btn btn-sm" onclick='printBill(${JSON.stringify(bill).replace(/'/g, "&apos;")})'>Print</button>
+                    ${isAdmin && bill.status === 'pending'? `<button class="btn btn-sm btn-success" onclick='approveBill("${docSnap.id}")'>Approve</button>` : ''}
+                    ${isAdmin? `<button class="btn btn-sm btn-danger" onclick='deleteBill("${docSnap.id}", "${bill.billNo}")'>Delete</button>` : ''}
+                </td>
             `;
-            dueListBody.appendChild(tr);
+            billsBody.appendChild(tr);
+        });
+
+        document.getElementById('totalBills').textContent = querySnapshot.size;
+        document.getElementById('totalRevenue').textContent = totalRevenue;
+        document.getElementById('pendingCount').textContent = pendingCount;
+    }
+
+    window.approveBill = async (id) => {
+        await updateDoc(doc(db, 'bills', id), { status: 'approved', updatedAt: new Date().toISOString() });
+        await logActivity('APPROVE_BILL', id);
+        loadBills();
+        loadDueList();
+    };
+
+    window.deleteBill = async (id, billNo) => {
+        if (confirm(`Delete ${billNo}?`)) {
+            await deleteDoc(doc(db, 'bills', id));
+            await logActivity('DELETE_BILL', billNo);
+            loadBills();
+            loadDueList();
         }
-    });
-    document.getElementById('dueCount').textContent = dueCount;
-}
+    };
 
-document.getElementById('filterAreaBtn').onclick = () => {
-    const area = document.getElementById('areaFilter').value;
-    loadDueList(area);
-};
-
-window.sendReminder = (phone, name, area) => {
-    const msg = `Hi ${name},%0A%0AThis is a reminder from ${companyData.name || 'OWNS Internet'}. Your bill for ${new Date().toLocaleDateString('en-US', {month: 'long'})} is due.%0AArea: ${area}%0A%0APlease pay to continue service.%0A%0AThank you!`;
-    window.open(`https://wa.me/88${phone}?text=${msg}`, '_blank');
-};
-
-// Customer History
-document.getElementById('historyBtn').onclick = async () => {
-    const phone = document.getElementById('historySearch').value.trim();
-    if (!phone) return alert('Enter phone number');
-
-    const q = query(collection(db, 'bills'), where('customerPhone', '==', phone), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-
-    let html = '<table><thead><tr><th>Date</th><th>Bill No</th><th>Month</th><th>Area</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
-    let total = 0;
-    snapshot.forEach(doc => {
-        const bill = doc.data();
-        if (bill.status === 'approved') total += bill.amount;
-        html += `<tr><td>${new Date(bill.createdAt).toLocaleDateString()}</td><td>${bill.billNo}</td><td>${bill.month}</td><td>${bill.customerArea || '-'}</td><td>৳${bill.amount}</td><td><span class="badge badge-${bill.status === 'approved'? 'approved' : 'pending'}">${bill.status}</span></td></tr>`;
-    });
-    html += `</tbody></table><p style="margin-top:15px;font-weight:bold">Total Paid: ৳${total}</p>`;
-    document.getElementById('historyResult').innerHTML = html;
-};
-
-// Reports
-document.getElementById('generateReport').onclick = async () => {
-    const from = document.getElementById('reportFrom').value;
-    const to = document.getElementById('reportTo').value;
-    if (!from ||!to) return alert('Select date range');
-
-    const q = query(collection(db, 'bills'), where('status', '==', 'approved'), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    let total = 0, count = 0;
-
-    snapshot.forEach(doc => {
-        const bill = doc.data();
-        const billDate = bill.createdAt.split('T')[0];
-        if (billDate >= from && billDate <= to) {
-            total += bill.amount;
-            count++;
-        }
-    });
-
-    document.getElementById('reportResult').innerHTML = `
-        <div class="stat-card"><h3>Period: ${from} to ${to}</h3><div class="number">৳${total}</div><p>Total Bills: ${count}</p></div>
-    `;
-};
-
-document.getElementById('exportExcel').onclick = async () => {
-    const snapshot = await getDocs(query(collection(db, 'bills'), orderBy('createdAt', 'desc')));
-    const data = [['Bill No', 'Date', 'Customer', 'Phone', 'Area', 'Address', 'Month', 'Amount', 'Status', 'Staff']];
-    snapshot.forEach(doc => {
-        const b = doc.data();
-        data.push([b.billNo, new Date(b.createdAt).toLocaleDateString(), b.customerName, b.customerPhone, b.customerArea || '', b.customerAddress || '', b.month, b.amount, b.status, b.staffName]);
-    });
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Bills');
-    XLSX.writeFile(wb, `OWNS_Bills_${new Date().toISOString().split('T')[0]}.xlsx`);
-    await logActivity('EXPORT_EXCEL', 'All bills');
-};
-
-// Export Due List
-document.getElementById('exportDueBtn').onclick = () => {
-    const rows = [['Customer', 'Phone', 'Area', 'Package', 'Address', 'Last Payment']];
-    document.querySelectorAll('#dueListBody tr').forEach(tr => {
-        const cells = tr.querySelectorAll('td');
-        if (cells.length > 1) {
-            rows.push([cells[0].innerText, cells[1].innerText, cells[2].innerText, cells[3].innerText, cells[4].innerText, cells[5].innerText]);
-        }
-    });
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Due List');
-    XLSX.writeFile(wb, `OWNS_DueList_${new Date().toISOString().split('T')[0]}.xlsx`);
-    logActivity('EXPORT_DUE_LIST', 'Due customers');
-};
-
-// Staff Report
-document.getElementById('staffReportBtn').onclick = async () => {
-    const month = document.getElementById('staffMonth').value;
-    if (!month) return alert('Select month');
-
-    const q = query(collection(db, 'bills'), where('month', '==', month), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    const staffData = {};
-
-    snapshot.forEach(doc => {
-        const bill = doc.data();
-        if (!staffData[bill.staffEmail]) {
-            staffData[bill.staffEmail] = { name: bill.staffName, email: bill.staffEmail, total: 0, approved: 0, pending: 0 };
-        }
-        if (bill.status === 'approved') {
-            staffData[bill.staffEmail].total += bill.amount;
-            staffData[bill.staffEmail].approved++;
-        } else {
-            staffData[bill.staffEmail].pending++;
-        }
-    });
-
-    const tbody = document.getElementById('staffReportBody');
-    tbody.innerHTML = '';
-    Object.values(staffData).forEach(staff => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${staff.name}</td>
-            <td>${staff.email}</td>
-            <td>${staff.approved + staff.pending}</td>
-            <td>৳${staff.total}</td>
-            <td>${staff.pending}</td>
+    window.printBill = (bill) => {
+        const billHTML = `
+            <div style="max-width:800px;margin:0 auto;font-family:Arial">
+                <div style="text-align:center;border-bottom:3px solid #1a73e8;padding-bottom:20px;margin-bottom:30px">
+                    <h1 style="color:#1a73e8;margin:0">${companyData.name || 'OWNS Internet'}</h1>
+                    <p style="margin:5px 0">${companyData.address || 'ISP Reseller Billing System'}</p>
+                    <p style="margin:5px 0;font-size:14px">${companyData.phone || 'Munshiganj'} | ${companyData.email || 'WhatsApp: 019XXXXXXXX'}</p>
+                </div>
+                <table style="width:100%;margin-bottom:30px">
+                    <tr><td><strong>Bill No:</strong> ${bill.billNo}</td><td style="text-align:right"><strong>Date:</strong> ${new Date(bill.createdAt).toLocaleDateString()}</td></tr>
+                    <tr><td><strong>Customer:</strong> ${bill.customerName}</td><td style="text-align:right"><strong>Month:</strong> ${bill.month}</td></tr>
+                    <tr><td><strong>Phone:</strong> ${bill.customerPhone}</td><td style="text-align:right"><strong>Area:</strong> ${bill.customerArea || '-'}</td></tr>
+                    <tr><td colspan="2"><strong>Address:</strong> ${bill.customerAddress || '-'}</td></tr>
+                </table>
+                <table style="width:100%;border-collapse:collapse">
+                    <tr style="background:#1a73e8;color:white"><th style="padding:12px;text-align:left">Description</th><th style="padding:12px;text-align:right">Amount</th></tr>
+                    <tr><td style="padding:12px;border-bottom:1px solid #ddd">Internet Package - ${bill.month} (${bill.connectionType || 'PPPoE'})</td><td style="padding:12px;text-align:right;border-bottom:1px solid #ddd">৳${bill.amount}</td></tr>
+                    <tr style="font-weight:bold;font-size:18px"><td style="padding:12px">Total</td><td style="padding:12px;text-align:right">৳${bill.amount}</td></tr>
+                </table>
+                <div style="margin-top:50px;text-align:center;color:#666;font-size:12px">
+                    <p>Thank you for choosing ${companyData.name || 'OWNS Internet'}</p>
+                    <p>Billed by: ${bill.staffName} | Status: ${bill.status}</p>
+                    <p style="color:#ea4335;margin-top:10px">Due Date: ${bill.dueDate || '-'}</p>
+                </div>
+            </div>
         `;
-        tbody.appendChild(tr);
-    });
-};
+        const printWindow = window.open('', '', 'width=800,height=600');
+        printWindow.document.write(`<html><head><title>Invoice</title></head><body>${billHTML}</body></html>`);
+        printWindow.document.close();
+        printWindow.print();
+    };
 
-// Activity Logs
-async function loadLogs() {
-    const q = query(collection(db, 'logs'), orderBy('timestamp', 'desc'));
-    const snapshot = await getDocs(q);
-    const tbody = document.getElementById('logsBody');
-    tbody.innerHTML = '';
+    // Search
+    document.getElementById('searchBtn').onclick = () => loadBills(document.getElementById('searchInput').value);
+    document.getElementById('clearSearch').onclick = () => { document.getElementById('searchInput').value = ''; loadBills(); };
 
-    snapshot.forEach(doc => {
-        const log = doc.data();
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${log.timestamp? new Date(log.timestamp.toDate()).toLocaleString() : '-'}</td>
-            <td>${log.user}</td>
-            <td>${log.action}</td>
-            <td>${log.details}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
+    // Due List with Area Filter
+    async function loadDueList(areaFilter = '') {
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const allBills = await getDocs(query(collection(db, 'bills'), where('status', '==', 'approved')));
+        const paidCustomers = new Set();
+        allBills.forEach(doc => {
+            const bill = doc.data();
+            if (bill.month === currentMonth) paidCustomers.add(bill.customerPhone);
+        });
 
-document.getElementById('exportLogs').onclick = async () => {
-    const snapshot = await getDocs(query(collection(db, 'logs'), orderBy('timestamp', 'desc')));
-    const data = [['Time', 'User', 'Email', 'Action', 'Details']];
-    snapshot.forEach(doc => {
-        const log = doc.data();
-        data.push([
-            log.timestamp? new Date(log.timestamp.toDate()).toLocaleString() : '-',
-            log.user,
-            log.email,
-            log.action,
-            log.details
-        ]);
-    });
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Activity Logs');
-    XLSX.writeFile(wb, `OWNS_Logs_${new Date().toISOString().split('T')[0]}.xlsx`);
-};
-
-// Monthly Revenue Chart
-async function loadChart() {
-    const snapshot = await getDocs(query(collection(db, 'bills'), where('status', '==', 'approved')));
-    const monthlyData = {};
-
-    snapshot.forEach(doc => {
-        const bill = doc.data();
-        const month = bill.month;
-        if (!monthlyData[month]) monthlyData[month] = 0;
-        monthlyData[month] += bill.amount;
-    });
-
-    const labels = Object.keys(monthlyData).sort();
-    const data = labels.map(m => monthlyData[m]);
-
-    const ctx = document.getElementById('revenueChart').getContext('2d');
-    if (revenueChart) revenueChart.destroy();
-    revenueChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Monthly Revenue ৳',
-                data: data,
-                borderColor: '#1a73e8',
-                backgroundColor: 'rgba(26, 115, 232, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: true },
-                title: { display: true, text: 'Revenue Trend' }
-            },
-            scales: {
-                y: { beginAtZero: true }
+        const allCustomers = {};
+        allBills.forEach(doc => {
+            const bill = doc.data();
+            if (!allCustomers[bill.customerPhone]) {
+                allCustomers[bill.customerPhone] = bill;
             }
+        });
+
+        const dueListBody = document.getElementById('dueListBody');
+        dueListBody.innerHTML = '';
+        let dueCount = 0;
+
+        Object.values(allCustomers).forEach(customer => {
+            if (!paidCustomers.has(customer.customerPhone)) {
+                if (areaFilter && customer.customerArea!== areaFilter) return;
+                dueCount++;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${customer.customerName}</td>
+                    <td>${customer.customerPhone}</td>
+                    <td><span class="badge badge-due">${customer.customerArea || '-'}</span></td>
+                    <td>৳${customer.amount}</td>
+                    <td>${customer.customerAddress || '-'}</td>
+                    <td>${new Date(customer.createdAt).toLocaleDateString()}</td>
+                    <td class="no-print"><button class="btn btn-sm btn-warning" onclick='sendReminder("${customer.customerPhone}", "${customer.customerName}", "${customer.customerArea}")'>Send Reminder</button></td>
+                `;
+                dueListBody.appendChild(tr);
+            }
+        });
+        document.getElementById('dueCount').textContent = dueCount;
+    }
+
+    document.getElementById('filterAreaBtn').onclick = () => {
+        const area = document.getElementById('areaFilter').value;
+        loadDueList(area);
+    };
+
+    window.sendReminder = (phone, name, area) => {
+        const msg = `Hi ${name},%0A%0AThis is a reminder from ${companyData.name || 'OWNS Internet'}. Your bill for ${new Date().toLocaleDateString('en-US', {month: 'long'})} is due.%0AArea: ${area}%0A%0APlease pay to continue service.%0A%0AThank you!`;
+        window.open(`https://wa.me/88${phone}?text=${msg}`, '_blank');
+    };
+
+    // Customer History
+    document.getElementById('historyBtn').onclick = async () => {
+        const phone = document.getElementById('historySearch').value.trim();
+        if (!phone) return alert('Enter phone number');
+
+        const q = query(collection(db, 'bills'), where('customerPhone', '==', phone), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+
+        let html = '<table><thead><tr><th>Date</th><th>Bill No</th><th>Month</th><th>Area</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
+        let total = 0;
+        snapshot.forEach(doc => {
+            const bill = doc.data();
+            if (bill.status === 'approved') total += bill.amount;
+            html += `<tr><td>${new Date(bill.createdAt).toLocaleDateString()}</td><td>${bill.billNo}</td><td>${bill.month}</td><td>${bill.customerArea || '-'}</td><td>৳${bill.amount}</td><td><span class="badge badge-${bill.status === 'approved'? 'approved' : 'pending'}">${bill.status}</span></td></tr>`;
+        });
+        html += `</tbody></table><p style="margin-top:15px;font-weight:bold">Total Paid: ৳${total}</p>`;
+        document.getElementById('historyResult').innerHTML = html;
+    };
+
+    // Reports
+    document.getElementById('generateReport').onclick = async () => {
+        const from = document.getElementById('reportFrom').value;
+        const to = document.getElementById('reportTo').value;
+        if (!from ||!to) return alert('Select date range');
+
+        const q = query(collection(db, 'bills'), where('status', '==', 'approved'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        let total = 0, count = 0;
+
+        snapshot.forEach(doc => {
+            const bill = doc.data();
+            const billDate = bill.createdAt.split('T')[0];
+            if (billDate >= from && billDate <= to) {
+                total += bill.amount;
+                count++;
+            }
+        });
+
+        document.getElementById('reportResult').innerHTML = `
+            <div class="stat-card"><h3>Period: ${from} to ${to}</h3><div class="number">৳${total}</div><p>Total Bills: ${count}</p></div>
+        `;
+    };
+
+    document.getElementById('exportExcel').onclick = async () => {
+        const snapshot = await getDocs(query(collection(db, 'bills'), orderBy('createdAt', 'desc')));
+        const data = [['Bill No', 'Date', 'Customer', 'Phone', 'Area', 'Address', 'Month', 'Amount', 'Status', 'Staff']];
+        snapshot.forEach(doc => {
+            const b = doc.data();
+            data.push([b.billNo, new Date(b.createdAt).toLocaleDateString(), b.customerName, b.customerPhone, b.customerArea || '', b.customerAddress || '', b.month, b.amount, b.status, b.staffName]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Bills');
+        XLSX.writeFile(wb, `OWNS_Bills_${new Date().toISOString().split('T')[0]}.xlsx`);
+        await logActivity('EXPORT_EXCEL', 'All bills');
+    };
+
+    // Export Due List
+    document.getElementById('exportDueBtn').onclick = () => {
+        const rows = [['Customer', 'Phone', 'Area', 'Package', 'Address', 'Last Payment']];
+        document.querySelectorAll('#dueListBody tr').forEach(tr => {
+            const cells = tr.querySelectorAll('td');
+            if (cells.length > 1) {
+                rows.push([cells[0].innerText, cells[1].innerText, cells[2].innerText, cells[3].innerText, cells[4].innerText, cells[5].innerText]);
+            }
+        });
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Due List');
+        XLSX.writeFile(wb, `OWNS_DueList_${new Date().toISOString().split('T')[0]}.xlsx`);
+        logActivity('EXPORT_DUE_LIST', 'Due customers');
+    };
+
+    // Staff Report
+    document.getElementById('staffReportBtn').onclick = async () => {
+        const month = document.getElementById('staffMonth').value;
+        if (!month) return alert('Select month');
+
+        const q = query(collection(db, 'bills'), where('month', '==', month), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const staffData = {};
+
+        snapshot.forEach(doc => {
+            const bill = doc.data();
+            if (!staffData[bill.staffEmail]) {
+                staffData[bill.staffEmail] = { name: bill.staffName, email: bill.staffEmail, total: 0, approved: 0, pending: 0 };
+            }
+            if (bill.status === 'approved') {
+                staffData[bill.staffEmail].total += bill.amount;
+                staffData[bill.staffEmail].approved++;
+            } else {
+                staffData[bill.staffEmail].pending++;
+            }
+        });
+
+        const tbody = document.getElementById('staffReportBody');
+        tbody.innerHTML = '';
+        Object.values(staffData).forEach(staff => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${staff.name}</td>
+                <td>${staff.email}</td>
+                <td>${staff.approved + staff.pending}</td>
+                <td>৳${staff.total}</td>
+                <td>${staff.pending}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    // Activity Logs
+    async function loadLogs() {
+        const q = query(collection(db, 'logs'), orderBy('timestamp', 'desc'));
+        const snapshot = await getDocs(q);
+        const tbody = document.getElementById('logsBody');
+        tbody.innerHTML = '';
+
+        snapshot.forEach(doc => {
+            const log = doc.data();
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${log.timestamp? new Date(log.timestamp.toDate()).toLocaleString() : '-'}</td>
+                <td>${log.user}</td>
+                <td>${log.action}</td>
+                <td>${log.details}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    document.getElementById('exportLogs').onclick = async () => {
+        const snapshot = await getDocs(query(collection(db, 'logs'), orderBy('timestamp', 'desc')));
+        const data = [['Time', 'User', 'Email', 'Action', 'Details']];
+        snapshot.forEach(doc => {
+            const log = doc.data();
+            data.push([
+                log.timestamp? new Date(log.timestamp.toDate()).toLocaleString() : '-',
+                log.user,
+                log.email,
+                log.action,
+                log.details
+            ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Activity Logs');
+        XLSX.writeFile(wb, `OWNS_Logs_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
+    // Monthly Revenue Chart
+    async function loadChart() {
+        const snapshot = await getDocs(query(collection(db, 'bills'), where('status', '==', 'approved')));
+        const monthlyData = {};
+
+        snapshot.forEach(doc => {
+            const bill = doc.data();
+            const month = bill.month;
+            if (!monthlyData[month]) monthlyData[month] = 0;
+            monthlyData[month] += bill.amount;
+        });
+
+        const labels = Object.keys(monthlyData).sort();
+        const data = labels.map(m => monthlyData[m]);
+
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        if (revenueChart) revenueChart.destroy();
+        revenueChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Monthly Revenue ৳',
+                    data: data,
+                    borderColor: '#1a73e8',
+                    backgroundColor: 'rgba(26, 115, 232, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: true },
+                    title: { display: true, text: 'Revenue Trend' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Update Preview
+    function updatePreview() {
+        // Company
+        document.getElementById('previewCompanyName').textContent = companyData.name || 'Your ISP Name';
+        document.getElementById('previewCompanyAddress').textContent = companyData.address || 'Company Address';
+        document.getElementById('previewCompanyContact').textContent = `${companyData.phone || 'Phone'} | ${companyData.email || 'Email'}`;
+        if (companyData.logo) {
+            document.getElementById('previewLogo').innerHTML = `<img src="${companyData.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`;
         }
-    });
-}
 
-// Update Preview
-function updatePreview() {
-    // Company
-    document.getElementById('previewCompanyName').textContent = companyData.name || 'Your ISP Name';
-    document.getElementById('previewCompanyAddress').textContent = companyData.address || 'Company Address';
-    document.getElementById('previewCompanyContact').textContent = `${companyData.phone || 'Phone'} | ${companyData.email || 'Email'}`;
-    if (companyData.logo) {
-        document.getElementById('previewLogo').innerHTML = `<img src="${companyData.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`;
+        // Invoice
+        if (!document.getElementById('previewInvoiceNo').textContent || document.getElementById('previewInvoiceNo').textContent === 'INV-1000') {
+            document.getElementById('previewInvoiceNo').textContent = `INV-${billCounter}`;
+        }
+        document.getElementById('previewIssueDate').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        // Customer
+        const name = document.getElementById('customerName').value;
+        const area = document.getElementById('customerArea').value;
+        const address = document.getElementById('customerAddress').value;
+        const phone = document.getElementById('customerPhone').value;
+        document.getElementById('previewCustomerName').textContent = name || '-';
+        document.getElementById('previewCustomerArea').textContent = area || '-';
+        document.getElementById('previewCustomerAddress').textContent = address || '-';
+        document.getElementById('previewCustomerPhone').textContent = phone || '-';
+
+        // Billing
+        const connType = document.getElementById('connectionType').value;
+        const pkg = document.getElementById('package');
+        const pkgText = pkg.options[pkg.selectedIndex].text;
+        const billMonth = document.getElementById('billMonth').value;
+        const dueDate = document.getElementById('dueDate').value;
+        const amount = pkg.value;
+
+        document.getElementById('previewConnectionType').textContent = connType || '-';
+        document.getElementById('previewPackage').textContent = pkgText;
+        document.getElementById('previewBillMonth').textContent = billMonth? new Date(billMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '-';
+        document.getElementById('previewBillMonthDesc').textContent = billMonth? new Date(billMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '-';
+        document.getElementById('previewDueDate').textContent = dueDate? new Date(dueDate).toLocaleDateString('en-GB') : '-';
+        document.getElementById('previewAmount').textContent = `৳ ${amount}.00`;
+        document.getElementById('previewSubtotal').textContent = `৳ ${amount}.00`;
+        document.getElementById('previewTotal').textContent = `৳ ${amount}.00`;
     }
 
-    // Invoice
-    if (!document.getElementById('previewInvoiceNo').textContent || document.getElementById('previewInvoiceNo').textContent === 'INV-0000') {
-        document.getElementById('previewInvoiceNo').textContent = `INV-${billCounter}`;
-    }
-    document.getElementById('previewIssueDate').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-    // Customer
-    const name = document.getElementById('customerName').value;
-    const area = document.getElementById('customerArea').value;
-    const address = document.getElementById('customerAddress').value;
-    const phone = document.getElementById('customerPhone').value;
-    document.getElementById('previewCustomerName').textContent = name || '-';
-    document.getElementById('previewCustomerArea').textContent = area || '-';
-    document.getElementById('previewCustomerAddress').textContent = address || '-';
-    document.getElementById('previewCustomerPhone').textContent = phone || '-';
-
-    // Billing
-    const connType = document.getElementById('connectionType').value;
-    const pkg = document.getElementById('package');
-    const pkgText = pkg.options[pkg.selectedIndex].text;
-    const billMonth = document.getElementById('billMonth').value;
-    const dueDate = document.getElementById('dueDate').value;
-    const amount = pkg.value;
-
-    document.getElementById('previewConnectionType').textContent = connType || '-';
-    document.getElementById('previewPackage').textContent = pkgText;
-    document.getElementById('previewBillMonth').textContent = billMonth? new Date(billMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '-';
-    document.getElementById('previewBillMonthDesc').textContent = billMonth? new Date(billMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '-';
-    document.getElementById('previewDueDate').textContent = dueDate? new Date(dueDate).toLocaleDateString('en-GB') : '-';
-    document.getElementById('previewAmount').textContent = `৳ ${amount}.00`;
-    document.getElementById('previewSubtotal').textContent = `৳ ${amount}.00`;
-    document.getElementById('previewTotal').textContent = `৳ ${amount}.00`;
-}
-
-// Real-time Update
-document.querySelectorAll('input, select, textarea').forEach(el => {
-    el.addEventListener('input', updatePreview);
-});
-
-async function logActivity(action, details) {
-    await addDoc(collection(db, 'logs'), {
-        user: currentUser.displayName,
-        email: currentUser.email,
-        action,
-        details,
-        timestamp: serverTimestamp()
+    // Real-time Update
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+        el.addEventListener('input', updatePreview);
     });
-}
+
+    async function logActivity(action, details) {
+        await addDoc(collection(db, 'logs'), {
+            user: currentUser.displayName,
+            email: currentUser.email,
+            action,
+            details,
+            timestamp: serverTimestamp()
+        });
+    }
 
 </script>
 
