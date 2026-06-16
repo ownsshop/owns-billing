@@ -417,18 +417,18 @@
     let customerPhotoFile = null;
     let customerNidFile = null;
 
-    // Auth - FIXED: Added click event
-    document.getElementById('loginBtn').onclick = () => {
-        document.getElementById('loginError').classList.add('hidden');
-        signInWithRedirect(auth, provider);
-    };
+// Auth - FIXED
+document.getElementById('loginBtn').onclick = () => {
+    document.getElementById('loginError').classList.add('hidden');
+    signInWithRedirect(auth, provider);
+};
 
-    // Check redirect result
-    getRedirectResult(auth).catch((error) => {
-        document.getElementById('loginError').textContent = 'Login failed: ' + error.message;
-        document.getElementById('loginError').classList.remove('hidden');
-        console.error(error);
-    });
+// Check redirect result
+getRedirectResult(auth).catch((error) => {
+    document.getElementById('loginError').textContent = 'Login failed: ' + error.message;
+    document.getElementById('loginError').classList.remove('hidden');
+    console.error(error);
+});
 
     document.getElementById('logoutBtn').onclick = () => signOut(auth);
 
