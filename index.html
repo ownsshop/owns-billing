@@ -41,11 +41,13 @@
             margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .form-group { margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         label { display: block; margin-bottom: 5px; color: #333; font-weight: 500; }
-        input, select {
+        input, select, textarea {
             width: 100%; padding: 10px; border: 1px solid #ddd;
             border-radius: 4px; font-size: 14px;
         }
+        textarea { resize: vertical; min-height: 60px; }
         .btn {
             background: #1a73e8; color: white; border: none; padding: 12px 30px;
             border-radius: 4px; font-size: 16px; cursor: pointer; margin-right: 10px;
@@ -66,6 +68,7 @@
         .stat-card .number { font-size: 32px; font-weight: bold; }
         #billArea { background: white; padding: 40px; margin-top: 20px; }
         @media print { .no-print { display: none; } }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -116,23 +119,35 @@
         <!-- Bill Form -->
         <div class="card no-print">
             <h2>Create New Bill</h2>
-            <div class="form-group">
-                <label>Customer Name</label>
-                <input type="text" id="customerName" placeholder="Enter customer name">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Customer Name *</label>
+                    <input type="text" id="customerName" placeholder="Enter customer name">
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp Number *</label>
+                    <input type="tel" id="customerPhone" placeholder="01XXXXXXXXX">
+                </div>
             </div>
             <div class="form-group">
-                <label>Package</label>
-                <select id="package">
-                    <option value="500">5 Mbps - ৳500</option>
-                    <option value="800">10 Mbps - ৳800</option>
-                    <option value="1000">15 Mbps - ৳1000</option>
-                    <option value="1500">20 Mbps - ৳1500</option>
-                    <option value="2000">30 Mbps - ৳2000</option>
-                </select>
+                <label>Address</label>
+                <textarea id="customerAddress" placeholder="House#, Road#, Area"></textarea>
             </div>
-            <div class="form-group">
-                <label>Month</label>
-                <input type="month" id="billMonth">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Package</label>
+                    <select id="package">
+                        <option value="500">5 Mbps - ৳500</option>
+                        <option value="800">10 Mbps - ৳800</option>
+                        <option value="1000">15 Mbps - ৳1000</option>
+                        <option value="1500">20 Mbps - ৳1500</option>
+                        <option value="2000">30 Mbps - ৳2000</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Month</label>
+                    <input type="month" id="billMonth">
+                </div>
             </div>
             <button class="btn btn-success" id="saveBillBtn">Save & Print Bill</button>
         </div>
@@ -145,7 +160,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Customer</th>
-                        <th>Package</th>
+                        <th>Phone</th>
                         <th>Amount</th>
                         <th id="staffCol" class="hidden">Staff</th>
                         <th class="no-print">Action</th>
@@ -215,16 +230,20 @@
     // Save Bill
     document.getElementById('saveBillBtn').onclick = async () => {
         const customerName = document.getElementById('customerName').value;
+        const customerPhone = document.getElementById('customerPhone').value;
+        const customerAddress = document.getElementById('customerAddress').value;
         const packageAmount = document.getElementById('package').value;
         const billMonth = document.getElementById('billMonth').value;
         
-        if (!customerName) {
-            alert('Please enter customer name');
+        if (!customerName || !customerPhone) {
+            alert('Please enter customer name and phone number');
             return;
         }
 
         const billData = {
             customerName,
+            customerPhone,
+            customerAddress,
             amount: parseInt(packageAmount),
             month: billMonth,
             staffEmail: currentUser.email,
@@ -236,6 +255,8 @@
         await addDoc(collection(db, 'bills'), billData);
         printBill(billData);
         document.getElementById('customerName').value = '';
+        document.getElementById('customerPhone').value = '';
+        document.getElementById('customerAddress').value = '';
         loadBills();
     };
 
@@ -264,7 +285,7 @@
             tr.innerHTML = `
                 <td>${new Date(bill.createdAt).toLocaleDateString()}</td>
                 <td>${bill.customerName}</td>
-                <td>৳${bill.amount}</td>
+                <td>${bill.customerPhone || '-'}</td>
                 <td>৳${bill.amount}</td>
                 ${isAdmin ? `<td>${bill.staffName}</td>` : ''}
                 <td class="no-print">
@@ -297,6 +318,7 @@
                 <div style="text-align:center;border-bottom:3px solid #1a73e8;padding-bottom:20px;margin-bottom:30px">
                     <h1 style="color:#1a73e8;margin:0">OWNS Internet</h1>
                     <p style="margin:5px 0">ISP Reseller Billing System</p>
+                    <p style="margin:5px 0;font-size:14px">Phone: 019XXXXXXXX | Munshiganj</p>
                 </div>
                 <table style="width:100%;margin-bottom:30px">
                     <tr>
@@ -306,6 +328,13 @@
                     <tr>
                         <td><strong>Customer:</strong> ${bill.customerName}</td>
                         <td style="text-align:right"><strong>Month:</strong> ${bill.month}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phone:</strong> ${bill.customerPhone || '-'}</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><strong>Address:</strong> ${bill.customerAddress || '-'}</td>
                     </tr>
                 </table>
                 <table style="width:100%;border-collapse:collapse">
@@ -325,6 +354,7 @@
                 <div style="margin-top:50px;text-align:center;color:#666;font-size:12px">
                     <p>Thank you for choosing OWNS Internet</p>
                     <p>Billed by: ${bill.staffName}</p>
+                    <p>For support: WhatsApp 019XXXXXXXX</p>
                 </div>
             </div>
         `;
