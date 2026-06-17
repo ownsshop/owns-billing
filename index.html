@@ -601,7 +601,7 @@
                  onmouseout="this.style.background='white'"
                  onclick="selectCustomer('${c.phone}')">
                 <div style="font-weight:600">${c.name}</div>
-                <div style="font-size:12px;color:#666">${c.phone} | ${c.area} | ৳${c.pkg || 'N/A'}</div>
+                <div style="font-size:12px;color:#666">${c.phone} | ${c.area} | ৳${c.package || 'N/A'}</div>
             </div>
         `).join('');
         dropdown.style.display = 'block';
@@ -616,7 +616,7 @@
             document.getElementById('customerArea').value = c.area;
             document.getElementById('customerAddress').value = c.address || '';
             document.getElementById('connectionType').value = c.connectionType || '';
-            document.getElementById('package').value = c.pkg || '';
+            document.getElementById('package').value = c.package || '';
             document.getElementById('customerDropdown').style.display = 'none';
             updatePreview();
         }
@@ -986,7 +986,7 @@
             document.getElementById('customerProfilePhone').textContent = c.phone;
             document.getElementById('customerProfileZone').textContent = c.zone || '-';
             document.getElementById('customerProfileArea').textContent = c.area;
-            document.getElementById('customerProfilePackage').textContent = `৳${c.pkg}`;
+            document.getElementById('customerProfilePackage').textContent = `৳${c.package}`;
             document.getElementById('customerProfileConnType').textContent = c.connectionType;
             document.getElementById('customerProfilePppoeUser').textContent = c.pppoeId || '-';
             document.getElementById('customerProfilePppoePass').textContent = c.pppoePassword || '-';
@@ -1276,15 +1276,18 @@
         const mobile = document.getElementById('custMobile').value.trim();
         const address = document.getElementById('custAddress').value.trim();
         const area = document.getElementById('custArea').value;
-        const pkg = document.getElementById('custPackage').value;
+        const package = document.getElementById('custPackage').value;
         const connType = document.getElementById('custConnectionType').value;
 
-        if (!name ||!mobile ||!address ||!area ||!pkg ||!connType) {
+        if (!name ||!mobile ||!address ||!area ||!package ||!connType) {
             alert('Please fill all required fields *');
             return;
         }
 
-        // Photo/NID upload removed
+        // Photo/NID upload removed/nid_${Date.now()}`);
+            await uploadBytes(nidRef, customerNidFile);
+            nidUrl = await getDownloadURL(nidRef);
+        }
 
         const customerData = {
             name,
@@ -1294,7 +1297,7 @@
             address,
             zone: document.getElementById('custZone').value,
             area,
-            pkg,
+            package,
             connectionType: connType,
             pppoeId: document.getElementById('custPppoeId').value,
             pppoePassword: document.getElementById('custPppoePass').value,
@@ -1349,7 +1352,7 @@
                 <td>${c.name}</td>
                 <td>${c.phone}</td>
                 <td>${c.area}</td>
-                <td>৳${c.pkg}</td>
+                <td>৳${c.package}</td>
                 <td>${c.pppoeId || '-'}</td>
                 <td class="no-print">
                     <button class="btn btn-sm" onclick='viewCustomer("${docSnap.id}")'>View</button>
@@ -1365,7 +1368,7 @@
         const docSnap = await getDoc(doc(db, 'customers', id));
         if (docSnap.exists()) {
             const c = docSnap.data();
-            alert(`Customer Details:\n\nName: ${c.name}\nPhone: ${c.phone}\nWhatsApp: ${c.whatsapp || '-'}\nImo: ${c.imo || '-'}\nAddress: ${c.address}\nZone: ${c.zone || '-'}\nArea: ${c.area}\nPackage: ৳${c.pkg}\nConnection: ${c.connectionType}\nPPPoE ID: ${c.pppoeId || '-'}\nPPPoE Pass: ${c.pppoePassword || '-'}\nMap: ${c.mapLink || '-'}`);
+            alert(`Customer Details:\n\nName: ${c.name}\nPhone: ${c.phone}\nWhatsApp: ${c.whatsapp || '-'}\nImo: ${c.imo || '-'}\nAddress: ${c.address}\nZone: ${c.zone || '-'}\nArea: ${c.area}\nPackage: ৳${c.package}\nConnection: ${c.connectionType}\nPPPoE ID: ${c.pppoeId || '-'}\nPPPoE Pass: ${c.pppoePassword || '-'}\nMap: ${c.mapLink || '-'}`);
         }
     };
 
@@ -1381,7 +1384,7 @@
             document.getElementById('custAddress').value = c.address;
             document.getElementById('custZone').value = c.zone || '';
             document.getElementById('custArea').value = c.area;
-            document.getElementById('custPackage').value = c.pkg;
+            document.getElementById('custPackage').value = c.package;
             document.getElementById('custConnectionType').value = c.connectionType;
             document.getElementById('custPppoeId').value = c.pppoeId || '';
             document.getElementById('custPppoePass').value = c.pppoePassword || '';
@@ -1410,7 +1413,10 @@
             return;
         }
 
-        // Photo/NID upload removed
+        // Photo/NID upload removed/nid_${Date.now()}`);
+            await uploadBytes(nidRef, customerNidFile);
+            nidUrl = await getDownloadURL(nidRef);
+        }
 
         const updateData = {
             name,
@@ -1468,28 +1474,7 @@
     }
 
     // Load Customer Billing History
-    async function loadCustomerBilling(email) {
-        const q = query(collection(db, 'customers'), where('email', '==', email));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-            const customer = snapshot.docs[0].data();
-            const billsQ = query(collection(db, 'bills'), where('customerPhone', '==', customer.phone), orderBy('createdAt', 'desc'));
-            const billsSnap = await getDocs(billsQ);
-            const tbody = document.getElementById('customerBillingBody');
-            tbody.innerHTML = '';
-            billsSnap.forEach(doc => {
-                const b = doc.data();
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${new Date(b.createdAt).toLocaleDateString()}</td>
-                    <td>${b.billNo}</td>
-                    <td>${b.month}</td>
-                    <td>৳${b.amount}</td>
-                    <td><span class="badge badge-${b.status === 'approved'? 'approved' : 'pending'}">${b.status}</span></td>
-                    <td class="no-print"><button class="btn btn-sm" onclick='printBill(${JSON.stringify(b).replace(/'/g, "&apos;")})'>Print</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
+    );
         }
     }
 
