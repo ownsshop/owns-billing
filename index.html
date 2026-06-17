@@ -412,7 +412,7 @@
         storageBucket: "owns-billing.firebasestorage.app",
         messagingSenderId: "1036958677443",
         appId: "1:1036958677443:web:fbd4ee2f0d0a24c4582576"
-    };
+    }
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -465,7 +465,7 @@
                         role: 'admin',
                         name: 'Admin',
                         createdAt: new Date().toISOString()
-                    });
+                    })
                 } else {
                     await signOut(auth);
                     document.getElementById('loginError').textContent = 'User not found. Contact admin.';
@@ -477,7 +477,7 @@
             document.getElementById('loginError').textContent = 'Login failed: ' + error.message;
             document.getElementById('loginError').classList.remove('hidden');
         }
-    };
+    }
 
     document.getElementById('logoutBtn').onclick = () => signOut(auth);
 
@@ -522,7 +522,7 @@
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
         }
-    });
+    })
 
     // Tabs
     document.querySelectorAll('.tab').forEach(tab => {
@@ -605,7 +605,7 @@
             </div>
         `).join('');
         dropdown.style.display = 'block';
-    });
+    })
 
     window.selectCustomer = (phone) => {
         const c = customers.find(cus => cus.phone === phone);
@@ -620,13 +620,13 @@
             document.getElementById('customerDropdown').style.display = 'none';
             updatePreview();
         }
-    };
+    }
 
     document.addEventListener('click', (e) => {
         if (!e.target.closest('#customerNameInput') &&!e.target.closest('#customerDropdown')) {
             document.getElementById('customerDropdown').style.display = 'none';
         }
-    });
+    })
 
     async function loadPackageDropdown() {
         const snapshot = await getDocs(collection(db, 'settings', 'packages', 'list'));
@@ -642,7 +642,7 @@
                 { speed: '20 Mbps', price: 1500 },
                 { speed: '30 Mbps', price: 2000 },
                 { speed: '50 Mbps', price: 3000 }
-            ];
+            ]
             for (let p of defaults) {
                 await addDoc(collection(db, 'settings', 'packages', 'list'), p);
             }
@@ -653,7 +653,7 @@
             const p = docSnap.data();
             allPackages.push(p);
             select.innerHTML += `<option value="${p.price}">${p.speed} - ৳${p.price}</option>`;
-        });
+        })
     }
 
     document.getElementById('clearInvoiceBtn').onclick = () => {
@@ -666,7 +666,7 @@
         document.getElementById('package').value = '';
         document.getElementById('billNotes').value = '';
         updatePreview();
-    };
+    }
 
     document.getElementById('saveBillBtn').onclick = async () => {
         const customerName = document.getElementById('customerNameInput').value.trim();
@@ -699,7 +699,7 @@
             status: userRole === 'admin'? 'approved' : 'pending',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
-        };
+        }
 
         await addDoc(collection(db, 'bills'), billData);
         await logActivity('CREATE_BILL', `${billData.billNo} for ${customerName}`);
@@ -707,7 +707,7 @@
         document.getElementById('clearInvoiceBtn').click();
         await loadBills();
         await loadDueList();
-    };
+    }
 
     document.getElementById('saveWhatsAppBtn').onclick = async () => {
         const customerName = document.getElementById('customerNameInput').value.trim();
@@ -740,7 +740,7 @@
             status: userRole === 'admin'? 'approved' : 'pending',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
-        };
+        }
 
         await addDoc(collection(db, 'bills'), billData);
         await logActivity('CREATE_BILL', `${billData.billNo} for ${customerName}`);
@@ -751,7 +751,7 @@
         document.getElementById('clearInvoiceBtn').click();
         await loadBills();
         await loadDueList();
-    };
+    }
 
     document.getElementById('savePrintBtn').onclick = async () => {
         const customerName = document.getElementById('customerNameInput').value.trim();
@@ -761,7 +761,7 @@
         }
         await document.getElementById('saveBillBtn').click();
         setTimeout(() => window.print(), 1000);
-    };
+    }
 
     document.getElementById('billMonth').onchange = (e) => {
         if (e.target.value) {
@@ -770,7 +770,7 @@
             document.getElementById('dueDate').value = nextMonth.toISOString().split('T')[0];
             updatePreview();
         }
-    };
+    }
 
     document.getElementById('billNotes').addEventListener('input', (e) => {
         const notes = e.target.value;
@@ -780,7 +780,7 @@
         } else {
             document.getElementById('previewNotes').style.display = 'none';
         }
-    });
+    })
 
     function updatePreview() {
         document.getElementById('previewCompanyName').textContent = companyData.name || 'Your ISP Name';
@@ -822,7 +822,7 @@
     document.querySelectorAll('input, select, textarea').forEach(el => {
         el.addEventListener('input', updatePreview);
         el.addEventListener('change', updatePreview);
-    });
+    })
 
     async function loadBills(filter = '') {
         const billsBody = document.getElementById('billsBody');
@@ -864,7 +864,7 @@
                 </td>
             `;
             billsBody.appendChild(tr);
-        });
+        })
 
         document.getElementById('totalBills').textContent = querySnapshot.size;
         document.getElementById('totalRevenue').textContent = totalRevenue;
@@ -885,7 +885,7 @@
             loadBills();
             loadDueList();
         }
-    };
+    }
 
     window.printBill = (bill) => {
         const billHTML = `
@@ -917,7 +917,7 @@
         printWindow.document.write(`<html><head><title>Invoice</title></head><body>${billHTML}</body></html>`);
         printWindow.document.close();
         printWindow.print();
-    };
+    }
 
     document.getElementById('searchBtn').onclick = () => loadBills(document.getElementById('searchInput').value);
     document.getElementById('clearSearch').onclick = () => { document.getElementById('searchInput').value = ''; loadBills(); };
@@ -929,7 +929,7 @@
         allBills.forEach(doc => {
             const bill = doc.data();
             if (bill.month === currentMonth) paidCustomers.add(bill.customerPhone);
-        });
+        })
 
         const allCustomers = {};
         allBills.forEach(doc => {
@@ -937,7 +937,7 @@
             if (!allCustomers[bill.customerPhone]) {
                 allCustomers[bill.customerPhone] = bill;
             }
-        });
+        })
 
         const dueListBody = document.getElementById('dueListBody');
         if (!dueListBody) return;
@@ -960,7 +960,7 @@
                 `;
                 dueListBody.appendChild(tr);
             }
-        });
+        })
         document.getElementById('dueCount').textContent = dueCount;
     }
 
@@ -974,7 +974,7 @@
     window.sendReminder = (phone, name, area) => {
         const msg = `Hi ${name},%0A%0AThis is a reminder from ${companyData.name || 'OWNS Internet'}. Your bill for ${new Date().toLocaleDateString('en-US', {month: 'long'})} is due.%0AArea: ${area}%0A%0APlease pay to continue service.%0A%0AThank you!`;
         window.open(`https://wa.me/88${phone}?text=${msg}`, '_blank');
-    };
+    }
 
     async function loadCustomerProfile() {
         const userDoc = await getDoc(doc(db, 'customers', currentUser.uid));
@@ -1014,7 +1014,7 @@
                     <td class="no-print"><button class="btn btn-sm" onclick='printBill(${JSON.stringify(b).replace(/'/g, "&apos;")})'>Print</button></td>
                 `;
                 tbody.appendChild(tr);
-            });
+            })
         }
     }
 
@@ -1026,7 +1026,7 @@
             const month = bill.month;
             if (!monthlyData[month]) monthlyData[month] = 0;
             monthlyData[month] += bill.amount;
-        });
+        })
 
         const labels = Object.keys(monthlyData).sort();
         const data = labels.map(m => monthlyData[m]);
@@ -1045,13 +1045,13 @@
                     tension: 0.4,
                     fill: true
                 }]
-            },
+            }
             options: {
                 responsive: true,
                 plugins: { legend: { display: true }, title: { display: true, text: 'Revenue Trend' } },
                 scales: { y: { beginAtZero: true } }
             }
-        });
+        })
     }
 
     async function loadSettings() {
@@ -1090,23 +1090,23 @@
             website: document.getElementById('setCompanyWebsite').value,
             whatsapp: document.getElementById('setCompanyWhatsApp').value,
             updatedAt: new Date().toISOString()
-        };
+        }
         await setDoc(doc(db, 'settings', 'company'), data);
         companyData = data;
         updatePreview();
         alert('Company Info Saved! ✅');
         await logActivity('UPDATE_COMPANY', 'Company info updated from Settings');
-    };
+    }
 
     document.getElementById('saveSmsSettings').onclick = async () => {
         const data = {
             provider: document.getElementById('smsProvider').value,
             apiKey: document.getElementById('smsApiKey').value,
             senderId: document.getElementById('smsSenderId').value
-        };
+        }
         await setDoc(doc(db, 'settings', 'sms'), data);
         alert('SMS Settings Saved! ✅');
-    };
+    }
 
     async function loadPackages() {
         const snapshot = await getDocs(collection(db, 'settings', 'packages', 'list'));
@@ -1123,7 +1123,7 @@
                 { speed: '20 Mbps', price: 1500 },
                 { speed: '30 Mbps', price: 2000 },
                 { speed: '50 Mbps', price: 3000 }
-            ];
+            ]
             for (let p of defaults) {
                 await addDoc(collection(db, 'settings', 'packages', 'list'), p);
             }
@@ -1134,7 +1134,7 @@
             const p = docSnap.data();
             tbody.innerHTML += `<tr><td>${p.speed}</td><td>৳${p.price}</td><button class="btn btn-sm btn-danger" onclick="deletePackage('${docSnap.id}')">Delete</button></td></tr>`;
             custPackageSelect.innerHTML += `<option value="${p.price}">${p.speed} - ৳${p.price}</option>`;
-        });
+        })
     }
 
     document.getElementById('addPackage').onclick = async () => {
@@ -1147,7 +1147,7 @@
         loadPackages();
         loadPackageDropdown();
         alert('Package Added! ✅');
-    };
+    }
 
     window.deletePackage = async (id) => {
         if (confirm('Delete this package?')) {
@@ -1155,7 +1155,7 @@
             loadPackages();
             loadPackageDropdown();
         }
-    };
+    }
 
     async function loadAreas() {
         const snapshot = await getDocs(collection(db, 'settings', 'areas', 'list'));
@@ -1171,7 +1171,7 @@
             tbody.innerHTML += `<tr><td>${a.name}</td><td><button class="btn btn-sm btn-danger" onclick="deleteArea('${docSnap.id}')">Delete</button></td></tr>`;
             areaSelect.innerHTML += `<option value="${a.name}">${a.name}</option>`;
             custAreaSelect.innerHTML += `<option value="${a.name}">${a.name}</option>`;
-        });
+        })
     }
 
     document.getElementById('addArea').onclick = async () => {
@@ -1181,14 +1181,14 @@
         document.getElementById('newArea').value = '';
         loadAreas();
         alert('Area Added! ✅');
-    };
+    }
 
     window.deleteArea = async (id) => {
         if (confirm('Delete this area?')) {
             await deleteDoc(doc(db, 'settings', 'areas', 'list', id));
             loadAreas();
         }
-    };
+    }
 
     // User Manager
     async function loadUsers() {
@@ -1198,7 +1198,7 @@
         snapshot.forEach(docSnap => {
             const u = docSnap.data();
             tbody.innerHTML += `<tr><td>${u.email}</td><td>${u.role}</td><td><button class="btn btn-sm btn-danger" onclick="deleteUser('${docSnap.id}')">Remove</button></td></tr>`;
-        });
+        })
     }
 
     document.getElementById('addUser').onclick = async () => {
@@ -1217,7 +1217,7 @@
                 name,
                 role,
                 createdAt: new Date().toISOString()
-            });
+            })
             document.getElementById('newUserEmail').value = '';
             document.getElementById('newUserPassword').value = '';
             document.getElementById('newUserName').value = '';
@@ -1226,14 +1226,14 @@
         } catch (error) {
             alert('Error: ' + error.message);
         }
-    };
+    }
 
     window.deleteUser = async (id) => {
         if (confirm('Remove this user? They will lose access.')) {
             await deleteDoc(doc(db, 'users', id));
             loadUsers();
         }
-    };
+    }
 
     // Backup All Data
     document.getElementById('backupAll').onclick = async () => {
@@ -1248,7 +1248,7 @@
             logs: logs.docs.map(d => ({ id: d.id,...d.data() })),
             users: users.docs.map(d => ({ id: d.id,...d.data() })),
             backupDate: new Date().toISOString()
-        };
+        }
 
         const ws1 = XLSX.utils.json_to_sheet(data.bills);
         const ws2 = XLSX.utils.json_to_sheet(data.customers);
@@ -1261,14 +1261,14 @@
         XLSX.utils.book_append_sheet(wb, ws4, 'Users');
         XLSX.writeFile(wb, `OWNS_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
         await logActivity('BACKUP', 'Full database backup downloaded');
-    };
+    }
 
     document.getElementById('clearCache').onclick = () => {
         if (confirm('Clear browser cache? This will log you out.')) {
             localStorage.clear();
             location.reload();
         }
-    };
+    }
 
 
     document.getElementById('saveCustomerBtn').onclick = async () => {
@@ -1301,7 +1301,7 @@
             // photoUrl, nidUrl removed,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
-        };
+        }
 
         await addDoc(collection(db, 'customers'), customerData);
         await logActivity('ADD_CUSTOMER', `${name} - ${mobile}`);
@@ -1333,7 +1333,7 @@
         document.getElementById('updateCustomerBtn').classList.add('hidden');
         customerPhotoFile = null;
         customerNidFile = null;
-    };
+    }
 
     async function loadAllCustomers() {
         const snapshot = await getDocs(query(collection(db, 'customers'), orderBy('createdAt', 'desc')));
@@ -1366,7 +1366,7 @@
             const c = docSnap.data();
             alert(`Customer Details:\n\nName: ${c.name}\nPhone: ${c.phone}\nWhatsApp: ${c.whatsapp || '-'}\nImo: ${c.imo || '-'}\nAddress: ${c.address}\nZone: ${c.zone || '-'}\nArea: ${c.area}\nPackage: ৳${c.package}\nConnection: ${c.connectionType}\nPPPoE ID: ${c.pppoeId || '-'}\nPPPoE Pass: ${c.pppoePassword || '-'}\nMap: ${c.mapLink || '-'}`);
         }
-    };
+    }
 
     window.editCustomer = async (id) => {
         const docSnap = await getDoc(doc(db, 'customers', id));
@@ -1397,7 +1397,7 @@
             document.getElementById('updateCustomerBtn').classList.remove('hidden');
             window.scrollTo(0, 0);
         }
-    };
+    }
 
     document.getElementById('updateCustomerBtn').onclick = async () => {
         const id = document.getElementById('editCustomerId').value;
@@ -1428,7 +1428,7 @@
             pppoePassword: document.getElementById('custPppoePass').value,
             mapLink: document.getElementById('custMapLink').value,
             updatedAt: new Date().toISOString()
-        };
+        }
 
         // Photo/NID update removed
 
@@ -1448,7 +1448,7 @@
             loadAllCustomers();
             alert('Customer Deleted! ✅');
         }
-    };
+    }
 
     document.getElementById('customerSearchBtn').onclick = () => {
         const search = document.getElementById('customerSearchInput').value.toLowerCase();
@@ -1457,7 +1457,7 @@
             const text = row.innerText.toLowerCase();
             row.style.display = text.includes(search)? '' : 'none';
         });
-    };
+    }
 
     async function logActivity(action, details) {
         await addDoc(collection(db, 'logs'), {
