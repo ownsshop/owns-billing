@@ -1284,10 +1284,6 @@
             return;
         }
 
-        // Photo/NID upload removed/nid_${Date.now()}`);
-            await uploadBytes(nidRef, customerNidFile);
-            nidUrl = await getDownloadURL(nidRef);
-        }
 
         const customerData = {
             name,
@@ -1313,7 +1309,7 @@
         document.getElementById('cancelEditBtn').click();
         await loadCustomers();
         loadAllCustomers();
-    };
+    }
 
     document.getElementById('cancelEditBtn').onclick = () => {
         document.getElementById('editCustomerId').value = '';
@@ -1442,7 +1438,7 @@
         document.getElementById('cancelEditBtn').click();
         await loadCustomers();
         loadAllCustomers();
-    };
+    }
 
     window.deleteCustomer = async (id, name) => {
         if (confirm(`Delete customer ${name}?`)) {
@@ -1474,9 +1470,6 @@
     }
 
     // Load Customer Billing History
-    );
-        }
-    }
 
 </script>
 
