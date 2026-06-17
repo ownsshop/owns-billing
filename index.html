@@ -58,9 +58,9 @@
       .company-logo { width: 60px; height: 60px; background: #1a73e8; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; border-radius: 8px; overflow: hidden; }
       .company-logo img { width: 100%; height: 100%; object-fit: cover; }
       .error-msg { color: #ea4335; font-size: 14px; margin-top: 10px; text-align: center; }
-      .img-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px; border: 2px solid #ddd; }
-      .upload-box { border: 2px dashed #ddd; padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; }
-      .upload-box:hover { border-color: #1a73e8; background: #f8f9fa; }
+      /* .img-preview removed */
+      /* .upload-box removed */
+      /* .upload-box:hover removed */
       .profile-card { display: flex; gap: 20px; align-items: center; }
       .profile-card img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #1a73e8; }
         @media print {.no-print,.tabs,.header { display: none!important; }.grid-2 { display: block; } }
@@ -90,7 +90,7 @@
     <div class="header no-print">
         <h2>OWNS Billing Pro Max</h2>
         <div class="user-info">
-            <img id="userPhoto" src="https://via.placeholder.com/40" alt="User">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>
             <div>
                 <div id="userName"></div>
                 <span id="userBadge" class="admin-badge hidden">ADMIN</span>
@@ -233,7 +233,7 @@
             <div class="card">
                 <h2>My Profile</h2>
                 <div class="profile-card">
-                    <img id="customerProfilePhoto" src="https://via.placeholder.com/120" alt="Profile">
+                    <div style="width:120px;height:120px;border-radius:50%;background:#1a73e8;color:white;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:bold">👤</div>
                     <div>
                         <h3 id="customerProfileName">-</h3>
                         <p><strong>Email:</strong> <span id="customerProfileEmail">-</span></p>
@@ -345,23 +345,7 @@
                             <div class="form-group"><label>PPPoE Password</label><input type="text" id="custPppoePass" placeholder="password123"></div>
                         </div>
                         <div class="form-group"><label>Google Map Location Link</label><input type="text" id="custMapLink" placeholder="https://maps.google.com/..."></div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Customer Photo</label>
-                                <div class="upload-box" onclick="document.getElementById('custPhotoInput').click()">
-                                    <p>📷 Click to Upload Photo</p>
-                                    <input type="file" id="custPhotoInput" accept="image/*" style="display:none">
-                                    <img id="custPhotoPreview" class="img-preview hidden">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>NID/Passport Image</label>
-                                <div class="upload-box" onclick="document.getElementById('custNidInput').click()">
-                                    <p>🪪 Click to Upload ID Card</p>
-                                    <input type="file" id="custNidInput" accept="image/*" style="display:none">
-                                    <img id="custNidPreview" class="img-preview hidden">
-                                </div>
-                            </div>
+                        
                         <button class="btn btn-success" id="saveCustomerBtn">💾 Save Customer</button>
                         <button class="btn btn-warning hidden" id="updateCustomerBtn">✏ Update Customer</button>
                         <button class="btn" id="cancelEditBtn">❌ Cancel</button>
@@ -419,7 +403,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc, serverTimestamp, getCountFromServer, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js";
+    // Firebase Storage removed - Photo/NID upload disabled
 
     const firebaseConfig = {
         apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
@@ -433,7 +417,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
+    // const storage = getStorage(app); // Storage disabled
 
     let currentUser = null;
     let userRole = null;
@@ -443,8 +427,8 @@
     let customers = [];
     let selectedCustomer = null;
     let allPackages = [];
-    let customerPhotoFile = null;
-    let customerNidFile = null;
+    // let customerPhotoFile = null; // Photo upload disabled
+    // let customerNidFile = null; // NID upload disabled
 
     // Login
     document.getElementById('loginBtn').onclick = async () => {
@@ -1287,26 +1271,12 @@
     };
 
     // Customer Management Functions
-    document.getElementById('custPhotoInput').onchange = (e) => {
-        customerPhotoFile = e.target.files[0];
-        if (customerPhotoFile) {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                document.getElementById('custPhotoPreview').src = ev.target.result;
-                document.getElementById('custPhotoPreview').classList.remove('hidden');
-            };
+    // Photo upload handler removed
             reader.readAsDataURL(customerPhotoFile);
         }
     };
 
-    document.getElementById('custNidInput').onchange = (e) => {
-        customerNidFile = e.target.files[0];
-        if (customerNidFile) {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                document.getElementById('custNidPreview').src = ev.target.result;
-                document.getElementById('custNidPreview').classList.remove('hidden');
-            };
+    // NID upload handler removed
             reader.readAsDataURL(customerNidFile);
         }
     };
@@ -1324,17 +1294,7 @@
             return;
         }
 
-        let photoUrl = '';
-        let nidUrl = '';
-
-        if (customerPhotoFile) {
-            const photoRef = ref(storage, `customers/${mobile}/photo_${Date.now()}`);
-            await uploadBytes(photoRef, customerPhotoFile);
-            photoUrl = await getDownloadURL(photoRef);
-        }
-
-        if (customerNidFile) {
-            const nidRef = ref(storage, `customers/${mobile}/nid_${Date.now()}`);
+        // Photo/NID upload removed/nid_${Date.now()}`);
             await uploadBytes(nidRef, customerNidFile);
             nidUrl = await getDownloadURL(nidRef);
         }
@@ -1352,8 +1312,7 @@
             pppoeId: document.getElementById('custPppoeId').value,
             pppoePassword: document.getElementById('custPppoePass').value,
             mapLink: document.getElementById('custMapLink').value,
-            photoUrl,
-            nidUrl,
+            // photoUrl, nidUrl removed,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -1380,10 +1339,10 @@
         document.getElementById('custPppoeId').value = '';
         document.getElementById('custPppoePass').value = '';
         document.getElementById('custMapLink').value = '';
-        document.getElementById('custPhotoInput').value = '';
-        document.getElementById('custNidInput').value = '';
-        document.getElementById('custPhotoPreview').classList.add('hidden');
-        document.getElementById('custNidPreview').classList.add('hidden');
+        // custPhotoInput removed
+        // custNidInput removed
+        // custPhotoPreview removed
+        // custNidPreview removed
         document.getElementById('saveCustomerBtn').classList.remove('hidden');
         document.getElementById('updateCustomerBtn').classList.add('hidden');
         customerPhotoFile = null;
@@ -1399,7 +1358,7 @@
             const c = docSnap.data();
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><img src="${c.photoUrl || 'https://via.placeholder.com/50'}" style="width:50px;height:50px;border-radius:50%;object-fit:cover"></td>
+                <td><div style="width:50px;height:50px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center">👤</div></td>
                 <td>${c.name}</td>
                 <td>${c.phone}</td>
                 <td>${c.area}</td>
@@ -1464,17 +1423,7 @@
             return;
         }
 
-        let photoUrl = '';
-        let nidUrl = '';
-
-        if (customerPhotoFile) {
-            const photoRef = ref(storage, `customers/${mobile}/photo_${Date.now()}`);
-            await uploadBytes(photoRef, customerPhotoFile);
-            photoUrl = await getDownloadURL(photoRef);
-        }
-
-        if (customerNidFile) {
-            const nidRef = ref(storage, `customers/${mobile}/nid_${Date.now()}`);
+        // Photo/NID upload removed/nid_${Date.now()}`);
             await uploadBytes(nidRef, customerNidFile);
             nidUrl = await getDownloadURL(nidRef);
         }
@@ -1495,8 +1444,7 @@
             updatedAt: new Date().toISOString()
         };
 
-        if (photoUrl) updateData.photoUrl = photoUrl;
-        if (nidUrl) updateData.nidUrl = nidUrl;
+        // Photo/NID update removed
 
         await updateDoc(doc(db, 'customers', id), updateData);
         await logActivity('UPDATE_CUSTOMER', `${name} - ${mobile}`);
