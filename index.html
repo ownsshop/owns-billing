@@ -672,11 +672,11 @@
         const customerName = document.getElementById('customerNameInput').value.trim();
         const customerPhone = document.getElementById('customerPhone').value.trim();
         const customerArea = document.getElementById('customerArea').value;
-        const packageAmount = document.getElementById('package').value;
+        const pkgAmount = document.getElementById('package').value;
         const billMonth = document.getElementById('billMonth').value;
         const dueDate = document.getElementById('dueDate').value;
 
-        if (!customerName ||!customerPhone ||!customerArea ||!packageAmount ||!billMonth) {
+        if (!customerName ||!customerPhone ||!customerArea ||!pkgAmount ||!billMonth) {
             alert('Please fill Customer Name, Phone, Area, Package and Bill Month');
             return;
         }
@@ -690,7 +690,7 @@
             customerAddress: document.getElementById('customerAddress').value,
             customerArea,
             connectionType: document.getElementById('connectionType').value,
-            amount: parseInt(packageAmount),
+            amount: parseInt(pkgAmount),
             month: billMonth,
             dueDate,
             notes: document.getElementById('billNotes').value,
@@ -713,11 +713,11 @@
         const customerName = document.getElementById('customerNameInput').value.trim();
         const customerPhone = document.getElementById('customerPhone').value.trim();
         const customerArea = document.getElementById('customerArea').value;
-        const packageAmount = document.getElementById('package').value;
+        const pkgAmount = document.getElementById('package').value;
         const billMonth = document.getElementById('billMonth').value;
         const dueDate = document.getElementById('dueDate').value;
 
-        if (!customerName ||!customerPhone ||!packageAmount ||!billMonth) {
+        if (!customerName ||!customerPhone ||!pkgAmount ||!billMonth) {
             alert('Please fill Customer, Package and Bill Month');
             return;
         }
@@ -731,7 +731,7 @@
             customerAddress: document.getElementById('customerAddress').value,
             customerArea,
             connectionType: document.getElementById('connectionType').value,
-            amount: parseInt(packageAmount),
+            amount: parseInt(pkgAmount),
             month: billMonth,
             dueDate,
             notes: document.getElementById('billNotes').value,
@@ -745,7 +745,7 @@
         await addDoc(collection(db, 'bills'), billData);
         await logActivity('CREATE_BILL', `${billData.billNo} for ${customerName}`);
 
-        const waMsg = `*${companyData.name || 'OWNS'} Internet Bill*%0A%0A*Invoice:* ${billData.invoiceNo}%0A*Customer:* ${customerName}%0A*Area:* ${customerArea}%0A*Month:* ${billMonth}%0A*Amount:* ৳${packageAmount}%0A*Due Date:* ${dueDate}%0A%0APlease pay on time. Thank you!`;
+        const waMsg = `*${companyData.name || 'OWNS'} Internet Bill*%0A%0A*Invoice:* ${billData.invoiceNo}%0A*Customer:* ${customerName}%0A*Area:* ${customerArea}%0A*Month:* ${billMonth}%0A*Amount:* ৳${pkgAmount}%0A*Due Date:* ${dueDate}%0A%0APlease pay on time. Thank you!`;
         window.open(`https://wa.me/88${customerPhone}?text=${waMsg}`, '_blank');
 
         document.getElementById('clearInvoiceBtn').click();
@@ -1276,10 +1276,10 @@
         const mobile = document.getElementById('custMobile').value.trim();
         const address = document.getElementById('custAddress').value.trim();
         const area = document.getElementById('custArea').value;
-        const package = document.getElementById('custPackage').value;
+        const pkg = document.getElementById('custPackage').value;
         const connType = document.getElementById('custConnectionType').value;
 
-        if (!name ||!mobile ||!address ||!area ||!package ||!connType) {
+        if (!name ||!mobile ||!address ||!area ||!pkg ||!connType) {
             alert('Please fill all required fields *');
             return;
         }
