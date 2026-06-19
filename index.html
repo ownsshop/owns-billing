@@ -1,962 +1,1117 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWNS Billing Pro Max V2 Complete</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-     .hidden { display: none!important; }
-     .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
-     .menu-btn.active { background-color: #dbeafe; color: #1e40af; }
-     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-     .modal-content { background-color: white; margin: 10% auto; padding: 20px; border-radius: 8px; width: 500px; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OWNS Billing Pro Max V3 Ultimate</title>
+<meta name="description" content="ISP Billing & Customer Management System - OWNS Billing Pro Max V3 Ultimate" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: '#1E40AF',
+          50: '#EFF6FF',
+          100: '#DBEAFE',
+          200: '#BFDBFE',
+          300: '#93C5FD',
+          400: '#60A5FA',
+          500: '#3B82F6',
+          600: '#2563EB',
+          700: '#1D4ED8',
+          800: '#1E40AF',
+          900: '#1E3A8A'
+        }
+      },
+      fontFamily: {
+        bangla: ['Hind Siliguri', 'Inter', 'sans-serif'],
+        sans: ['Inter', 'Hind Siliguri', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { font-family: 'Hind Siliguri', 'Inter', sans-serif; }
+  .sidebar-scroll::-webkit-scrollbar { width: 6px; }
+  .sidebar-scroll::-webkit-scrollbar-thumb { background: #1E40AF; border-radius: 10px; }
+  .leaflet-container { height: 300px; border-radius: 0.5rem; }
+  @media (max-width: 390px) {
+    .leaflet-container { height: 200px; }
+  }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.3s ease-in; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .modal { display: none; }
+  .modal.active { display: flex; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .print-only { display: none; }
+  @media print {
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+    body { background: white !important; }
+  }
+</style>
 </head>
-<body class="bg-gray-100">
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
-        <div class="bg-white p-8 rounded-lg shadow-2xl w-96">
-            <h1 class="text-3xl font-bold text-center mb-2">OWNS Billing Pro</h1>
-            <p class="text-center text-gray-600 mb-6">Complete ISP Management System V2</p>
-            <input type="email" id="loginEmail" placeholder="Email" class="w-full p-3 border rounded mb-3">
-            <input type="password" id="loginPassword" placeholder="Password" class="w-full p-3 border rounded mb-4">
-            <button id="loginBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Login</button>
-            <p id="loginError" class="text-red-500 text-sm mt-2 hidden"></p>
-        </div>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+<!-- Login Screen -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary-700 to-primary-900">
+  <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
+    <div class="text-center mb-8">
+      <div class="w-20 h-20 bg-primary rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+        <i class="fas fa-network-wired text-white text-3xl"></i>
+      </div>
+      <h1 class="text-3xl font-bold text-primary dark:text-primary-400">OWNS Billing Pro</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">Max V3 Ultimate</p>
     </div>
+    
+    <form id="loginForm" class="space-y-5">
+      <div>
+        <label class="block text-sm font-medium mb-2">ইউজার রোল</label>
+        <select id="userRole" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+          <option value="admin">অ্যাডমিন</option>
+          <option value="manager">ম্যানেজার</option>
+          <option value="staff">স্টাফ</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-2">ইমেইল</label>
+        <input type="email" id="loginEmail" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none" placeholder="admin@owns.com" value="admin@owns.com">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-2">পাসওয়ার্ড</label>
+        <input type="password" id="loginPassword" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none" placeholder="••••••••" value="admin123">
+      </div>
+      <button type="submit" class="w-full bg-primary hover:bg-primary-700 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl">
+        লগইন করুন <i class="fas fa-arrow-right ml-2"></i>
+      </button>
+    </form>
+    <p class="text-xs text-center text-gray-500 dark:text-gray-400 mt-6">ডেমো: admin@owns.com / admin123</p>
+  </div>
+</div>
 
-    <div id="appScreen" class="hidden">
-        <nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold">OWNS Billing Pro Max V2</h1>
-            <div class="flex items-center gap-4">
-                <span id="userName" class="font-semibold"></span>
-                <span id="userRole" class="bg-blue-800 px-3 py-1 rounded text-sm"></span>
-                <button id="logoutBtn" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600">Logout</button>
+<!-- Main App -->
+<div id="mainApp" class="hidden">
+  <!-- Top Nav -->
+  <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 no-print">
+    <div class="flex items-center justify-between px-4 py-3">
+      <div class="flex items-center gap-3">
+        <button id="sidebarToggle" class="lg:hidden text-gray-600 dark:text-gray-300">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+            <i class="fas fa-network-wired text-white text-sm"></i>
+          </div>
+          <div class="hidden sm:block">
+            <h1 class="text-lg font-bold text-primary dark:text-primary-400">OWNS Billing Pro</h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Max V3 Ultimate</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <button id="themeToggle" class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+          <i class="fas fa-moon dark:hidden"></i>
+          <i class="fas fa-sun hidden dark:block"></i>
+        </button>
+        <div class="relative">
+          <button id="userMenuBtn" class="flex items-center gap-2">
+            <img src="https://ui-avatars.com/api/?name=Admin&background=1E40AF&color=fff" class="w-9 h-9 rounded-full" alt="User">
+            <div class="hidden md:block text-left">
+              <p class="text-sm font-semibold" id="userName">অ্যাডমিন</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400" id="userRoleText">অ্যাডমিন</p>
             </div>
+            <i class="fas fa-chevron-down text-xs"></i>
+          </button>
+          <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700">
+            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"><i class="fas fa-user mr-2"></i> প্রোফাইল</a>
+            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-cog mr-2"></i> সেটিংস</a>
+            <hr class="border-gray-200 dark:border-gray-700">
+            <button id="logoutBtn" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg text-red-600"><i class="fas fa-sign-out-alt mr-2"></i> লগআউট</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed lg:sticky top-0 left-0 h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-30 overflow-y-auto sidebar-scroll no-print">
+      <div class="p-4 lg:pt-20">
+        <nav class="space-y-1">
+          <a href="#" data-page="dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary dark:text-primary-400 font-semibold">
+            <i class="fas fa-chart-line w-5"></i><span>ড্যাশবোর্ড</span>
+          </a>
+          <a href="#" data-page="customers" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <i class="fas fa-users w-5"></i><span>কাস্টমার</span>
+          </a>
+          <a href="#" data-page="billing" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <i class="fas fa-file-invoice-dollar w-5"></i><span>বিলিং ও ইনভয়েস</span>
+          </a>
+          <a href="#" data-page="collection" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <i class="fas fa-hand-holding-usd w-5"></i><span>কালেকশন</span>
+          </a>
+          <a href="#" data-page="complaints" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <i class="fas fa-ticket-alt w-5"></i><span>কমপ্লেইন</span>
+          </a>
+          <a href="#" data-page="reports" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <i class="fas fa-chart-bar w-5"></i><span>রিপোর্ট</span>
+          </a>
+          <a href="#" data-page="staff" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition admin-only">
+            <i class="fas fa-user-tie w-5"></i><span>স্টাফ ম্যানেজমেন্ট</span>
+          </a>
+          <a href="#" data-page="settings" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition admin-only">
+            <i class="fas fa-cog w-5"></i><span>সেটিংস</span>
+          </a>
         </nav>
+      </div>
+    </aside>
 
-        <div class="flex">
-            <div id="sidebar" class="w-64 bg-white h-screen shadow-lg overflow-y-auto">
-                <div id="adminMenu" class="p-4 hidden">
-                    <h3 class="font-bold text-gray-700 mb-3">Admin Panel</h3>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="dashboard">📊 Dashboard</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="invoice">📄 Invoice Generator</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="customers">👥 All Customers</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="reports">📈 Reports</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="staff">👔 Staff Report</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="complaints">🎫 Complaints</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="logs">📋 Activity Logs</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="settings">⚙️ Settings</button>
-                </div>
-                <div id="staffMenu" class="p-4 hidden">
-                    <h3 class="font-bold text-gray-700 mb-3">Staff Panel</h3>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="dashboard">📊 Dashboard</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="invoice">📄 Create Invoice</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="mycustomers">👥 My Customers</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="complaints">🎫 My Complaints</button>
-                </div>
-                <div id="customerMenu" class="p-4 hidden">
-                    <h3 class="font-bold text-gray-700 mb-3">Customer Panel</h3>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="mybills">💳 My Bills</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="myprofile">👤 My Profile</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="mycomplaints">🎫 My Complaints</button>
-                </div>
-            </div>
-
-            <div class="flex-1 p-6 overflow-y-auto h-screen">
-                <div id="dashboardTab" class="tab-content">
-                    <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
-                    <div class="grid grid-cols-4 gap-4 mb-6">
-                        <div class="bg-purple-500 text-white p-6 rounded-lg"><p class="text-sm">Total Bills</p><p id="totalBills" class="text-3xl font-bold">0</p></div>
-                        <div class="bg-green-500 text-white p-6 rounded-lg"><p class="text-sm">Total Revenue</p><p id="totalRevenue" class="text-3xl font-bold">৳0</p></div>
-                        <div class="bg-yellow-500 text-white p-6 rounded-lg"><p class="text-sm">Due This Month</p><p id="dueMonth" class="text-3xl font-bold">0</p></div>
-                        <div class="bg-red-500 text-white p-6 rounded-lg"><p class="text-sm">Pending Complaints</p><p id="pendingComplaints" class="text-3xl font-bold">0</p></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-6 mb-6">
-                        <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-xl font-bold mb-4">Monthly Revenue</h3><canvas id="revenueChart"></canvas></div>
-                        <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-xl font-bold mb-4">Customer Status</h3><canvas id="customerChart"></canvas></div>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-xl font-bold mb-4">Recent Bills</h3>
-                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Bill No</th><th class="text-left p-2">Customer</th><th class="text-left p-2">Amount</th><th class="text-left p-2">Status</th><th class="text-left p-2">Action</th></tr></thead><tbody id="recentBillsTable"></tbody></table>
-                    </div>
-                </div>
-
-                <div id="invoiceTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">Generate Invoice</h2>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block mb-2 font-semibold">Customer Name *</label><select id="customerSelect" class="w-full p-3 border rounded"><option value="">Select Customer</option></select></div>
-                            <div><label class="block mb-2 font-semibold">Package *</label><select id="packageSelect" class="w-full p-3 border rounded"><option value="">Select Package</option></select></div>
-                            <div><label class="block mb-2 font-semibold">WhatsApp Number</label><input type="text" id="invoiceWhatsApp" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block mb-2 font-semibold">Imo Number</label><input type="text" id="invoiceImo" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div class="col-span-2"><label class="block mb-2 font-semibold">Address</label><input type="text" id="invoiceAddress" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block mb-2 font-semibold">Bill Month *</label><input type="month" id="billMonth" class="w-full p-3 border rounded"></div>
-                            <div><label class="block mb-2 font-semibold">Amount *</label><input type="number" id="billAmount" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block mb-2 font-semibold">Due Date *</label><input type="date" id="dueDate" class="w-full p-3 border rounded"></div>
-                        </div>
-                        <button id="generateInvoiceBtn" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Generate Invoice</button>
-                    </div>
-                </div>
-                <div id="customersTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">All Customers</h2>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <div class="flex gap-4 mb-4">
-                            <input type="text" id="customerSearch" placeholder="Search by name or phone..." class="flex-1 p-3 border rounded">
-                            <button id="exportCustomersBtn" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700">Export Excel</button>
-                        </div>
-                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Name</th><th class="text-left p-2">Phone</th><th class="text-left p-2">Area</th><th class="text-left p-2">Package</th><th class="text-left p-2">PPPoE User</th><th class="text-left p-2">Status</th><th class="text-left p-2">Action</th></tr></thead><tbody id="allCustomersTable"></tbody></table>
-                    </div>
-                </div>
-
-                <div id="reportsTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">Reports</h2>
-                    <div class="bg-white p-6 rounded-lg shadow mb-6">
-                        <h3 class="text-xl font-bold mb-4">Date Range Report</h3>
-                        <div class="grid grid-cols-3 gap-4">
-                            <div><label class="block mb-2">From Date</label><input type="date" id="reportFromDate" class="w-full p-3 border rounded"></div>
-                            <div><label class="block mb-2">To Date</label><input type="date" id="reportToDate" class="w-full p-3 border rounded"></div>
-                            <div class="flex items-end"><button id="generateReportBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Generate Report</button></div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Date</th><th class="text-left p-2">Total Bills</th><th class="text-left p-2">Paid</th><th class="text-left p-2">Pending</th><th class="text-left p-2">Revenue</th></tr></thead><tbody id="reportTable"></tbody></table>
-                    </div>
-                </div>
-
-                <div id="staffTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">Staff Wise Collection Report</h2>
-                    <div class="bg-white p-6 rounded-lg shadow mb-6">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block mb-2">Select Month</label><input type="month" id="staffReportMonth" class="w-full p-3 border rounded"></div>
-                            <div class="flex items-end"><button id="loadStaffReportBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Load Report</button></div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Staff Name</th><th class="text-left p-2">Email</th><th class="text-left p-2">Total Bills</th><th class="text-left p-2">Total Collection</th><th class="text-left p-2">Pending</th></tr></thead><tbody id="staffReportTable"></tbody></table>
-                    </div>
-                </div>
-
-                <div id="settingsTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">Settings</h2>
-                    <div class="grid grid-cols-2 gap-6 mb-6">
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <h3 class="text-xl font-bold mb-4">Add Customer</h3>
-                            <input type="text" id="custName" placeholder="Customer Name *" class="w-full p-3 border rounded mb-3">
-                            <input type="text" id="custZone" placeholder="Zone *" class="w-full p-3 border rounded mb-3">
-                            <input type="text" id="custArea" placeholder="Area *" class="w-full p-3 border rounded mb-3">
-                            <input type="text" id="custAddress" placeholder="Address *" class="w-full p-3 border rounded mb-3">
-                            <input type="text" id="custPhone" placeholder="Phone Number *" class="w-full p-3 border rounded mb-3">
-                            <input type="text" id="custWhatsApp" placeholder="WhatsApp Number" class="w-full p-3 border rounded mb-3">
-                            <input type="text" id="custImo" placeholder="Imo Number" class="w-full p-3 border rounded mb-3">
-                            <input type="text" id="custPPPoEUser" placeholder="PPPoE Username" class="w-full p-3 border rounded mb-3">
-                            <input type="password" id="custPPPoEPass" placeholder="PPPoE Password" class="w-full p-3 border rounded mb-3">
-                            <select id="custPackage" class="w-full p-3 border rounded mb-3"><option value="">Select Package *</option></select>
-                            <select id="custAssignedStaff" class="w-full p-3 border rounded mb-3"><option value="">Assign Staff</option></select>
-                            <button id="saveCustomerBtn" class="w-full bg-green-600 text-white p-3 rounded hover:bg-green-700">Save Customer</button>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <h3 class="text-xl font-bold mb-4">User Management</h3>
-                            <input type="email" id="newUserEmail" placeholder="Email *" class="w-full p-3 border rounded mb-3">
-                            <input type="password" id="newUserPassword" placeholder="Password *" class="w-full p-3 border rounded mb-3">
-                            <select id="newUserRole" class="w-full p-3 border rounded mb-3"><option value="staff">Staff</option><option value="customer">Customer</option></select>
-                            <button id="createUserBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 mb-4">Create User</button>
-                            <h3 class="text-xl font-bold mb-4 mt-6">Package Manager</h3>
-                            <input type="text" id="pkgName" placeholder="Package Name" class="w-full p-3 border rounded mb-3">
-                            <input type="number" id="pkgPrice" placeholder="Price" class="w-full p-3 border rounded mb-3">
-                            <input type="text" id="pkgSpeed" placeholder="Speed (e.g. 10 Mbps)" class="w-full p-3 border rounded mb-3">
-                            <button id="addPackageBtn" class="w-full bg-purple-600 text-white p-3 rounded hover:bg-purple-700 mb-4">Add Package</button>
-                            <table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left p-2">Package</th><th class="text-left p-2">Price</th><th class="text-left p-2">Action</th></tr></thead><tbody id="packageListTable"></tbody></table>
-                        </div>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-xl font-bold mb-4">Company Information</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="text" id="companyName" placeholder="Company Name" class="w-full p-3 border rounded">
-                            <input type="text" id="companyPhone" placeholder="Phone" class="w-full p-3 border rounded">
-                            <input type="text" id="companyAddress" placeholder="Address" class="w-full p-3 border rounded col-span-2">
-                            <input type="email" id="companyEmail" placeholder="Email" class="w-full p-3 border rounded">
-                            <input type="url" id="companyLogo" placeholder="Logo URL" class="w-full p-3 border rounded">
-                        </div>
-                        <button id="saveCompanyBtn" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Save Company Info</button>
-                    </div>
-                </div>
-
-                <div id="complaintsTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">Complaints Management</h2>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <div id="adminComplaintView" class="hidden">
-                            <div class="flex justify-between mb-4">
-                                <h3 class="font-bold">All Complaints</h3>
-                                <select id="complaintFilter" class="p-2 border rounded"><option value="all">All</option><option value="pending">Pending</option><option value="assigned">Assigned</option><option value="resolved">Resolved</option></select>
-                            </div>
-                            <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Customer</th><th class="text-left p-2">Issue</th><th class="text-left p-2">Status</th><th class="text-left p-2">Assigned To</th><th class="text-left p-2">Date</th><th class="text-left p-2">Action</th></tr></thead><tbody id="complaintsTable"></tbody></table>
-                        </div>
-                        <div id="staffComplaintView" class="hidden">
-                            <h3 class="font-bold mb-3">Assigned Complaints</h3>
-                            <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Customer</th><th class="text-left p-2">Issue</th><th class="text-left p-2">Status</th><th class="text-left p-2">Action</th></tr></thead><tbody id="staffComplaintsTable"></tbody></table>
-                        </div>
-                    </div>
-                </div>
-                <div id="logsTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">Activity Logs</h2>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <button id="exportLogsBtn" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 mb-4">Export Logs</button>
-                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Time</th><th class="text-left p-2">User</th><th class="text-left p-2">Action</th><th class="text-left p-2">Details</th></tr></thead><tbody id="logsTable"></tbody></table>
-                    </div>
-                </div>
-
-                <div id="mycustomersTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">My Customers</h2>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Name</th><th class="text-left p-2">Phone</th><th class="text-left p-2">Area</th><th class="text-left p-2">Package</th><th class="text-left p-2">Status</th><th class="text-left p-2">Due</th></tr></thead><tbody id="myCustomersTable"></tbody></table>
-                    </div>
-                </div>
-
-                <div id="mybillsTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">My Bills</h2>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Bill No</th><th class="text-left p-2">Month</th><th class="text-left p-2">Amount</th><th class="text-left p-2">Status</th><th class="text-left p-2">Due Date</th><th class="text-left p-2">Action</th></tr></thead><tbody id="myBillsTable"></tbody></table>
-                    </div>
-                </div>
-
-                <div id="myprofileTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">My Profile</h2>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block font-semibold">Name</label><input type="text" id="myName" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block font-semibold">Phone</label><input type="text" id="myPhone" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block font-semibold">WhatsApp</label><input type="text" id="myWhatsApp" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block font-semibold">Imo</label><input type="text" id="myImo" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block font-semibold">PPPoE Username</label><input type="text" id="myPPPoEUser" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block font-semibold">PPPoE Password</label><input type="text" id="myPPPoEPass" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block font-semibold">Package</label><input type="text" id="myPackage" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div><label class="block font-semibold">Zone/Area</label><input type="text" id="myZoneArea" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                            <div class="col-span-2"><label class="block font-semibold">Address</label><input type="text" id="myAddress" class="w-full p-3 border rounded bg-gray-100" readonly></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="mycomplaintsTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">My Complaints</h2>
-                    <div class="bg-white p-6 rounded-lg shadow mb-4">
-                        <h3 class="font-bold mb-3">Submit New Complaint</h3>
-                        <textarea id="complaintText" placeholder="Describe your issue..." class="w-full p-3 border rounded mb-3 h-32"></textarea>
-                        <button id="submitComplaintBtn" class="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700">Submit Complaint</button>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="font-bold mb-3">Complaint History</h3>
-                        <div id="myComplaintsList"></div>
-                    </div>
-                </div>
-            </div>
+    <!-- Main Content -->
+    <main class="flex-1 p-4 md:p-6 lg:p-8 w-full min-w-0">
+      <!-- Dashboard Page -->
+      <div id="dashboard" class="page active">
+        <div class="mb-6">
+          <h2 class="text-2xl md:text-3xl font-bold">ড্যাশবোর্ড</h2>
+          <p class="text-gray-500 dark:text-gray-400 mt-1">স্বাগতম, আপনার ISP বিজনেস ওভারভিউ</p>
         </div>
-    </div>
 
-    <div id="forwardModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4">Forward Complaint to Staff</h3>
-            <select id="forwardStaffSelect" class="w-full p-3 border rounded mb-4"><option value="">Select Staff</option></select>
-            <div class="flex gap-4">
-                <button id="confirmForwardBtn" class="flex-1 bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Forward</button>
-                <button onclick="document.getElementById('forwardModal').style.display='none'" class="flex-1 bg-gray-400 text-white p-3 rounded hover:bg-gray-500">Cancel</button>
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+          <div class="bg-gradient-to-br from-primary to-primary-700 text-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-primary-100 text-sm">মোট কাস্টমার</p>
+                <h3 class="text-3xl font-bold mt-2" id="totalCustomers">1,245</h3>
+                <p class="text-xs text-primary-200 mt-2"><i class="fas fa-arrow-up"></i> ১২% এই মাসে</p>
+              </div>
+              <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-users text-2xl"></i>
+              </div>
             </div>
-        </div>
-    </div>
+          </div>
 
-    <div id="replyModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4">Reply to Complaint</h3>
-            <textarea id="replyText" placeholder="Enter your reply..." class="w-full p-3 border rounded mb-4 h-32"></textarea>
-            <div class="flex gap-4">
-                <button id="confirmReplyBtn" class="flex-1 bg-green-600 text-white p-3 rounded hover:bg-green-700">Send Reply</button>
-                <button onclick="document.getElementById('replyModal').style.display='none'" class="flex-1 bg-gray-400 text-white p-3 rounded hover:bg-gray-500">Cancel</button>
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">মাসিক আয়</p>
+                <h3 class="text-3xl font-bold mt-2">৳4,52,300</h3>
+                <p class="text-xs text-green-600 mt-2"><i class="fas fa-arrow-up"></i> ৮% এই মাসে</p>
+              </div>
+              <div class="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                <i class="fas fa-dollar-sign text-2xl text-green-600 dark:text-green-400"></i>
+              </div>
             </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">বকেয়া বিল</p>
+                <h3 class="text-3xl font-bold mt-2">৳82,500</h3>
+                <p class="text-xs text-red-600 mt-2"><i class="fas fa-arrow-down"></i> ৫% এই মাসে</p>
+              </div>
+              <div class="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-2xl text-red-600 dark:text-red-400"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">সক্রিয় কমপ্লেইন</p>
+                <h3 class="text-3xl font-bold mt-2">23</h3>
+                <p class="text-xs text-orange-600 mt-2"><i class="fas fa-clock"></i> সমাধান বাকি</p>
+              </div>
+              <div class="w-14 h-14 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
+                <i class="fas fa-ticket-alt text-2xl text-orange-600 dark:text-orange-400"></i>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold mb-4">মাসিক আয় চার্ট</h3>
+            <canvas id="revenueChart"></canvas>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold mb-4">প্যাকেজ বিতরণ</h3>
+            <canvas id="packageChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+          <h3 class="text-lg font-semibold mb-4">সাম্প্রতিক লেনদেন</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th class="px-4 py-3 text-left">ইনভয়েস</th>
+                  <th class="px-4 py-3 text-left">কাস্টমার</th>
+                  <th class="px-4 py-3 text-left">পরিমাণ</th>
+                  <th class="px-4 py-3 text-left">স্ট্যাটাস</th>
+                  <th class="px-4 py-3 text-left">তারিখ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                <tr>
+                  <td class="px-4 py-3">#INV-1245</td>
+                  <td class="px-4 py-3">রহিম উদ্দিন</td>
+                  <td class="px-4 py-3 font-semibold">৳1,200</td>
+                  <td class="px-4 py-3"><span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs">পেইড</span></td>
+                  <td class="px-4 py-3">০৪ অক্টো ২০২৪</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3">#INV-1244</td>
+                  <td class="px-4 py-3">করিম মিয়া</td>
+                  <td class="px-4 py-3 font-semibold">৳800</td>
+                  <td class="px-4 py-3"><span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full text-xs">পেন্ডিং</span></td>
+                  <td class="px-4 py-3">০৪ অক্টো ২০২৪</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customers Page -->
+      <div id="customers" class="page">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold">কাস্টমার ম্যানেজমেন্ট</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">সকল কাস্টমারের তথ্য দেখুন ও ম্যানেজ করুন</p>
+          </div>
+          <button id="addCustomerBtn" class="bg-primary hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg flex items-center gap-2">
+            <i class="fas fa-plus"></i> নতুন কাস্টমার
+          </button>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <input type="text" placeholder="কাস্টমার খুঁজুন..." class="w-full sm:w-64 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th class="px-4 py-3 text-left">ID</th>
+                  <th class="px-4 py-3 text-left">নাম</th>
+                  <th class="px-4 py-3 text-left">ফোন</th>
+                  <th class="px-4 py-3 text-left">প্যাকেজ</th>
+                  <th class="px-4 py-3 text-left">বিল</th>
+                  <th class="px-4 py-3 text-left">স্ট্যাটাস</th>
+                  <th class="px-4 py-3 text-left">অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="customerTableBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Billing Page -->
+      <div id="billing" class="page">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold">বিলিং ও ইনভয়েস</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">ইনভয়েস তৈরি ও ম্যানেজ করুন</p>
+          </div>
+          <button id="createInvoiceBtn" class="bg-primary hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg flex items-center gap-2">
+            <i class="fas fa-file-invoice"></i> নতুন ইনভয়েস
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 class="font-semibold">সাম্প্রতিক ইনভয়েস</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th class="px-4 py-3 text-left">ইনভয়েস #</th>
+                    <th class="px-4 py-3 text-left">কাস্টমার</th>
+                    <th class="px-4 py-3 text-left">পরিমাণ</th>
+                    <th class="px-4 py-3 text-left">স্ট্যাটাস</th>
+                    <th class="px-4 py-3 text-left">অ্যাকশন</th>
+                  </tr>
+                </thead>
+                <tbody id="invoiceTableBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+              <h3 class="font-semibold mb-4">বিলিং সামারি</h3>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-gray-600 dark:text-gray-400">মোট ইনভয়েস</span>
+                  <span class="font-bold">2,450</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600 dark:text-gray-400">পেইড</span>
+                  <span class="font-bold text-green-600">2,125</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600 dark:text-gray-400">পেন্ডিং</span>
+                  <span class="font-bold text-yellow-600">325</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collection Page -->
+      <div id="collection" class="page">
+        <div class="mb-6">
+          <h2 class="text-2xl md:text-3xl font-bold">স্টাফ কালেকশন ট্র্যাকিং</h2>
+          <p class="text-gray-500 dark:text-gray-400 mt-1">স্টাফদের কালেকশন মনিটর করুন</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="staffCollectionCards">
+        </div>
+      </div>
+
+      <!-- Complaints Page -->
+      <div id="complaints" class="page">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold">কমপ্লেইন টিকেটিং</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">কাস্টমার কমপ্লেইন ম্যানেজ করুন</p>
+          </div>
+          <button id="newComplaintBtn" class="bg-primary hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg flex items-center gap-2">
+            <i class="fas fa-plus"></i> নতুন টিকেট
+          </button>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th class="px-4 py-3 text-left">টিকেট #</th>
+                  <th class="px-4 py-3 text-left">কাস্টমার</th>
+                  <th class="px-4 py-3 text-left">বিষয়</th>
+                  <th class="px-4 py-3 text-left">প্রায়োরিটি</th>
+                  <th class="px-4 py-3 text-left">স্ট্যাটাস</th>
+                  <th class="px-4 py-3 text-left">অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="complaintTableBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reports Page -->
+      <div id="reports" class="page">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold">রিপোর্ট</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">বিস্তারিত রিপোর্ট দেখুন ও এক্সপোর্ট করুন</p>
+          </div>
+          <button id="exportExcelBtn" class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg flex items-center gap-2">
+            <i class="fas fa-file-excel"></i> Excel এক্সপোর্ট
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+            <h3 class="font-semibold mb-4">মাসিক কালেকশন রিপোর্ট</h3>
+            <canvas id="collectionChart"></canvas>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+            <h3 class="font-semibold mb-4">স্টাফ পারফরম্যান্স</h3>
+            <canvas id="staffChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff Page -->
+      <div id="staff" class="page">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold">স্টাফ ম্যানেজমেন্ট</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">স্টাফ তথ্য ও পারমিশন ম্যানেজ করুন</p>
+          </div>
+          <button id="addStaffBtn" class="bg-primary hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg flex items-center gap-2">
+            <i class="fas fa-plus"></i> নতুন স্টাফ
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="staffCards">
+        </div>
+      </div>
+
+      <!-- Settings Page -->
+      <div id="settings" class="page">
+        <div class="mb-6">
+          <h2 class="text-2xl md:text-3xl font-bold">সেটিংস</h2>
+          <p class="text-gray-500 dark:text-gray-400 mt-1">সিস্টেম সেটিংস কনফিগার করুন</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700 max-w-2xl">
+          <h3 class="font-semibold mb-4">কোম্পানি তথ্য</h3>
+          <form class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">কোম্পানি নাম</label>
+              <input type="text" value="OWNS Link Solutions" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">ঠিকানা</label>
+              <input type="text" value="ঢাকা, বাংলাদেশ" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">ফোন</label>
+              <input type="text" value="+880 1234-567890" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+            </div>
+            <button type="submit" class="bg-primary hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold">সেভ করুন</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 text-center text-sm text-gray-500 dark:text-gray-400 no-print">
+    © 2024 OWNS Link Solutions. সকল অধিকার সংরক্ষিত।
+  </footer>
+</div>
+
+<!-- Add Customer Modal -->
+<div id="customerModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4 z-50 no-print">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-white dark:bg-gray-800 p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+      <h3 class="text-xl font-bold">নতুন কাস্টমার যোগ করুন</h3>
+      <button class="closeModal text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
     </div>
+    <form id="customerForm" class="p-6 space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium mb-2">পুরো নাম *</label>
+          <input type="text" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">মোবাইল নম্বর *</label>
+          <input type="tel" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">ইমেইল</label>
+          <input type="email" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">প্যাকেজ *</label>
+          <select required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+            <option value="">সিলেক্ট করুন</option>
+            <option value="10Mbps - ৳800">10 Mbps - ৳800</option>
+            <option value="20Mbps - ৳1200">20 Mbps - ৳1200</option>
+            <option value="50Mbps - ৳2000">50 Mbps - ৳2000</option>
+            <option value="100Mbps - ৳3000">100 Mbps - ৳3000</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">IP অ্যাড্রেস</label>
+          <input type="text" placeholder="192.168.1.100" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">মাসিক বিল</label>
+          <input type="number" placeholder="1200" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">ঠিকানা</label>
+        <textarea rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">লোকেশন (ম্যাপ)</label>
+        <div id="map" class="leaflet-container"></div>
+        <input type="hidden" id="customerLat">
+        <input type="hidden" id="customerLng">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium mb-2">কাস্টমার ফটো</label>
+          <input type="file" accept="image/*" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary file:text-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">NID আপলোড</label>
+          <input type="file" accept="image/*,.pdf" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary file:text-white">
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-4">
+        <button type="submit" class="flex-1 bg-primary hover:bg-primary-700 text-white py-3 rounded-lg font-semibold">সেভ করুন</button>
+        <button type="button" class="closeModal flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 py-3 rounded-lg font-semibold">বাতিল</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Invoice Preview Modal -->
+<div id="invoiceModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4 z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-white dark:bg-gray-800 p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center no-print">
+      <h3 class="text-xl font-bold">ইনভয়েস প্রিভিউ</h3>
+      <div class="flex gap-2">
+        <button id="printInvoiceBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-print mr-2"></i>প্রিন্ট</button>
+        <button class="closeModal text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+      </div>
+    </div>
+    <div id="invoiceContent" class="p-8">
+      <!-- Invoice will be generated here -->
+    </div>
+  </div>
+</div>
 
 <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+// Firebase SDK v9
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js';
 
-    const firebaseConfig = {
-  apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
-  authDomain: "owns-billing.firebaseapp.com",
-  projectId: "owns-billing",
-  storageBucket: "owns-billing.firebasestorage.app",
-  messagingSenderId: "1036958677443",
-  appId: "1:1036958677443:web:fbd4ee2f0d0a24c4582576"
+// Firebase Config - Replace with your config
+const firebaseConfig = {
+  apiKey: "demo-key",
+  authDomain: "demo.firebaseapp.com",
+  projectId: "demo",
+  storageBucket: "demo.appspot.com",
+  messagingSenderId: "123456",
+  appId: "1:123456:web:abc"
 };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+// Initialize Firebase
+let app, auth, db, storage;
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+} catch(e) {
+  console.log('Firebase not configured, using demo mode');
+}
 
-    let currentUser = null;
-    let currentRole = null;
-    let currentUserData = null;
-    let currentComplaintId = null;
-    let revenueChart = null;
-    let customerChart = null;
+// Demo Data
+const demoData = {
+  customers: [
+    {id: 1, name: 'রহিম উদ্দিন', phone: '01712345678', email: 'rahim@email.com', package: '20Mbps', bill: 1200, status: 'active', address: 'মিরপুর-১০, ঢাকা'},
+    {id: 2, name: 'করিম মিয়া', phone: '01812345678', email: 'karim@email.com', package: '10Mbps', bill: 800, status: 'active', address: 'উত্তরা, ঢাকা'},
+    {id: 3, name: 'সুমন আহমেদ', phone: '01912345678', email: 'sumon@email.com', package: '50Mbps', bill: 2000, status: 'inactive', address: 'ধানমন্ডি, ঢাকা'}
+  ],
+  staff: [
+    {id: 1, name: 'আলী হাসান', role: 'কালেকশন অফিসার', phone: '01711111111', collection: 45200, target: 50000},
+    {id: 2, name: 'নাসির উদ্দিন', role: 'টেকনিশিয়ান', phone: '01722222222', collection: 38000, target: 40000},
+    {id: 3, name: 'জসিম মিয়া', role: 'কালেকশন অফিসার', phone: '01733333333', collection: 42000, target: 45000}
+  ],
+  invoices: [
+    {id: 'INV-1245', customer: 'রহিম উদ্দিন', amount: 1200, status: 'paid', date: '2024-10-04'},
+    {id: 'INV-1244', customer: 'করিম মিয়া', amount: 800, status: 'pending', date: '2024-10-04'},
+    {id: 'INV-1243', customer: 'সুমন আহমেদ', amount: 2000, status: 'paid', date: '2024-10-03'}
+  ],
+  complaints: [
+    {id: 'TKT-001', customer: 'রহিম উদ্দিন', subject: 'ইন্টারনেট স্লো', priority: 'high', status: 'open'},
+    {id: 'TKT-002', customer: 'করিম মিয়া', subject: 'লাইন কাটা', priority: 'urgent', status: 'in-progress'},
+    {id: 'TKT-003', customer: 'সুমন আহমেদ', subject: 'বিল সমস্যা', priority: 'medium', status: 'resolved'}
+  ]
+};
 
-    document.getElementById('loginBtn').onclick = async () => {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            document.getElementById('loginError').classList.add('hidden');
-        } catch (error) {
-            document.getElementById('loginError').textContent = error.message;
-            document.getElementById('loginError').classList.remove('hidden');
-        }
-    };
+let currentUser = {role: 'admin', name: 'অ্যাডমিন'};
+let map, customerMarker;
 
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            currentUser = user;
-            const userQuery = query(collection(db, 'users'), where('email', '==', user.email));
-            const userDoc = await getDocs(userQuery);
-            if (!userDoc.empty) {
-                currentUserData = userDoc.docs[0].data();
-                currentRole = currentUserData.role;
-            } else {
-                currentRole = 'admin';
-            }
-            showApp();
-        } else {
-            showLogin();
-        }
+// DOM Ready
+document.addEventListener('DOMContentLoaded', function() {
+  initApp();
+});
+
+function initApp() {
+  // Theme
+  if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+  }
+  
+  // Event Listeners
+  setupEventListeners();
+  
+  // Load Demo Data
+  loadDashboardData();
+  loadCustomers();
+  loadInvoices();
+  loadStaff();
+  loadComplaints();
+  initCharts();
+}
+
+function setupEventListeners() {
+  // Login
+  document.getElementById('loginForm').addEventListener('submit', handleLogin);
+  
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+  
+  // User Menu
+  document.getElementById('userMenuBtn').addEventListener('click', () => {
+    document.getElementById('userMenu').classList.toggle('hidden');
+  });
+  
+  // Theme Toggle
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  
+  // Sidebar Toggle
+  document.getElementById('sidebarToggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('-translate-x-full');
+  });
+  
+  // Navigation
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const page = link.dataset.page;
+      switchPage(page);
+      // Close sidebar on mobile
+      if (window.innerWidth < 1024) {
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+      }
     });
-
-    function showLogin() {
-        document.getElementById('loginScreen').classList.remove('hidden');
-        document.getElementById('appScreen').classList.add('hidden');
+  });
+  
+  // Modals
+  document.getElementById('addCustomerBtn').addEventListener('click', () => openModal('customerModal'));
+  document.getElementById('createInvoiceBtn').addEventListener('click', createInvoice);
+  document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+  
+  document.querySelectorAll('.closeModal').forEach(btn => {
+    btn.addEventListener('click', closeModals);
+  });
+  
+  // Forms
+  document.getElementById('customerForm').addEventListener('submit', saveCustomer);
+  document.getElementById('printInvoiceBtn').addEventListener('click', () => window.print());
+  
+  // Click outside to close
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#userMenuBtn') && !e.target.closest('#userMenu')) {
+      document.getElementById('userMenu').classList.add('hidden');
     }
+  });
+}
 
-    async function showApp() {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('appScreen').classList.remove('hidden');
-        document.getElementById('userName').textContent = currentUser.email;
-        document.getElementById('userRole').textContent = currentRole.toUpperCase();
+function handleLogin(e) {
+  e.preventDefault();
+  const role = document.getElementById('userRole').value;
+  const email = document.getElementById('loginEmail').value;
+  
+  currentUser = {role: role, name: role === 'admin' ? 'অ্যাডমিন' : role === 'manager' ? 'ম্যানেজার' : 'স্টাফ'};
+  document.getElementById('userName').textContent = currentUser.name;
+  document.getElementById('userRoleText').textContent = currentUser.role === 'admin' ? 'অ্যাডমিন' : currentUser.role === 'manager' ? 'ম্যানেজার' : 'স্টাফ';
+  
+  // Hide/show admin features
+  if (role !== 'admin') {
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+  }
+  
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  
+  initMap();
+}
 
-        document.getElementById('adminMenu').classList.add('hidden');
-        document.getElementById('staffMenu').classList.add('hidden');
-        document.getElementById('customerMenu').classList.add('hidden');
+function handleLogout() {
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('mainApp').classList.add('hidden');
+  closeModals();
+}
 
-        if (currentRole === 'admin') {
-            document.getElementById('adminMenu').classList.remove('hidden');
-            document.getElementById('adminComplaintView').classList.remove('hidden');
-        } else if (currentRole === 'staff') {
-            document.getElementById('staffMenu').classList.remove('hidden');
-            document.getElementById('staffComplaintView').classList.remove('hidden');
-            loadMyCustomers();
-        } else {
-            document.getElementById('customerMenu').classList.remove('hidden');
-            loadMyProfile();
-            loadMyBills();
-        }
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+}
 
-        await loadDashboard();
-        await loadCustomers();
-        await loadPackages();
-        await loadStaffList();
-        showTab('dashboard');
+function switchPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  
+  document.querySelectorAll('.nav-link').forEach(link => {
+    if (link.dataset.page === pageId) {
+      link.classList.add('bg-primary-50', 'dark:bg-primary-900/30', 'text-primary', 'dark:text-primary-400', 'font-semibold');
+      link.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+    } else {
+      link.classList.remove('bg-primary-50', 'dark:bg-primary-900/30', 'text-primary', 'dark:text-primary-400', 'font-semibold');
+      link.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
     }
+  });
+}
 
-    document.getElementById('logoutBtn').onclick = () => signOut(auth);
+function openModal(modalId) {
+  closeModals();
+  document.getElementById(modalId).classList.add('active');
+  if (modalId === 'customerModal' && map) {
+    setTimeout(() => map.invalidateSize(), 100);
+  }
+}
 
-    document.querySelectorAll('.menu-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            showTab(btn.dataset.tab);
-        };
+function closeModals() {
+  document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+}
+
+function initMap() {
+  if (map) return;
+  map = L.map('map').setView([23.8103, 90.4125], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  
+  map.on('click', function(e) {
+    if (customerMarker) map.removeLayer(customerMarker);
+    customerMarker = L.marker(e.latlng).addTo(map);
+    document.getElementById('customerLat').value = e.latlng.lat;
+    document.getElementById('customerLng').value = e.latlng.lng;
+  });
+}
+
+function saveCustomer(e) {
+  e.preventDefault();
+  closeModals();
+  alert('কাস্টমার সফলভাবে যোগ হয়েছে!');
+  loadCustomers();
+}
+
+function createInvoice() {
+  const invoiceHTML = `
+    <div class="print-only mb-4 text-center">
+      <h2 class="text-2xl font-bold text-primary">OWNS Link Solutions</h2>
+      <p class="text-sm text-gray-600">ইন্টারনেট সার্ভিস প্রোভাইডার</p>
+    </div>
+    <div class="border-b-2 border-primary pb-4 mb-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <h2 class="text-2xl font-bold text-primary">ইনভয়েস</h2>
+          <p class="text-gray-500">Invoice #INV-${Date.now().toString().slice(-6)}</p>
+        </div>
+        <div class="text-right">
+          <p class="font-semibold">OWNS Link Solutions</p>
+          <p class="text-sm text-gray-600">ঢাকা, বাংলাদেশ</p>
+          <p class="text-sm text-gray-600">+880 1234-567890</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-2 gap-6 mb-6">
+      <div>
+        <p class="font-semibold mb-2">বিল টু:</p>
+        <p>রহিম উদ্দিন</p>
+        <p class="text-sm text-gray-600">মিরপুর-১০, ঢাকা</p>
+        <p class="text-sm text-gray-600">01712345678</p>
+      </div>
+      <div class="text-right">
+        <p class="text-sm"><span class="font-semibold">ইনভয়েস তারিখ:</span> ${new Date().toLocaleDateString('bn-BD')}</p>
+        <p class="text-sm"><span class="font-semibold">শেষ তারিখ:</span> ${new Date(Date.now() + 7*24*60*60*1000).toLocaleDateString('bn-BD')}</p>
+      </div>
+    </div>
+    
+    <table class="w-full mb-6">
+      <thead class="bg-gray-100 dark:bg-gray-700">
+        <tr>
+          <th class="px-4 py-3 text-left">বিবরণ</th>
+          <th class="px-4 py-3 text-right">পরিমাণ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b">
+          <td class="px-4 py-3">20 Mbps ইন্টারনেট প্যাকেজ<br><span class="text-sm text-gray-600">অক্টোবর ২০২৪</span></td>
+          <td class="px-4 py-3 text-right font-semibold">৳1,200</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="px-4 py-3 text-right font-semibold">সর্বমোট:</td>
+          <td class="px-4 py-3 text-right font-bold text-xl text-primary">৳1,200</td>
+        </tr>
+      </tfoot>
+    </table>
+    
+    <div class="flex justify-between items-center pt-6 border-t">
+      <div id="qrcode"></div>
+      <div class="text-right text-sm text-gray-600">
+        <p>পেমেন্ট করুন বিকাশ/নগদে</p>
+        <p>01712345678</p>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('invoiceContent').innerHTML = invoiceHTML;
+  openModal('invoiceModal');
+  
+  setTimeout(() => {
+    document.getElementById('qrcode').innerHTML = '';
+    new QRCode(document.getElementById('qrcode'), {
+      text: 'INV-1245|৳1200|OWNS',
+      width: 100,
+      height: 100
     });
+  }, 100);
+}
 
-    function showTab(tab) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-        document.getElementById(tab + 'Tab')?.classList.remove('hidden');
-        if (tab === 'customers') loadAllCustomers();
-        if (tab === 'complaints') loadComplaints();
-        if (tab === 'mybills') loadMyBills();
-        if (tab === 'mycomplaints') loadMyComplaints();
-        if (tab === 'myprofile') loadMyProfile();
-        if (tab === 'mycustomers') loadMyCustomers();
-        if (tab === 'logs') loadLogs();
-        if (tab === 'reports') loadReports();
-        if (tab === 'staff') loadStaffReport();
-    }
+function loadDashboardData() {
+  document.getElementById('totalCustomers').textContent = demoData.customers.length;
+}
 
-    async function loadDashboard() {
-        const bills = await getDocs(collection(db, 'bills'));
-        const complaints = await getDocs(query(collection(db, 'complaints'), where('status', '==', 'pending')));
-        document.getElementById('totalBills').textContent = bills.size;
-        document.getElementById('pendingComplaints').textContent = complaints.size;
-        let revenue = 0;
-        bills.forEach(doc => revenue += doc.data().amount || 0);
-        document.getElementById('totalRevenue').textContent = '৳' + revenue.toLocaleString();
-        await loadRecentBills();
-        await loadCharts();
-    }
+function loadCustomers() {
+  const tbody = document.getElementById('customerTableBody');
+  tbody.innerHTML = demoData.customers.map(c => `
+    <tr>
+      <td class="px-4 py-3">#${c.id}</td>
+      <td class="px-4 py-3 font-medium">${c.name}</td>
+      <td class="px-4 py-3">${c.phone}</td>
+      <td class="px-4 py-3">${c.package}</td>
+      <td class="px-4 py-3 font-semibold">৳${c.bill}</td>
+      <td class="px-4 py-3">
+        <span class="px-2 py-1 ${c.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'} rounded-full text-xs">
+          ${c.status === 'active' ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
+        </span>
+      </td>
+      <td class="px-4 py-3">
+        <button class="text-primary hover:text-primary-700 mr-3"><i class="fas fa-edit"></i></button>
+        <button class="text-red-600 hover:text-red-700"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
 
-    async function loadCharts() {
-        const bills = await getDocs(collection(db, 'bills'));
-        const monthlyData = {};
-        bills.forEach(doc => {
-            const month = doc.data().month;
-            monthlyData[month] = (monthlyData[month] || 0) + doc.data().amount;
-        });
+function loadInvoices() {
+  const tbody = document.getElementById('invoiceTableBody');
+  tbody.innerHTML = demoData.invoices.map(inv => `
+    <tr>
+      <td class="px-4 py-3 font-medium">${inv.id}</td>
+      <td class="px-4 py-3">${inv.customer}</td>
+      <td class="px-4 py-3 font-semibold">৳${inv.amount}</td>
+      <td class="px-4 py-3">
+        <span class="px-2 py-1 ${inv.status === 'paid' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'} rounded-full text-xs">
+          ${inv.status === 'paid' ? 'পেইড' : 'পেন্ডিং'}
+        </span>
+      </td>
+      <td class="px-4 py-3">
+        <button onclick="viewInvoice('${inv.id}')" class="text-primary hover:text-primary-700"><i class="fas fa-eye"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
 
-        if (revenueChart) revenueChart.destroy();
-        const ctx1 = document.getElementById('revenueChart');
-        if (ctx1) {
-            revenueChart = new Chart(ctx1, {
-                type: 'line',
-                data: {
-                    labels: Object.keys(monthlyData).sort(),
-                    datasets: [{ label: 'Revenue', data: Object.keys(monthlyData).sort().map(m => monthlyData[m]), borderColor: '#3b82f6', tension: 0.3, fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)' }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
+window.viewInvoice = function(id) {
+  createInvoice();
+}
+
+function loadStaff() {
+  const container = document.getElementById('staffCollectionCards');
+  container.innerHTML = demoData.staff.map(s => `
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+      <div class="flex items-center gap-4 mb-4">
+        <img src="https://ui-avatars.com/api/?name=${s.name}&background=1E40AF&color=fff" class="w-12 h-12 rounded-full">
+        <div>
+          <h4 class="font-semibold">${s.name}</h4>
+          <p class="text-sm text-gray-500">${s.role}</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600 dark:text-gray-400">কালেকশন</span>
+          <span class="font-semibold">৳${s.collection.toLocaleString()}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600 dark:text-gray-400">টার্গেট</span>
+          <span class="font-semibold">৳${s.target.toLocaleString()}</span>
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div class="bg-primary h-2 rounded-full" style="width: ${(s.collection/s.target)*100}%"></div>
+        </div>
+        <p class="text-xs text-center text-gray-500">${Math.round((s.collection/s.target)*100)}% সম্পন্ন</p>
+      </div>
+    </div>
+  `).join('');
+  
+  const staffCards = document.getElementById('staffCards');
+  staffCards.innerHTML = demoData.staff.map(s => `
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+      <div class="text-center mb-4">
+        <img src="https://ui-avatars.com/api/?name=${s.name}&background=1E40AF&color=fff" class="w-20 h-20 rounded-full mx-auto mb-3">
+        <h4 class="font-bold text-lg">${s.name}</h4>
+        <p class="text-sm text-gray-500">${s.role}</p>
+      </div>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-600 dark:text-gray-400">ফোন:</span>
+          <span>${s.phone}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600 dark:text-gray-400">কালেকশন:</span>
+          <span class="font-semibold text-green-600">৳${s.collection.toLocaleString()}</span>
+        </div>
+      </div>
+      <button class="w-full mt-4 bg-primary hover:bg-primary-700 text-white py-2 rounded-lg text-sm">বিস্তারিত</button>
+    </div>
+  `).join('');
+}
+
+function loadComplaints() {
+  const tbody = document.getElementById('complaintTableBody');
+  tbody.innerHTML = demoData.complaints.map(c => `
+    <tr>
+      <td class="px-4 py-3 font-medium">${c.id}</td>
+      <td class="px-4 py-3">${c.customer}</td>
+      <td class="px-4 py-3">${c.subject}</td>
+      <td class="px-4 py-3">
+        <span class="px-2 py-1 ${c.priority === 'urgent' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : c.priority === 'high' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'} rounded-full text-xs">
+          ${c.priority === 'urgent' ? 'জরুরী' : c.priority === 'high' ? 'উচ্চ' : 'মাঝারি'}
+        </span>
+      </td>
+      <td class="px-4 py-3">
+        <span class="px-2 py-1 ${c.status === 'resolved' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : c.status === 'in-progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400'} rounded-full text-xs">
+          ${c.status === 'resolved' ? 'সমাধান' : c.status === 'in-progress' ? 'চলমান' : 'খোলা'}
+        </span>
+      </td>
+      <td class="px-4 py-3">
+        <button class="text-primary hover:text-primary-700"><i class="fas fa-eye"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function initCharts() {
+  const isDark = document.documentElement.classList.contains('dark');
+  const textColor = isDark ? '#9CA3AF' : '#6B7280';
+  
+  // Revenue Chart
+  const revCtx = document.getElementById('revenueChart');
+  if (revCtx) {
+    new Chart(revCtx, {
+      type: 'line',
+      data: {
+        labels: ['জানু', 'ফেব', 'মার', 'এপ্রি', 'মে', 'জুন', 'জুল', 'আগ', 'সেপ', 'অক্টো'],
+        datasets: [{
+          label: 'মাসিক আয়',
+          data: [320000, 350000, 380000, 400000, 420000, 440000, 450000, 460000, 455000, 452300],
+          borderColor: '#1E40AF',
+          backgroundColor: 'rgba(30, 64, 175, 0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { ticks: { color: textColor } },
+          x: { ticks: { color: textColor } }
         }
-
-        const customers = await getDocs(collection(db, 'customers'));
-        const statusCount = { Active: 0, Inactive: 0 };
-        customers.forEach(doc => {
-            const status = doc.data().status || 'Active';
-            statusCount[status] = (statusCount[status] || 0) + 1;
-        });
-
-        if (customerChart) customerChart.destroy();
-        const ctx2 = document.getElementById('customerChart');
-        if (ctx2) {
-            customerChart = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(statusCount),
-                    datasets: [{ data: Object.values(statusCount), backgroundColor: ['#10b981', '#ef4444'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
+      }
+    });
+  }
+  
+  // Package Chart
+  const pkgCtx = document.getElementById('packageChart');
+  if (pkgCtx) {
+    new Chart(pkgCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['10Mbps', '20Mbps', '50Mbps', '100Mbps'],
+        datasets: [{
+          data: [450, 550, 180, 65],
+          backgroundColor: ['#1E40AF', '#3B82F6', '#60A5FA', '#93C5FD']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { position: 'bottom', labels: { color: textColor } } }
+      }
+    });
+  }
+  
+  // Collection Chart
+  const colCtx = document.getElementById('collectionChart');
+  if (colCtx) {
+    new Chart(colCtx, {
+      type: 'bar',
+      data: {
+        labels: ['জানু', 'ফেব', 'মার', 'এপ্রি', 'মে', 'জুন'],
+        datasets: [{
+          label: 'কালেকশন',
+          data: [380000, 410000, 395000, 430000, 455000, 452300],
+          backgroundColor: '#1E40AF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { ticks: { color: textColor } },
+          x: { ticks: { color: textColor } }
         }
-    }
-
-    document.getElementById('saveCustomerBtn').onclick = async () => {
-        const customerData = {
-            name: document.getElementById('custName').value,
-            zone: document.getElementById('custZone').value,
-            area: document.getElementById('custArea').value,
-            address: document.getElementById('custAddress').value,
-            phone: document.getElementById('custPhone').value,
-            whatsapp: document.getElementById('custWhatsApp').value,
-            imo: document.getElementById('custImo').value,
-            pppoeUser: document.getElementById('custPPPoEUser').value,
-            pppoePass: document.getElementById('custPPPoEPass').value,
-            package: document.getElementById('custPackage').value,
-            assignedStaff: document.getElementById('custAssignedStaff').value,
-            status: 'Active',
-            createdAt: serverTimestamp(),
-            createdBy: currentUser.email
-        };
-        if (!customerData.name ||!customerData.phone ||!customerData.package) {
-            alert('Please fill required fields: Name, Phone, Package');
-            return;
+      }
+    });
+  }
+  
+  // Staff Chart
+  const staffCtx = document.getElementById('staffChart');
+  if (staffCtx) {
+    new Chart(staffCtx, {
+      type: 'bar',
+      data: {
+        labels: demoData.staff.map(s => s.name),
+        datasets: [{
+          label: 'কালেকশন (৳)',
+          data: demoData.staff.map(s => s.collection),
+          backgroundColor: '#1E40AF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { ticks: { color: textColor } },
+          x: { ticks: { color: textColor } }
         }
-        await addDoc(collection(db, 'customers'), customerData);
-        await logActivity('ADD_CUSTOMER', customerData.name);
-        alert('Customer Added Successfully!');
-        document.getElementById('custName').value = '';
-        document.getElementById('custPhone').value = '';
-        document.getElementById('custAddress').value = '';
-        document.getElementById('custWhatsApp').value = '';
-        document.getElementById('custImo').value = '';
-        document.getElementById('custPPPoEUser').value = '';
-        document.getElementById('custPPPoEPass').value = '';
-        loadCustomers();
-        loadAllCustomers();
-    };
-        async function loadCustomers() {
-        const snapshot = await getDocs(collection(db, 'customers'));
-        const select = document.getElementById('customerSelect');
-        select.innerHTML = '<option value="">Select Customer</option>';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            select.innerHTML += `<option value="${doc.id}" data-whatsapp="${data.whatsapp || ''}" data-imo="${data.imo || ''}" data-address="${data.address || ''}" data-name="${data.name}">${data.name} - ${data.phone}</option>`;
-        });
-    }
+      }
+    });
+  }
+}
 
-    document.getElementById('customerSelect').onchange = (e) => {
-        const opt = e.target.selectedOptions[0];
-        document.getElementById('invoiceWhatsApp').value = opt.dataset.whatsapp || '';
-        document.getElementById('invoiceImo').value = opt.dataset.imo || '';
-        document.getElementById('invoiceAddress').value = opt.dataset.address || '';
-    };
-
-    async function loadPackages() {
-        const snapshot = await getDocs(collection(db, 'packages'));
-        const selects = [document.getElementById('packageSelect'), document.getElementById('custPackage')];
-        selects.forEach(select => {
-            if (select) {
-                select.innerHTML = '<option value="">Select Package</option>';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    select.innerHTML += `<option value="${doc.id}" data-price="${data.price}">${data.name} - ৳${data.price} (${data.speed})</option>`;
-                });
-            }
-        });
-        loadPackageTable();
-    }
-
-    async function loadPackageTable() {
-        const snapshot = await getDocs(collection(db, 'packages'));
-        const tbody = document.getElementById('packageListTable');
-        if (tbody) {
-            tbody.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">৳${data.price}</td><td class="p-2"><button onclick="deletePackage('${doc.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Delete</button></td></tr>`;
-            });
-        }
-    }
-
-    async function loadStaffList() {
-        const q = query(collection(db, 'users'), where('role', '==', 'staff'));
-        const snapshot = await getDocs(q);
-        const select = document.getElementById('custAssignedStaff');
-        if (select) {
-            select.innerHTML = '<option value="">Assign Staff</option>';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                select.innerHTML += `<option value="${data.email}">${data.email}</option>`;
-            });
-        }
-    }
-
-    document.getElementById('packageSelect').onchange = (e) => {
-        const opt = e.target.selectedOptions[0];
-        document.getElementById('billAmount').value = opt.dataset.price || '';
-    };
-
-    document.getElementById('generateInvoiceBtn').onclick = async () => {
-        const customerId = document.getElementById('customerSelect').value;
-        const packageId = document.getElementById('packageSelect').value;
-        const month = document.getElementById('billMonth').value;
-        const amount = parseFloat(document.getElementById('billAmount').value);
-        const dueDate = document.getElementById('dueDate').value;
-        const customerName = document.getElementById('customerSelect').selectedOptions[0].dataset.name;
-
-        if (!customerId ||!packageId ||!month ||!amount ||!dueDate) {
-            alert('Please fill all required fields');
-            return;
-        }
-
-        await addDoc(collection(db, 'bills'), {
-            customerId,
-            customerName,
-            packageId,
-            month,
-            amount,
-            dueDate,
-            status: 'pending',
-            createdBy: currentUser.email,
-            createdAt: serverTimestamp()
-        });
-        await logActivity('GENERATE_INVOICE', `Bill for ${customerName} - ${month}`);
-        alert('Invoice Generated Successfully!');
-        document.getElementById('billMonth').value = '';
-        document.getElementById('dueDate').value = '';
-        loadDashboard();
-    };
-
-    document.getElementById('createUserBtn').onclick = async () => {
-        const email = document.getElementById('newUserEmail').value;
-        const password = document.getElementById('newUserPassword').value;
-        const role = document.getElementById('newUserRole').value;
-        try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            await addDoc(collection(db, 'users'), { email, role, createdAt: serverTimestamp(), createdBy: currentUser.email });
-            await logActivity('CREATE_USER', `${email} - ${role}`);
-            alert('User Created Successfully!');
-            document.getElementById('newUserEmail').value = '';
-            document.getElementById('newUserPassword').value = '';
-            loadStaffList();
-        } catch (error) {
-            alert('Error: ' + error.message);
-        }
-    };
-
-    document.getElementById('addPackageBtn').onclick = async () => {
-        const name = document.getElementById('pkgName').value;
-        const price = parseFloat(document.getElementById('pkgPrice').value);
-        const speed = document.getElementById('pkgSpeed').value;
-        if (!name ||!price) {
-            alert('Please fill all fields');
-            return;
-        }
-        await addDoc(collection(db, 'packages'), { name, price, speed, createdAt: serverTimestamp() });
-        await logActivity('ADD_PACKAGE', name);
-        alert('Package Added!');
-        document.getElementById('pkgName').value = '';
-        document.getElementById('pkgPrice').value = '';
-        document.getElementById('pkgSpeed').value = '';
-        loadPackages();
-    };
-
-    window.deletePackage = async (id) => {
-        if (currentRole!== 'admin') {
-            alert('Only admin can delete packages');
-            return;
-        }
-        if (confirm('Delete this package?')) {
-            await deleteDoc(doc(db, 'packages', id));
-            await logActivity('DELETE_PACKAGE', id);
-            loadPackages();
-        }
-    };
-
-    document.getElementById('saveCompanyBtn').onclick = async () => {
-        const companyData = {
-            name: document.getElementById('companyName').value,
-            phone: document.getElementById('companyPhone').value,
-            address: document.getElementById('companyAddress').value,
-            email: document.getElementById('companyEmail').value,
-            logo: document.getElementById('companyLogo').value,
-            updatedAt: serverTimestamp()
-        };
-        await addDoc(collection(db, 'settings'), companyData);
-        await logActivity('UPDATE_COMPANY', 'Company info updated');
-        alert('Company Info Saved!');
-    };
-
-    async function loadAllCustomers() {
-        const snapshot = await getDocs(collection(db, 'customers'));
-        const tbody = document.getElementById('allCustomersTable');
-        tbody.innerHTML = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const deleteBtn = currentRole === 'admin'? `<button onclick="deleteCustomer('${doc.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Delete</button>` : '';
-            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">${data.phone}</td><td class="p-2">${data.area}</td><td class="p-2">${data.package || 'N/A'}</td><td class="p-2">${data.pppoeUser || 'N/A'}</td><td class="p-2"><span class="bg-green-500 text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${deleteBtn}</td></tr>`;
-        });
-    }
-
-    document.getElementById('customerSearch').onkeyup = (e) => {
-        const search = e.target.value.toLowerCase();
-        const rows = document.getElementById('allCustomersTable').getElementsByTagName('tr');
-        for (let row of rows) {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(search)? '' : 'none';
-        }
-    };
-
-    window.deleteCustomer = async (id) => {
-        if (currentRole!== 'admin') {
-            alert('Only admin can delete customers');
-            return;
-        }
-        if (confirm('Delete this customer? This will also delete all related bills.')) {
-            await deleteDoc(doc(db, 'customers', id));
-            await logActivity('DELETE_CUSTOMER', id);
-            loadAllCustomers();
-            loadCustomers();
-        }
-    };
-
-    document.getElementById('exportCustomersBtn').onclick = () => {
-        alert('Export feature: Copy table to Excel. For full Excel export, add SheetJS library.');
-    };
-
-    document.getElementById('submitComplaintBtn').onclick = async () => {
-        const text = document.getElementById('complaintText').value;
-        if (!text) {
-            alert('Please describe your issue');
-            return;
-        }
-        await addDoc(collection(db, 'complaints'), {
-            customerEmail: currentUser.email,
-            issue: text,
-            status: 'pending',
-            assignedTo: null,
-            createdAt: serverTimestamp()
-        });
-        await logActivity('SUBMIT_COMPLAINT', text.substring(0, 50));
-        alert('Complaint Submitted Successfully!');
-        document.getElementById('complaintText').value = '';
-        loadMyComplaints();
-        loadDashboard();
-    };
-
-    async function loadComplaints() {
-        const filter = document.getElementById('complaintFilter')?.value || 'all';
-        let q = collection(db, 'complaints');
-        if (filter!== 'all') {
-            q = query(collection(db, 'complaints'), where('status', '==', filter));
-        }
-        const snapshot = await getDocs(q);
-        const tbody = document.getElementById('complaintsTable');
-        tbody.innerHTML = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const statusColor = data.status === 'pending'? 'bg-yellow-500' : data.status === 'assigned'? 'bg-blue-500' : 'bg-green-500';
-            const actionBtn = data.status === 'pending'? `<button onclick="openForwardModal('${doc.id}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Forward</button>` : data.status === 'assigned'? `<button onclick="openReplyModal('${doc.id}')" class="bg-green-500 text-white px-3 py-1 rounded text-sm">Reply</button>` : '';
-            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.customerEmail}</td><td class="p-2">${data.issue.substring(0, 50)}...</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${data.assignedTo || 'Unassigned'}</td><td class="p-2">${new Date(data.createdAt?.toDate()).toLocaleDateString()}</td><td class="p-2">${actionBtn}</td></tr>`;
-        });
-    }
-
-    document.getElementById('complaintFilter').onchange = () => loadComplaints();
-
-    window.openForwardModal = (id) => {
-        currentComplaintId = id;
-        document.getElementById('forwardModal').style.display = 'block';
-        loadStaffForForward();
-    };
-
-    async function loadStaffForForward() {
-        const q = query(collection(db, 'users'), where('role', '==', 'staff'));
-        const snapshot = await getDocs(q);
-        const select = document.getElementById('forwardStaffSelect');
-        select.innerHTML = '<option value="">Select Staff</option>';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            select.innerHTML += `<option value="${data.email}">${data.email}</option>`;
-        });
-    }
-
-    document.getElementById('confirmForwardBtn').onclick = async () => {
-        const staffEmail = document.getElementById('forwardStaffSelect').value;
-        if (!staffEmail) {
-            alert('Please select staff');
-            return;
-        }
-        await updateDoc(doc(db, 'complaints', currentComplaintId), { 
-            status: 'assigned', 
-            assignedTo: staffEmail,
-            assignedAt: serverTimestamp()
-        });
-        await logActivity('FORWARD_COMPLAINT', `To ${staffEmail}`);
-        document.getElementById('forwardModal').style.display = 'none';
-        loadComplaints();
-        loadDashboard();
-    };
-
-    window.openReplyModal = (id) => {
-        currentComplaintId = id;
-        document.getElementById('replyModal').style.display = 'block';
-    };
-
-    document.getElementById('confirmReplyBtn').onclick = async () => {
-        const reply = document.getElementById('replyText').value;
-        if (!reply) {
-            alert('Please enter reply');
-            return;
-        }
-        await updateDoc(doc(db, 'complaints', currentComplaintId), { 
-            status: 'resolved', 
-            staffReply: reply,
-            resolvedAt: serverTimestamp(),
-            resolvedBy: currentUser.email
-        });
-        await logActivity('RESOLVE_COMPLAINT', currentComplaintId);
-        document.getElementById('replyModal').style.display = 'none';
-        document.getElementById('replyText').value = '';
-        loadComplaints();
-        loadDashboard();
-    };
-
-    async function loadMyProfile() {
-        const q = query(collection(db, 'customers'), where('phone', '==', currentUserData?.phone || currentUser.email));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-            const data = snapshot.docs[0].data();
-            document.getElementById('myName').value = data.name || '';
-            document.getElementById('myPhone').value = data.phone || '';
-            document.getElementById('myWhatsApp').value = data.whatsapp || '';
-            document.getElementById('myImo').value = data.imo || '';
-            document.getElementById('myPPPoEUser').value = data.pppoeUser || '';
-            document.getElementById('myPPPoEPass').value = data.pppoePass || '';
-            document.getElementById('myPackage').value = data.package || '';
-            document.getElementById('myZoneArea').value = `${data.zone || ''} / ${data.area || ''}`;
-            document.getElementById('myAddress').value = data.address || '';
-        }
-    }
-
-    async function loadMyComplaints() {
-        const q = query(collection(db, 'complaints'), where('customerEmail', '==', currentUser.email), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-        const list = document.getElementById('myComplaintsList');
-        list.innerHTML = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const statusColor = data.status === 'pending'? 'bg-yellow-500' : data.status === 'assigned'? 'bg-blue-500' : 'bg-green-500';
-            const reply = data.staffReply? `<p class="text-sm text-gray-600 mt-2"><strong>Staff Reply:</strong> ${data.staffReply}</p>` : '';
-            list.innerHTML += `<div class="border p-4 rounded mb-3"><div class="flex justify-between items-start"><div class="flex-1"><p class="font-semibold">${data.issue}</p><p class="text-xs text-gray-500 mt-1">${new Date(data.createdAt?.toDate()).toLocaleString()}</p>${reply}</div><span class="${statusColor} text-white px-3 py-1 rounded text-xs">${data.status}</span></div></div>`;
-        });
-    }
-
-    async function loadMyBills() {
-        const customerQuery = query(collection(db, 'customers'), where('phone', '==', currentUserData?.phone || currentUser.email));
-        const customerSnap = await getDocs(customerQuery);
-        if (!customerSnap.empty) {
-            const customerId = customerSnap.docs[0].id;
-            const billsQuery = query(collection(db, 'bills'), where('customerId', '==', customerId), orderBy('createdAt', 'desc'));
-            const billsSnap = await getDocs(billsQuery);
-            const tbody = document.getElementById('myBillsTable');
-            tbody.innerHTML = '';
-            billsSnap.forEach(doc => {
-                const data = doc.data();
-                const statusColor = data.status === 'paid'? 'bg-green-500' : data.status === 'approved'? 'bg-blue-500' : 'bg-red-500';
-                const payBtn = data.status!== 'paid'? `<button onclick="payBill('${doc.id}')" class="bg-green-500 text-white px-3 py-1 rounded text-xs">Pay Now</button>` : '';
-                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${doc.id.substring(0,8)}</td><td class="p-2">${data.month}</td><td class="p-2">৳${data.amount}</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${data.dueDate || 'N/A'}</td><td class="p-2">${payBtn}</td></tr>`;
-            });
-        }
-    }
-
-    window.payBill = async (id) => {
-        if (confirm('Mark this bill as paid?')) {
-            await updateDoc(doc(db, 'bills', id), { status: 'paid', paidAt: serverTimestamp() });
-            await logActivity('PAY_BILL', id);
-            loadMyBills();
-            loadDashboard();
-        }
-    };
-
-    async function loadMyCustomers() {
-        const q = query(collection(db, 'customers'), where('assignedStaff', '==', currentUser.email));
-        const snapshot = await getDocs(q);
-        const tbody = document.getElementById('myCustomersTable');
-        if (tbody) {
-            tbody.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">${data.phone}</td><td class="p-2">${data.area}</td><td class="p-2">${data.package || 'N/A'}</td><td class="p-2"><span class="bg-green-500 text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">৳0</td></tr>`;
-            });
-        }
-    }
-
-    async function loadRecentBills() {
-        const billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(billsQuery);
-        const tbody = document.getElementById('recentBillsTable');
-        if (tbody) {
-            tbody.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const statusColor = data.status === 'paid'? 'bg-green-500' : data.status === 'approved'? 'bg-blue-500' : 'bg-yellow-500';
-                const deleteBtn = currentRole === 'admin'? `<button onclick="deleteBill('${doc.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Delete</button>` : '';
-                const approveBtn = data.status === 'pending'? `<button onclick="approveBill('${doc.id}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button>` : '';
-                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${doc.id.substring(0,8)}</td><td class="p-2">${data.customerName || 'N/A'}</td><td class="p-2">৳${data.amount}</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${approveBtn}${deleteBtn}</td></tr>`;
-            });
-        }
-    }
-
-    window.deleteBill = async (id) => {
-        if (currentRole!== 'admin') {
-            alert('Only admin can delete bills');
-            return;
-        }
-        if (confirm('Delete this bill?')) {
-            await deleteDoc(doc(db, 'bills', id));
-            await logActivity('DELETE_BILL', id);
-            loadDashboard();
-            loadRecentBills();
-        }
-    };
-
-    window.approveBill = async (id) => {
-        await updateDoc(doc(db, 'bills', id), { status: 'approved', approvedBy: currentUser.email, approvedAt: serverTimestamp() });
-        await logActivity('APPROVE_BILL', id);
-        loadRecentBills();
-        loadDashboard();
-    };
-
-    async function loadLogs() {
-        const snapshot = await getDocs(query(collection(db, 'logs'), orderBy('timestamp', 'desc')));
-        const tbody = document.getElementById('logsTable');
-        if (tbody) {
-            tbody.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${new Date(data.timestamp?.toDate()).toLocaleString()}</td><td class="p-2">${data.user}</td><td class="p-2">${data.action}</td><td class="p-2">${data.details}</td></tr>`;
-            });
-        }
-    }
-
-    async function logActivity(action, details) {
-        await addDoc(collection(db, 'logs'), {
-            user: currentUser.email,
-            action,
-            details,
-            timestamp: serverTimestamp()
-        });
-    }
-
-    document.getElementById('exportLogsBtn').onclick = () => {
-        alert('Export feature: Copy table to Excel. For full Excel export, add SheetJS library.');
-    };
-
-    async function loadReports() {
-        // Placeholder for date range reports
-    }
-
-    document.getElementById('generateReportBtn').onclick = async () => {
-        const fromDate = document.getElementById('reportFromDate').value;
-        const toDate = document.getElementById('reportToDate').value;
-        if (!fromDate ||!toDate) {
-            alert('Please select date range');
-            return;
-        }
-        const bills = await getDocs(collection(db, 'bills'));
-        const reportData = {};
-        bills.forEach(doc => {
-            const data = doc.data();
-            const date = data.createdAt?.toDate().toISOString().split('T')[0];
-            if (date >= fromDate && date <= toDate) {
-                if (!reportData[date]) reportData[date] = { total: 0, paid: 0, pending: 0, revenue: 0 };
-                reportData[date].total++;
-                if (data.status === 'paid') {
-                    reportData[date].paid++;
-                    reportData[date].revenue += data.amount;
-                } else {
-                    reportData[date].pending++;
-                }
-            }
-        });
-        const tbody = document.getElementById('reportTable');
-        tbody.innerHTML = '';
-        Object.keys(reportData).sort().forEach(date => {
-            const d = reportData[date];
-            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${date}</td><td class="p-2">${d.total}</td><td class="p-2">${d.paid}</td><td class="p-2">${d.pending}</td><td class="p-2">৳${d.revenue}</td></tr>`;
-        });
-    };
-
-    async function loadStaffReport() {
-        // Load staff report for selected month
-    }
-
-    document.getElementById('loadStaffReportBtn').onclick = async () => {
-        const month = document.getElementById('staffReportMonth').value;
-        if (!month) {
-            alert('Please select month');
-            return;
-        }
-        const users = await getDocs(query(collection(db, 'users'), where('role', '==', 'staff')));
-        const tbody = document.getElementById('staffReportTable');
-        tbody.innerHTML = '';
-        for (const userDoc of users.docs) {
-            const staffEmail = userDoc.data().email;
-            const bills = await getDocs(query(collection(db, 'bills'), where('createdBy', '==', staffEmail)));
-            let total = 0, collected = 0, pending = 0;
-            bills.forEach(billDoc => {
-                const bill = billDoc.data();
-                if (bill.month === month) {
-                    total++;
-                    if (bill.status === 'paid') collected += bill.amount;
-                    else pending += bill.amount;
-                }
-            });
-            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${staffEmail}</td><td class="p-2">${staffEmail}</td><td class="p-2">${total}</td><td class="p-2">৳${collected}</td><td class="p-2">৳${pending}</td></tr>`;
-        }
-    };
+function exportToExcel() {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(demoData.customers);
+  XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+  XLSX.writeFile(wb, 'OWNS_Billing_Report.xlsx');
+}
 </script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
