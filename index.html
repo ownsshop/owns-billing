@@ -7,16 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-       .hidden { display: none!important; }
-       .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
-       .menu-btn.active { background-color: #dbeafe; color: #1e40af; }
+      .hidden { display: none!important; }
+      .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+      .menu-btn.active { background-color: #dbeafe; color: #1e40af; }
+      .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+      .modal-content { background-color: white; margin: 10% auto; padding: 20px; border-radius: 8px; width: 500px; }
     </style>
 </head>
 <body class="bg-gray-100">
     <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
         <div class="bg-white p-8 rounded-lg shadow-2xl w-96">
             <h1 class="text-3xl font-bold text-center mb-2">OWNS Billing Pro</h1>
-            <p class="text-center text-gray-600 mb-6">Complete ISP Management System</p>
+            <p class="text-center text-gray-600 mb-6">Complete ISP Management System V2</p>
             <input type="email" id="loginEmail" placeholder="Email" class="w-full p-3 border rounded mb-3">
             <input type="password" id="loginPassword" placeholder="Password" class="w-full p-3 border rounded mb-4">
             <button id="loginBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Login</button>
@@ -26,7 +28,7 @@
 
     <div id="appScreen" class="hidden">
         <nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold">OWNS Billing Pro Max</h1>
+            <h1 class="text-2xl font-bold">OWNS Billing Pro Max V2</h1>
             <div class="flex items-center gap-4">
                 <span id="userName" class="font-semibold"></span>
                 <span id="userRole" class="bg-blue-800 px-3 py-1 rounded text-sm"></span>
@@ -52,7 +54,7 @@
                     <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="dashboard">📊 Dashboard</button>
                     <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="invoice">📄 Create Invoice</button>
                     <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="mycustomers">👥 My Customers</button>
-                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="complaints">🎫 Complaints</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="complaints">🎫 My Complaints</button>
                 </div>
                 <div id="customerMenu" class="p-4 hidden">
                     <h3 class="font-bold text-gray-700 mb-3">Customer Panel</h3>
@@ -72,6 +74,16 @@
                         <div class="bg-yellow-500 text-white p-6 rounded-lg"><p class="text-sm">Due This Month</p><p id="dueMonth" class="text-3xl font-bold">0</p></div>
                         <div class="bg-red-500 text-white p-6 rounded-lg"><p class="text-sm">Pending Complaints</p><p id="pendingComplaints" class="text-3xl font-bold">0</p></div>
                     </div>
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-xl font-bold mb-4">Monthly Revenue Chart</h3>
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-xl font-bold mb-4">Customer Status</h3>
+                            <canvas id="customerChart"></canvas>
+                        </div>
+                    </div>
                     <div class="bg-white p-6 rounded-lg shadow">
                         <h3 class="text-xl font-bold mb-4">Recent Bills</h3>
                         <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Bill No</th><th class="text-left p-2">Customer</th><th class="text-left p-2">Amount</th><th class="text-left p-2">Status</th><th class="text-left p-2">Action</th></tr></thead><tbody id="recentBillsTable"></tbody></table>
@@ -90,6 +102,7 @@
                             <div class="col-span-2"><label class="block mb-2 font-semibold">Address</label><input type="text" id="invoiceAddress" class="w-full p-3 border rounded bg-gray-100" readonly></div>
                             <div><label class="block mb-2 font-semibold">Bill Month *</label><input type="month" id="billMonth" class="w-full p-3 border rounded"></div>
                             <div><label class="block mb-2 font-semibold">Amount *</label><input type="number" id="billAmount" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block mb-2 font-semibold">Due Date *</label><input type="date" id="dueDate" class="w-full p-3 border rounded"></div>
                         </div>
                         <button id="generateInvoiceBtn" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Generate Invoice</button>
                     </div>
@@ -99,15 +112,48 @@
                 <div id="customersTab" class="tab-content hidden">
                     <h2 class="text-2xl font-bold mb-4">All Customers</h2>
                     <div class="bg-white p-6 rounded-lg shadow">
-                        <input type="text" id="customerSearch" placeholder="Search by name or phone..." class="w-full p-3 border rounded mb-4">
-                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Name</th><th class="text-left p-2">Phone</th><th class="text-left p-2">Area</th><th class="text-left p-2">Package</th><th class="text-left p-2">PPPoE User</th><th class="text-left p-2">Action</th></tr></thead><tbody id="allCustomersTable"></tbody></table>
+                        <div class="flex gap-4 mb-4">
+                            <input type="text" id="customerSearch" placeholder="Search by name or phone..." class="flex-1 p-3 border rounded">
+                            <button id="exportCustomersBtn" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700">Export Excel</button>
+                        </div>
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Name</th><th class="text-left p-2">Phone</th><th class="text-left p-2">Area</th><th class="text-left p-2">Package</th><th class="text-left p-2">PPPoE User</th><th class="text-left p-2">Status</th><th class="text-left p-2">Action</th></tr></thead><tbody id="allCustomersTable"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Reports -->
+                <div id="reportsTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">Reports</h2>
+                    <div class="bg-white p-6 rounded-lg shadow mb-6">
+                        <h3 class="text-xl font-bold mb-4">Date Range Report</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div><label class="block mb-2">From Date</label><input type="date" id="reportFromDate" class="w-full p-3 border rounded"></div>
+                            <div><label class="block mb-2">To Date</label><input type="date" id="reportToDate" class="w-full p-3 border rounded"></div>
+                            <div class="flex items-end"><button id="generateReportBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Generate Report</button></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Date</th><th class="text-left p-2">Total Bills</th><th class="text-left p-2">Paid</th><th class="text-left p-2">Pending</th><th class="text-left p-2">Revenue</th></tr></thead><tbody id="reportTable"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Staff Report -->
+                <div id="staffTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">Staff Wise Collection Report</h2>
+                    <div class="bg-white p-6 rounded-lg shadow mb-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block mb-2">Select Month</label><input type="month" id="staffReportMonth" class="w-full p-3 border rounded"></div>
+                            <div class="flex items-end"><button id="loadStaffReportBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Load Report</button></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Staff Name</th><th class="text-left p-2">Email</th><th class="text-left p-2">Total Bills</th><th class="text-left p-2">Total Collection</th><th class="text-left p-2">Pending</th></tr></thead><tbody id="staffReportTable"></tbody></table>
                     </div>
                 </div>
 
                 <!-- Settings -->
                 <div id="settingsTab" class="tab-content hidden">
                     <h2 class="text-2xl font-bold mb-4">Settings</h2>
-                    <div class="grid grid-cols-2 gap-6">
+                    <div class="grid grid-cols-2 gap-6 mb-6">
                         <div class="bg-white p-6 rounded-lg shadow">
                             <h3 class="text-xl font-bold mb-4">Add Customer</h3>
                             <input type="text" id="custName" placeholder="Customer Name *" class="w-full p-3 border rounded mb-3">
@@ -120,6 +166,7 @@
                             <input type="text" id="custPPPoEUser" placeholder="PPPoE Username" class="w-full p-3 border rounded mb-3">
                             <input type="password" id="custPPPoEPass" placeholder="PPPoE Password" class="w-full p-3 border rounded mb-3">
                             <select id="custPackage" class="w-full p-3 border rounded mb-3"><option value="">Select Package *</option></select>
+                            <select id="custAssignedStaff" class="w-full p-3 border rounded mb-3"><option value="">Assign Staff</option></select>
                             <button id="saveCustomerBtn" class="w-full bg-green-600 text-white p-3 rounded hover:bg-green-700">Save Customer</button>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow">
@@ -131,8 +178,21 @@
                             <h3 class="text-xl font-bold mb-4 mt-6">Package Manager</h3>
                             <input type="text" id="pkgName" placeholder="Package Name" class="w-full p-3 border rounded mb-3">
                             <input type="number" id="pkgPrice" placeholder="Price" class="w-full p-3 border rounded mb-3">
-                            <button id="addPackageBtn" class="w-full bg-purple-600 text-white p-3 rounded hover:bg-purple-700">Add Package</button>
+                            <input type="text" id="pkgSpeed" placeholder="Speed (e.g. 10 Mbps)" class="w-full p-3 border rounded mb-3">
+                            <button id="addPackageBtn" class="w-full bg-purple-600 text-white p-3 rounded hover:bg-purple-700 mb-4">Add Package</button>
+                            <table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left p-2">Package</th><th class="text-left p-2">Price</th><th class="text-left p-2">Action</th></tr></thead><tbody id="packageListTable"></tbody></table>
                         </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-bold mb-4">Company Information</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="companyName" placeholder="Company Name" class="w-full p-3 border rounded">
+                            <input type="text" id="companyPhone" placeholder="Phone" class="w-full p-3 border rounded">
+                            <input type="text" id="companyAddress" placeholder="Address" class="w-full p-3 border rounded col-span-2">
+                            <input type="email" id="companyEmail" placeholder="Email" class="w-full p-3 border rounded">
+                            <input type="url" id="companyLogo" placeholder="Logo URL" class="w-full p-3 border rounded">
+                        </div>
+                        <button id="saveCompanyBtn" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Save Company Info</button>
                     </div>
                 </div>
 
@@ -141,8 +201,11 @@
                     <h2 class="text-2xl font-bold mb-4">Complaints Management</h2>
                     <div class="bg-white p-6 rounded-lg shadow">
                         <div id="adminComplaintView" class="hidden">
-                            <h3 class="font-bold mb-3">All Complaints</h3>
-                            <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Customer</th><th class="text-left p-2">Issue</th><th class="text-left p-2">Status</th><th class="text-left p-2">Assigned To</th><th class="text-left p-2">Action</th></tr></thead><tbody id="complaintsTable"></tbody></table>
+                            <div class="flex justify-between mb-4">
+                                <h3 class="font-bold">All Complaints</h3>
+                                <select id="complaintFilter" class="p-2 border rounded"><option value="all">All</option><option value="pending">Pending</option><option value="assigned">Assigned</option><option value="resolved">Resolved</option></select>
+                            </div>
+                            <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Customer</th><th class="text-left p-2">Issue</th><th class="text-left p-2">Status</th><th class="text-left p-2">Assigned To</th><th class="text-left p-2">Date</th><th class="text-left p-2">Action</th></tr></thead><tbody id="complaintsTable"></tbody></table>
                         </div>
                         <div id="staffComplaintView" class="hidden">
                             <h3 class="font-bold mb-3">Assigned Complaints</h3>
@@ -151,14 +214,32 @@
                     </div>
                 </div>
 
-                <!-- Customer Tabs -->
-                <div id="mybillsTab" class="tab-content hidden">
-                    <h2 class="text-2xl font-bold mb-4">My Bills</h2>
+                <!-- Activity Logs -->
+                <div id="logsTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">Activity Logs</h2>
                     <div class="bg-white p-6 rounded-lg shadow">
-                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Bill No</th><th class="text-left p-2">Month</th><th class="text-left p-2">Amount</th><th class="text-left p-2">Status</th><th class="text-left p-2">Due Date</th></tr></thead><tbody id="myBillsTable"></tbody></table>
+                        <button id="exportLogsBtn" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 mb-4">Export Logs</button>
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Time</th><th class="text-left p-2">User</th><th class="text-left p-2">Action</th><th class="text-left p-2">Details</th></tr></thead><tbody id="logsTable"></tbody></table>
                     </div>
                 </div>
 
+                <!-- My Customers (Staff) -->
+                <div id="mycustomersTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">My Customers</h2>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Name</th><th class="text-left p-2">Phone</th><th class="text-left p-2">Area</th><th class="text-left p-2">Package</th><th class="text-left p-2">Status</th><th class="text-left p-2">Due</th></tr></thead><tbody id="myCustomersTable"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Customer: My Bills -->
+                <div id="mybillsTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">My Bills</h2>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Bill No</th><th class="text-left p-2">Month</th><th class="text-left p-2">Amount</th><th class="text-left p-2">Status</th><th class="text-left p-2">Due Date</th><th class="text-left p-2">Action</th></tr></thead><tbody id="myBillsTable"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Customer: My Profile -->
                 <div id="myprofileTab" class="tab-content hidden">
                     <h2 class="text-2xl font-bold mb-4">My Profile</h2>
                     <div class="bg-white p-6 rounded-lg shadow">
@@ -169,11 +250,14 @@
                             <div><label class="block font-semibold">Imo</label><input type="text" id="myImo" class="w-full p-3 border rounded bg-gray-100" readonly></div>
                             <div><label class="block font-semibold">PPPoE Username</label><input type="text" id="myPPPoEUser" class="w-full p-3 border rounded bg-gray-100" readonly></div>
                             <div><label class="block font-semibold">PPPoE Password</label><input type="text" id="myPPPoEPass" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block font-semibold">Package</label><input type="text" id="myPackage" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block font-semibold">Zone/Area</label><input type="text" id="myZoneArea" class="w-full p-3 border rounded bg-gray-100" readonly></div>
                             <div class="col-span-2"><label class="block font-semibold">Address</label><input type="text" id="myAddress" class="w-full p-3 border rounded bg-gray-100" readonly></div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Customer: My Complaints -->
                 <div id="mycomplaintsTab" class="tab-content hidden">
                     <h2 class="text-2xl font-bold mb-4">My Complaints</h2>
                     <div class="bg-white p-6 rounded-lg shadow mb-4">
@@ -186,12 +270,29 @@
                         <div id="myComplaintsList"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Other tabs: reports, staff, logs, mycustomers -->
-                <div id="reportsTab" class="tab-content hidden"><h2 class="text-2xl font-bold mb-4">Reports</h2><div class="bg-white p-6 rounded-lg shadow"><p>Reports coming soon...</p></div></div>
-                <div id="staffTab" class="tab-content hidden"><h2 class="text-2xl font-bold mb-4">Staff Report</h2><div class="bg-white p-6 rounded-lg shadow"><p>Staff Report coming soon...</p></div></div>
-                <div id="logsTab" class="tab-content hidden"><h2 class="text-2xl font-bold mb-4">Activity Logs</h2><div class="bg-white p-6 rounded-lg shadow"><table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Time</th><th class="text-left p-2">User</th><th class="text-left p-2">Action</th><th class="text-left p-2">Details</th></tr></thead><tbody id="logsTable"></tbody></table></div></div>
-                <div id="mycustomersTab" class="tab-content hidden"><h2 class="text-2xl font-bold mb-4">My Customers</h2><div class="bg-white p-6 rounded-lg shadow"><table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Name</th><th class="text-left p-2">Phone</th><th class="text-left p-2">Area</th><th class="text-left p-2">Status</th></tr></thead><tbody id="myCustomersTable"></tbody></table></div></div>
+    <!-- Modals -->
+    <div id="forwardModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">Forward Complaint to Staff</h3>
+            <select id="forwardStaffSelect" class="w-full p-3 border rounded mb-4"><option value="">Select Staff</option></select>
+            <div class="flex gap-4">
+                <button id="confirmForwardBtn" class="flex-1 bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Forward</button>
+                <button onclick="document.getElementById('forwardModal').style.display='none'" class="flex-1 bg-gray-400 text-white p-3 rounded hover:bg-gray-500">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="replyModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">Reply to Complaint</h3>
+            <textarea id="replyText" placeholder="Enter your reply..." class="w-full p-3 border rounded mb-4 h-32"></textarea>
+            <div class="flex gap-4">
+                <button id="confirmReplyBtn" class="flex-1 bg-green-600 text-white p-3 rounded hover:bg-green-700">Send Reply</button>
+                <button onclick="document.getElementById('replyModal').style.display='none'" class="flex-1 bg-gray-400 text-white p-3 rounded hover:bg-gray-500">Cancel</button>
             </div>
         </div>
     </div>
@@ -217,6 +318,9 @@
     let currentUser = null;
     let currentRole = null;
     let currentUserData = null;
+    let currentComplaintId = null;
+    let revenueChart = null;
+    let customerChart = null;
 
     document.getElementById('loginBtn').onclick = async () => {
         const email = document.getElementById('loginEmail').value;
@@ -252,7 +356,7 @@
         document.getElementById('appScreen').classList.add('hidden');
     }
 
-    function showApp() {
+    async function showApp() {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('appScreen').classList.remove('hidden');
         document.getElementById('userName').textContent = currentUser.email;
@@ -268,15 +372,17 @@
         } else if (currentRole === 'staff') {
             document.getElementById('staffMenu').classList.remove('hidden');
             document.getElementById('staffComplaintView').classList.remove('hidden');
+            loadMyCustomers();
         } else {
             document.getElementById('customerMenu').classList.remove('hidden');
-            document.getElementById('customerComplaintView').classList.remove('hidden');
             loadMyProfile();
+            loadMyBills();
         }
 
-        loadDashboard();
-        loadCustomers();
-        loadPackages();
+        await loadDashboard();
+        await loadCustomers();
+        await loadPackages();
+        await loadStaffList();
         showTab('dashboard');
     }
 
@@ -297,6 +403,11 @@
         if (tab === 'complaints') loadComplaints();
         if (tab === 'mybills') loadMyBills();
         if (tab === 'mycomplaints') loadMyComplaints();
+        if (tab === 'myprofile') loadMyProfile();
+        if (tab === 'mycustomers') loadMyCustomers();
+        if (tab === 'logs') loadLogs();
+        if (tab === 'reports') loadReports();
+        if (tab === 'staff') loadStaffReport();
     }
 
     async function loadDashboard() {
@@ -306,10 +417,52 @@
         document.getElementById('pendingComplaints').textContent = complaints.size;
         let revenue = 0;
         bills.forEach(doc => revenue += doc.data().amount || 0);
-        document.getElementById('totalRevenue').textContent = '৳' + revenue;
+        document.getElementById('totalRevenue').textContent = '৳' + revenue.toLocaleString();
+        await loadRecentBills();
+        await loadCharts();
     }
 
-    document.getElementById('saveCustomerBtn').onclick = async () => {
+    async function loadCharts() {
+        const bills = await getDocs(collection(db, 'bills'));
+        const monthlyData = {};
+        bills.forEach(doc => {
+            const month = doc.data().month;
+            monthlyData[month] = (monthlyData[month] || 0) + doc.data().amount;
+        });
+
+        if (revenueChart) revenueChart.destroy();
+        const ctx1 = document.getElementById('revenueChart');
+        if (ctx1) {
+            revenueChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(monthlyData),
+                    datasets: [{ label: 'Revenue', data: Object.values(monthlyData), borderColor: '#3b82f6', tension: 0.3 }]
+                }
+            });
+        }
+
+        const customers = await getDocs(collection(db, 'customers'));
+        const statusCount = { Active: 0, Inactive: 0 };
+        customers.forEach(doc => {
+            const status = doc.data().status || 'Active';
+            statusCount[status] = (statusCount[status] || 0) + 1;
+        });
+
+        if (customerChart) customerChart.destroy();
+        const ctx2 = document.getElementById('customerChart');
+        if (ctx2) {
+            customerChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCount),
+                    datasets: [{ data: Object.values(statusCount), backgroundColor: ['#10b981', '#ef4444'] }]
+                }
+            });
+        }
+    }
+
+        document.getElementById('saveCustomerBtn').onclick = async () => {
         const customerData = {
             name: document.getElementById('custName').value,
             zone: document.getElementById('custZone').value,
@@ -321,17 +474,27 @@
             pppoeUser: document.getElementById('custPPPoEUser').value,
             pppoePass: document.getElementById('custPPPoEPass').value,
             package: document.getElementById('custPackage').value,
-            createdAt: serverTimestamp()
+            assignedStaff: document.getElementById('custAssignedStaff').value,
+            status: 'Active',
+            createdAt: serverTimestamp(),
+            createdBy: currentUser.email
         };
-        if (!customerData.name ||!customerData.phone) {
-            alert('Please fill required fields');
+        if (!customerData.name ||!customerData.phone ||!customerData.package) {
+            alert('Please fill required fields: Name, Phone, Package');
             return;
         }
         await addDoc(collection(db, 'customers'), customerData);
+        await logActivity('ADD_CUSTOMER', customerData.name);
         alert('Customer Added Successfully!');
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
+        document.getElementById('custAddress').value = '';
+        document.getElementById('custWhatsApp').value = '';
+        document.getElementById('custImo').value = '';
+        document.getElementById('custPPPoEUser').value = '';
+        document.getElementById('custPPPoEPass').value = '';
         loadCustomers();
+        loadAllCustomers();
     };
 
     async function loadCustomers() {
@@ -340,7 +503,7 @@
         select.innerHTML = '<option value="">Select Customer</option>';
         snapshot.forEach(doc => {
             const data = doc.data();
-            select.innerHTML += `<option value="${doc.id}" data-whatsapp="${data.whatsapp || ''}" data-imo="${data.imo || ''}" data-address="${data.address || ''}">${data.name} - ${data.phone}</option>`;
+            select.innerHTML += `<option value="${doc.id}" data-whatsapp="${data.whatsapp || ''}" data-imo="${data.imo || ''}" data-address="${data.address || ''}" data-name="${data.name}">${data.name} - ${data.phone}</option>`;
         });
     }
 
@@ -359,10 +522,36 @@
                 select.innerHTML = '<option value="">Select Package</option>';
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    select.innerHTML += `<option value="${doc.id}" data-price="${data.price}">${data.name} - ৳${data.price}</option>`;
+                    select.innerHTML += `<option value="${doc.id}" data-price="${data.price}">${data.name} - ৳${data.price} (${data.speed})</option>`;
                 });
             }
         });
+        loadPackageTable();
+    }
+
+    async function loadPackageTable() {
+        const snapshot = await getDocs(collection(db, 'packages'));
+        const tbody = document.getElementById('packageListTable');
+        if (tbody) {
+            tbody.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">৳${data.price}</td><td class="p-2"><button onclick="deletePackage('${doc.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Delete</button></td></tr>`;
+            });
+        }
+    }
+
+    async function loadStaffList() {
+        const q = query(collection(db, 'users'), where('role', '==', 'staff'));
+        const snapshot = await getDocs(q);
+        const select = document.getElementById('custAssignedStaff');
+        if (select) {
+            select.innerHTML = '<option value="">Assign Staff</option>';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                select.innerHTML += `<option value="${data.email}">${data.email}</option>`;
+            });
+        }
     }
 
     document.getElementById('packageSelect').onchange = (e) => {
@@ -375,22 +564,29 @@
         const packageId = document.getElementById('packageSelect').value;
         const month = document.getElementById('billMonth').value;
         const amount = parseFloat(document.getElementById('billAmount').value);
+        const dueDate = document.getElementById('dueDate').value;
+        const customerName = document.getElementById('customerSelect').selectedOptions[0].dataset.name;
 
-        if (!customerId ||!packageId ||!month ||!amount) {
+        if (!customerId ||!packageId ||!month ||!amount ||!dueDate) {
             alert('Please fill all required fields');
             return;
         }
 
         await addDoc(collection(db, 'bills'), {
             customerId,
+            customerName,
             packageId,
             month,
             amount,
+            dueDate,
             status: 'pending',
             createdBy: currentUser.email,
             createdAt: serverTimestamp()
         });
+        await logActivity('GENERATE_INVOICE', `Bill for ${customerName} - ${month}`);
         alert('Invoice Generated Successfully!');
+        document.getElementById('billMonth').value = '';
+        document.getElementById('dueDate').value = '';
         loadDashboard();
     };
 
@@ -400,10 +596,12 @@
         const role = document.getElementById('newUserRole').value;
         try {
             await createUserWithEmailAndPassword(auth, email, password);
-            await addDoc(collection(db, 'users'), { email, role, createdAt: serverTimestamp() });
+            await addDoc(collection(db, 'users'), { email, role, createdAt: serverTimestamp(), createdBy: currentUser.email });
+            await logActivity('CREATE_USER', `${email} - ${role}`);
             alert('User Created Successfully!');
             document.getElementById('newUserEmail').value = '';
             document.getElementById('newUserPassword').value = '';
+            loadStaffList();
         } catch (error) {
             alert('Error: ' + error.message);
         }
@@ -412,15 +610,43 @@
     document.getElementById('addPackageBtn').onclick = async () => {
         const name = document.getElementById('pkgName').value;
         const price = parseFloat(document.getElementById('pkgPrice').value);
+        const speed = document.getElementById('pkgSpeed').value;
         if (!name ||!price) {
             alert('Please fill all fields');
             return;
         }
-        await addDoc(collection(db, 'packages'), { name, price, createdAt: serverTimestamp() });
+        await addDoc(collection(db, 'packages'), { name, price, speed, createdAt: serverTimestamp() });
+        await logActivity('ADD_PACKAGE', name);
         alert('Package Added!');
         document.getElementById('pkgName').value = '';
         document.getElementById('pkgPrice').value = '';
+        document.getElementById('pkgSpeed').value = '';
         loadPackages();
+    };
+
+    window.deletePackage = async (id) => {
+        if (currentRole!== 'admin') {
+            alert('Only admin can delete packages');
+            return;
+        }
+        if (confirm('Delete this package?')) {
+            await deleteDoc(doc(db, 'packages', id));
+            await logActivity('DELETE_PACKAGE', id);
+            loadPackages();
+        }
+    };
+
+    document.getElementById('saveCompanyBtn').onclick = async () => {
+        const companyData = {
+            name: document.getElementById('companyName').value,
+            phone: document.getElementById('companyPhone').value,
+            address: document.getElementById('companyAddress').value,
+            email: document.getElementById('companyEmail').value,
+            logo: document.getElementById('companyLogo').value,
+            updatedAt: serverTimestamp()
+        };
+        await addDoc(collection(db, 'settings'), companyData);
+        alert('Company Info Saved!');
     };
 
     async function loadAllCustomers() {
@@ -429,19 +655,35 @@
         tbody.innerHTML = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">${data.phone}</td><td class="p-2">${data.area}</td><td class="p-2">${data.package || 'N/A'}</td><td class="p-2">${data.pppoeUser || 'N/A'}</td><td class="p-2"><button onclick="deleteCustomer('${doc.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Delete</button></td></tr>`;
+            const deleteBtn = currentRole === 'admin'? `<button onclick="deleteCustomer('${doc.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Delete</button>` : '';
+            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">${data.phone}</td><td class="p-2">${data.area}</td><td class="p-2">${data.package || 'N/A'}</td><td class="p-2">${data.pppoeUser || 'N/A'}</td><td class="p-2"><span class="bg-green-500 text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${deleteBtn}</td></tr>`;
         });
     }
+
+    document.getElementById('customerSearch').onkeyup = (e) => {
+        const search = e.target.value.toLowerCase();
+        const rows = document.getElementById('allCustomersTable').getElementsByTagName('tr');
+        for (let row of rows) {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(search)? '' : 'none';
+        }
+    };
 
     window.deleteCustomer = async (id) => {
         if (currentRole!== 'admin') {
             alert('Only admin can delete customers');
             return;
         }
-        if (confirm('Delete this customer?')) {
+        if (confirm('Delete this customer? This will also delete all related bills.')) {
             await deleteDoc(doc(db, 'customers', id));
+            await logActivity('DELETE_CUSTOMER', id);
             loadAllCustomers();
+            loadCustomers();
         }
+    };
+
+    document.getElementById('exportCustomersBtn').onclick = () => {
+        alert('Export feature: Copy table data to Excel manually. Full Excel export needs SheetJS library.');
     };
 
     document.getElementById('submitComplaintBtn').onclick = async () => {
@@ -457,32 +699,92 @@
             assignedTo: null,
             createdAt: serverTimestamp()
         });
+        await logActivity('SUBMIT_COMPLAINT', text.substring(0, 50));
         alert('Complaint Submitted Successfully!');
         document.getElementById('complaintText').value = '';
         loadMyComplaints();
+        loadDashboard();
     };
 
     async function loadComplaints() {
-        const snapshot = await getDocs(collection(db, 'complaints'));
+        const filter = document.getElementById('complaintFilter')?.value || 'all';
+        let q = collection(db, 'complaints');
+        if (filter!== 'all') {
+            q = query(collection(db, 'complaints'), where('status', '==', filter));
+        }
+        const snapshot = await getDocs(q);
         const tbody = document.getElementById('complaintsTable');
         tbody.innerHTML = '';
         snapshot.forEach(doc => {
             const data = doc.data();
             const statusColor = data.status === 'pending'? 'bg-yellow-500' : data.status === 'assigned'? 'bg-blue-500' : 'bg-green-500';
-            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.customerEmail}</td><td class="p-2">${data.issue}</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${data.assignedTo || 'Unassigned'}</td><td class="p-2">${data.status === 'pending'? `<button onclick="forwardComplaint('${doc.id}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Forward to Staff</button>` : ''}</td></tr>`;
+            const actionBtn = data.status === 'pending'? `<button onclick="openForwardModal('${doc.id}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Forward</button>` : data.status === 'assigned'? `<button onclick="openReplyModal('${doc.id}')" class="bg-green-500 text-white px-3 py-1 rounded text-sm">Reply</button>` : '';
+            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.customerEmail}</td><td class="p-2">${data.issue.substring(0, 50)}...</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${data.assignedTo || 'Unassigned'}</td><td class="p-2">${new Date(data.createdAt?.toDate()).toLocaleDateString()}</td><td class="p-2">${actionBtn}</td></tr>`;
         });
     }
 
-    window.forwardComplaint = async (id) => {
-        const staffEmail = prompt('Enter staff email to assign:');
-        if (staffEmail) {
-            await updateDoc(doc(db, 'complaints', id), { status: 'assigned', assignedTo: staffEmail });
-            loadComplaints();
+    document.getElementById('complaintFilter').onchange = () => loadComplaints();
+
+    window.openForwardModal = (id) => {
+        currentComplaintId = id;
+        document.getElementById('forwardModal').style.display = 'block';
+        loadStaffForForward();
+    };
+
+    async function loadStaffForForward() {
+        const q = query(collection(db, 'users'), where('role', '==', 'staff'));
+        const snapshot = await getDocs(q);
+        const select = document.getElementById('forwardStaffSelect');
+        select.innerHTML = '<option value="">Select Staff</option>';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            select.innerHTML += `<option value="${data.email}">${data.email}</option>`;
+        });
+    }
+
+    document.getElementById('confirmForwardBtn').onclick = async () => {
+        const staffEmail = document.getElementById('forwardStaffSelect').value;
+        if (!staffEmail) {
+            alert('Please select staff');
+            return;
         }
+        await updateDoc(doc(db, 'complaints', currentComplaintId), { 
+            status: 'assigned', 
+            assignedTo: staffEmail,
+            assignedAt: serverTimestamp()
+        });
+        await logActivity('FORWARD_COMPLAINT', `To ${staffEmail}`);
+        document.getElementById('forwardModal').style.display = 'none';
+        loadComplaints();
+        loadDashboard();
+    };
+
+    window.openReplyModal = (id) => {
+        currentComplaintId = id;
+        document.getElementById('replyModal').style.display = 'block';
+    };
+
+    document.getElementById('confirmReplyBtn').onclick = async () => {
+        const reply = document.getElementById('replyText').value;
+        if (!reply) {
+            alert('Please enter reply');
+            return;
+        }
+        await updateDoc(doc(db, 'complaints', currentComplaintId), { 
+            status: 'resolved', 
+            staffReply: reply,
+            resolvedAt: serverTimestamp(),
+            resolvedBy: currentUser.email
+        });
+        await logActivity('RESOLVE_COMPLAINT', currentComplaintId);
+        document.getElementById('replyModal').style.display = 'none';
+        document.getElementById('replyText').value = '';
+        loadComplaints();
+        loadDashboard();
     };
 
     async function loadMyProfile() {
-        const q = query(collection(db, 'customers'), where('phone', '==', currentUserData?.phone || ''));
+        const q = query(collection(db, 'customers'), where('phone', '==', currentUserData?.phone || currentUser.email));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const data = snapshot.docs[0].data();
@@ -492,40 +794,65 @@
             document.getElementById('myImo').value = data.imo || '';
             document.getElementById('myPPPoEUser').value = data.pppoeUser || '';
             document.getElementById('myPPPoEPass').value = data.pppoePass || '';
+            document.getElementById('myPackage').value = data.package || '';
+            document.getElementById('myZoneArea').value = `${data.zone || ''} / ${data.area || ''}`;
             document.getElementById('myAddress').value = data.address || '';
         }
     }
 
     async function loadMyComplaints() {
-        const q = query(collection(db, 'complaints'), where('customerEmail', '==', currentUser.email));
+        const q = query(collection(db, 'complaints'), where('customerEmail', '==', currentUser.email), orderBy('createdAt', 'desc'));
         const snapshot = await getDocs(q);
         const list = document.getElementById('myComplaintsList');
         list.innerHTML = '';
         snapshot.forEach(doc => {
             const data = doc.data();
             const statusColor = data.status === 'pending'? 'bg-yellow-500' : data.status === 'assigned'? 'bg-blue-500' : 'bg-green-500';
-            list.innerHTML += `<div class="border p-4 rounded mb-3"><p class="font-semibold">${data.issue}</p><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></div>`;
+            const reply = data.staffReply? `<p class="text-sm text-gray-600 mt-2"><strong>Staff Reply:</strong> ${data.staffReply}</p>` : '';
+            list.innerHTML += `<div class="border p-4 rounded mb-3"><div class="flex justify-between items-start"><div class="flex-1"><p class="font-semibold">${data.issue}</p><p class="text-xs text-gray-500 mt-1">${new Date(data.createdAt?.toDate()).toLocaleString()}</p>${reply}</div><span class="${statusColor} text-white px-3 py-1 rounded text-xs">${data.status}</span></div></div>`;
         });
     }
 
     async function loadMyBills() {
-        const customerQuery = query(collection(db, 'customers'), where('phone', '==', currentUserData?.phone || ''));
+        const customerQuery = query(collection(db, 'customers'), where('phone', '==', currentUserData?.phone || currentUser.email));
         const customerSnap = await getDocs(customerQuery);
-                if (!customerSnap.empty) {
+        if (!customerSnap.empty) {
             const customerId = customerSnap.docs[0].id;
-            const billsQuery = query(collection(db, 'bills'), where('customerId', '==', customerId));
+            const billsQuery = query(collection(db, 'bills'), where('customerId', '==', customerId), orderBy('createdAt', 'desc'));
             const billsSnap = await getDocs(billsQuery);
             const tbody = document.getElementById('myBillsTable');
             tbody.innerHTML = '';
             billsSnap.forEach(doc => {
                 const data = doc.data();
-                const statusColor = data.status === 'paid'? 'bg-green-500' : 'bg-red-500';
-                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${doc.id.substring(0,8)}</td><td class="p-2">${data.month}</td><td class="p-2">৳${data.amount}</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${data.dueDate || 'N/A'}</td></tr>`;
+                const statusColor = data.status === 'paid'? 'bg-green-500' : data.status === 'approved'? 'bg-blue-500' : 'bg-red-500';
+                const payBtn = data.status!== 'paid'? `<button onclick="payBill('${doc.id}')" class="bg-green-500 text-white px-3 py-1 rounded text-xs">Pay Now</button>` : '';
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${doc.id.substring(0,8)}</td><td class="p-2">${data.month}</td><td class="p-2">৳${data.amount}</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${data.dueDate || 'N/A'}</td><td class="p-2">${payBtn}</td></tr>`;
             });
         }
     }
 
-    // Load recent bills for dashboard
+    window.payBill = async (id) => {
+        if (confirm('Mark this bill as paid?')) {
+            await updateDoc(doc(db, 'bills', id), { status: 'paid', paidAt: serverTimestamp() });
+            await logActivity('PAY_BILL', id);
+            loadMyBills();
+            loadDashboard();
+        }
+    };
+
+    async function loadMyCustomers() {
+        const q = query(collection(db, 'customers'), where('assignedStaff', '==', currentUser.email));
+        const snapshot = await getDocs(q);
+        const tbody = document.getElementById('myCustomersTable');
+        if (tbody) {
+            tbody.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">${data.phone}</td><td class="p-2">${data.area}</td><td class="p-2">${data.package || 'N/A'}</td><td class="p-2"><span class="bg-green-500 text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">৳0</td></tr>`;
+            });
+        }
+    }
+
     async function loadRecentBills() {
         const billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'));
         const snapshot = await getDocs(billsQuery);
@@ -536,7 +863,8 @@
                 const data = doc.data();
                 const statusColor = data.status === 'paid'? 'bg-green-500' : data.status === 'approved'? 'bg-blue-500' : 'bg-yellow-500';
                 const deleteBtn = currentRole === 'admin'? `<button onclick="deleteBill('${doc.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Delete</button>` : '';
-                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${doc.id.substring(0,8)}</td><td class="p-2">${data.customerName || 'N/A'}</td><td class="p-2">৳${data.amount}</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2"><button onclick="approveBill('${doc.id}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button>${deleteBtn}</td></tr>`;
+                const approveBtn = data.status === 'pending'? `<button onclick="approveBill('${doc.id}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button>` : '';
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${doc.id.substring(0,8)}</td><td class="p-2">${data.customerName || 'N/A'}</td><td class="p-2">৳${data.amount}</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${approveBtn}${deleteBtn}</td></tr>`;
             });
         }
     }
@@ -555,13 +883,12 @@
     };
 
     window.approveBill = async (id) => {
-        await updateDoc(doc(db, 'bills', id), { status: 'approved' });
+        await updateDoc(doc(db, 'bills', id), { status: 'approved', approvedBy: currentUser.email, approvedAt: serverTimestamp() });
         await logActivity('APPROVE_BILL', id);
         loadRecentBills();
         loadDashboard();
     };
 
-    // Load logs
     async function loadLogs() {
         const snapshot = await getDocs(query(collection(db, 'logs'), orderBy('timestamp', 'desc')));
         const tbody = document.getElementById('logsTable');
@@ -574,7 +901,6 @@
         }
     }
 
-    // Log activity
     async function logActivity(action, details) {
         await addDoc(collection(db, 'logs'), {
             user: currentUser.email,
@@ -584,19 +910,73 @@
         });
     }
 
-    // Load My Customers for Staff
-    async function loadMyCustomers() {
-        const q = query(collection(db, 'customers'), where('assignedStaff', '==', currentUser.email));
-        const snapshot = await getDocs(q);
-        const tbody = document.getElementById('myCustomersTable');
-        if (tbody) {
-            tbody.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">${data.phone}</td><td class="p-2">${data.area}</td><td class="p-2">${data.status || 'Active'}</td></tr>`;
-            });
-        }
+    document.getElementById('exportLogsBtn').onclick = () => {
+        alert('Export feature: Copy table to Excel. For full Excel export, add SheetJS library.');
+    };
+
+    async function loadReports() {
+        // Placeholder for date range reports
     }
+
+    document.getElementById('generateReportBtn').onclick = async () => {
+        const fromDate = document.getElementById('reportFromDate').value;
+        const toDate = document.getElementById('reportToDate').value;
+        if (!fromDate ||!toDate) {
+            alert('Please select date range');
+            return;
+        }
+        const bills = await getDocs(collection(db, 'bills'));
+        const reportData = {};
+        bills.forEach(doc => {
+            const data = doc.data();
+            const date = data.createdAt?.toDate().toISOString().split('T')[0];
+            if (date >= fromDate && date <= toDate) {
+                if (!reportData[date]) reportData[date] = { total: 0, paid: 0, pending: 0, revenue: 0 };
+                reportData[date].total++;
+                if (data.status === 'paid') {
+                    reportData[date].paid++;
+                    reportData[date].revenue += data.amount;
+                } else {
+                    reportData[date].pending++;
+                }
+            }
+        });
+        const tbody = document.getElementById('reportTable');
+        tbody.innerHTML = '';
+        Object.keys(reportData).sort().forEach(date => {
+            const d = reportData[date];
+            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${date}</td><td class="p-2">${d.total}</td><td class="p-2">${d.paid}</td><td class="p-2">${d.pending}</td><td class="p-2">৳${d.revenue}</td></tr>`;
+        });
+    };
+
+    async function loadStaffReport() {
+        // Load staff report for selected month
+    }
+
+    document.getElementById('loadStaffReportBtn').onclick = async () => {
+        const month = document.getElementById('staffReportMonth').value;
+        if (!month) {
+            alert('Please select month');
+            return;
+        }
+        const users = await getDocs(query(collection(db, 'users'), where('role', '==', 'staff')));
+        const tbody = document.getElementById('staffReportTable');
+        tbody.innerHTML = '';
+        for (const userDoc of users.docs) {
+            const staffEmail = userDoc.data().email;
+            const bills = await getDocs(query(collection(db, 'bills'), where('createdBy', '==', staffEmail)));
+            let total = 0, collected = 0, pending = 0;
+            bills.forEach(billDoc => {
+                const bill = billDoc.data();
+                if (bill.month === month) {
+                    total++;
+                    if (bill.status === 'paid') collected += bill.amount;
+                    else pending += bill.amount;
+                }
+            });
+            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${staffEmail}</td><td class="p-2">${staffEmail}</td><td class="p-2">${total}</td><td class="p-2">৳${collected}</td><td class="p-2">৳${pending}</td></tr>`;
+        }
+    };
 </script>
 </body>
 </html>
