@@ -57,121 +57,6 @@
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>body{font-family:"Noto Sans Bengali", sans-serif !important;}</style>
-
-<style id="mobile-fix">
-/* Smart Mobile UI Fix */
-@media (max-width: 768px) {
-  body { overflow-x: hidden; }
-  
-  /* Header fix */
-  .header, .navbar, header { 
-    position: sticky !important; 
-    top: 0; 
-    z-index: 1000;
-    padding: 8px 12px !important;
-  }
-  .header h1 { font-size: 18px !important; }
-  
-  /* Sidebar - Off canvas */
-  .sidebar, .admin-panel, #sidebar {
-    position: fixed !important;
-    left: -280px !important;
-    top: 0 !important;
-    width: 260px !important;
-    height: 100vh !important;
-    transition: left 0.3s ease !important;
-    z-index: 9998 !important;
-    overflow-y: auto !important;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-  }
-  .sidebar.active, .admin-panel.active, #sidebar.active {
-    left: 0 !important;
-  }
-  
-  /* Overlay when sidebar open */
-  .sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 9997;
-  }
-  .sidebar-overlay.active { display: block; }
-  
-  /* Main content */
-  .main-content, #mainContent, main {
-    margin-left: 0 !important;
-    padding: 12px !important;
-    width: 100% !important;
-  }
-  
-  /* Dashboard cards - stack */
-  .grid, .grid-cols-2, .grid-cols-3, .grid-cols-4 {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-  .card, .dashboard-card {
-    margin: 8px 0 !important;
-    padding: 16px !important;
-  }
-  
-  /* Tables - horizontal scroll */
-  .table-container, .table-responsive {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-  table { min-width: 600px !important; }
-  
-  /* Forms */
-  .form-row, .form-grid {
-    flex-direction: column !important;
-    grid-template-columns: 1fr !important;
-  }
-  input, select, textarea, button {
-    font-size: 16px !important; /* Prevent iOS zoom */
-    width: 100% !important;
-  }
-  
-  /* Charts */
-  .chart-container { 
-    height: 250px !important; 
-    overflow-x: auto;
-  }
-  
-  /* Hamburger menu button */
-  .menu-toggle {
-    display: block !important;
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 10000;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 20px;
-    cursor: pointer;
-  }
-  
-  /* Hide desktop elements */
-  .desktop-only { display: none !important; }
-}
-
-@media (max-width: 390px) {
-  .card { padding: 12px !important; }
-  h1 { font-size: 18px !important; }
-  h2 { font-size: 16px !important; }
-  .btn { padding: 8px 12px !important; font-size: 14px !important; }
-}
-
-/* Desktop */
-@media (min-width: 769px) {
-  .menu-toggle { display: none !important; }
-  .sidebar-overlay { display: none !important; }
-}
-</style>
-
 </head>
 <body class="bg-gray-50 font-sans">
 <div id="app" class="min-h-screen flex flex-col">
@@ -583,7 +468,8 @@
           <input type="hidden" id="custLng">
         </div>
         <div class="flex gap-3 pt-4">
-          <button type="submit" class="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-semibold transition">সেভ করুন</button>
+          <div id="errorBox" style="display:none;background:#fee;color:#c00;padding:12px;border-radius:6px;margin-bottom:12px;text-align:center;"></div>
+<button type="submit" class="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-semibold transition">সেভ করুন</button>
           <button type="button" onclick="closeCustomerModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-lg font-semibold transition">বাতিল</button>
         </div>
       </form>
@@ -751,74 +637,7 @@
 
 
 <!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-  // TODO: আপনার Firebase config বসান - Firebase Console > Project Settings থেকে নিন
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "owns-billing.firebaseapp.com",
-    projectId: "owns-billing",
-    storageBucket: "owns-billing.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-
-  // Login handler
-  window.handleLogin = async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('emailInput').value.trim();
-    const password = document.getElementById('passwordInput').value;
-    const errorDiv = document.getElementById('loginError');
-    
-    errorDiv.textContent = '';
-    errorDiv.classList.add('hidden');
-    
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Login success:', userCredential.user.email);
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('mainApp').classList.remove('hidden');
-      loadUserData(userCredential.user);
-    } catch (error) {
-      console.error('Login error:', error.code);
-      let msg = 'লগইন করতে সমস্যা হয়েছে';
-      if (error.code === 'auth/invalid-email') msg = 'ইমেইল ঠিকানা ভুল';
-      if (error.code === 'auth/user-disabled') msg = 'এই ইউজার ডিজেবল করা আছে';
-      if (error.code === 'auth/user-not-found') msg = 'ইউজার খুঁজে পাওয়া যায়নি';
-      if (error.code === 'auth/wrong-password') msg = 'পাসওয়ার্ড ভুল';
-      if (error.code === 'auth/invalid-credential') msg = 'ইমেইল বা পাসওয়ার্ড ভুল';
-      errorDiv.textContent = msg;
-      errorDiv.classList.remove('hidden');
-    }
-  };
-
-  // Auth state check
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('mainApp').classList.remove('hidden');
-      loadUserData(user);
-    } else {
-      document.getElementById('loginScreen').classList.remove('hidden');
-      document.getElementById('mainApp').classList.add('hidden');
-    }
-  });
-
-  // Logout
-  window.handleLogout = () => {
-    signOut(auth);
-  };
-
-  window.loadUserData = (user) => {
-    document.getElementById('userEmailDisplay').textContent = user.email;
-    document.getElementById('userAvatar').src = user.photoURL || 'https://ui-avatars.com/api/?name=' + user.email;
-  };
-</script>
 
 <script>
   // Global error handler
@@ -829,35 +648,69 @@
   };
 (function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 
+<!-- Firebase Compat - No Module Issues -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
-// Mobile Menu Toggle
-function toggleMobileMenu() {
-  document.querySelector('.sidebar, .admin-panel, #sidebar')?.classList.toggle('active');
-  document.querySelector('.sidebar-overlay')?.classList.toggle('active');
-}
+// Firebase Config - আপনারটা বসানো আছে
+const firebaseConfig = {
+  apiKey: "AIzaSyBZUlhoH3pPZWmBZko-SfIJpV6jBoeFRM",
+  authDomain: "owns-billing.firebaseapp.com",
+  projectId: "owns-billing",
+  storageBucket: "owns-billing.firebasestorage.app",
+  messagingSenderId: "1036958677443",
+  appId: "1:1036958677443:web:fbd4ee2f0d0a24c4582576"
+};
 
-// Create overlay if not exists
-if (!document.querySelector('.sidebar-overlay')) {
-  const overlay = document.createElement('div');
-  overlay.className = 'sidebar-overlay';
-  overlay.onclick = toggleMobileMenu;
-  document.body.appendChild(overlay);
-}
+// Initialize
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-// Create hamburger if not exists
-if (!document.querySelector('.menu-toggle')) {
-  const btn = document.createElement('button');
-  btn.className = 'menu-toggle';
-  btn.innerHTML = '☰';
-  btn.onclick = toggleMobileMenu;
-  document.body.appendChild(btn);
-}
-
-// Close sidebar on menu item click (mobile)
-document.querySelectorAll('.sidebar a, .admin-panel a').forEach(link => {
-  link.addEventListener('click', () => {
-    if (window.innerWidth <= 768) {
-      toggleMobileMenu();
+// V2 এর লগইন লজিক - হুবহু কপি
+document.addEventListener('DOMContentLoaded', function() {
+  const loginForm = document.getElementById('loginForm');
+  const errorBox = document.getElementById('errorBox');
+  
+  if (loginForm) {
+    loginForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      if (errorBox) errorBox.style.display = 'none';
+      
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        console.log('Login success');
+        // Hide login, show app
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+      } catch (error) {
+        console.error('Login error:', error);
+        if (errorBox) {
+          let msg = 'লগইন ব্যর্থ';
+          if (error.code === 'auth/invalid-credential') msg = 'ইমেইল বা পাসওয়ার্ড ভুল';
+          if (error.code === 'auth/user-not-found') msg = 'ইউজার পাওয়া যায়নি';
+          if (error.code === 'auth/wrong-password') msg = 'পাসওয়ার্ড ভুল';
+          if (error.code === 'auth/unauthorized-domain') msg = 'ডোমেইন Authorized না';
+          errorBox.textContent = msg;
+          errorBox.style.display = 'block';
+        }
+      }
+    });
+  }
+  
+  // Auth state check
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appScreen').style.display = 'block';
+    } else {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('appScreen').style.display = 'none';
     }
   });
 });
