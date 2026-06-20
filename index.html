@@ -4,7 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OWNS Billing Pro Max V3 Ultimate</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+  // Form validation helper
+  function validateForm(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return false;
+    const required = form.querySelectorAll('[required]');
+    for (let field of required) {
+      if (!field.value.trim()) {
+        alert('সব প্রয়োজনীয় ফিল্ড পূরণ করুন');
+        field.focus();
+        return false;
+      }
+    }
+    return true;
+  }
+
+</script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -39,6 +55,8 @@
     .btn-text { display: none; }
   }
 </style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>body{font-family:"Noto Sans Bengali", sans-serif !important;}</style>
 </head>
 <body class="bg-gray-50 font-sans">
 <div id="app" class="min-h-screen flex flex-col">
@@ -51,19 +69,19 @@
           <i class="fas fa-wifi text-white text-2xl"></i>
         </div>
         <h1 class="text-3xl font-bold text-gray-800">OWNS Billing Pro</h1>
-        <p class="text-gray-500 mt-2">ISP à¦¬à¦¿à¦²à¦¿à¦‚ à¦®à§à¦¯à¦¾à¦¨à§‡à¦œà¦®à§‡à¦¨à§à¦Ÿ à¦¸à¦¿à¦¸à§à¦Ÿà§‡à¦®</p>
+        <p class="text-gray-500 mt-2">ISP বিলিং ম্যানেজমেন্ট সিস্টেম</p>
       </div>
       <form id="loginForm" class="space-y-5">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦‡à¦®à§‡à¦‡à¦²</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">ইমেইল</label>
           <input type="email" id="loginEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">পাসওয়ার্ড</label>
           <input type="password" id="loginPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition">
         </div>
         <button type="submit" class="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg hover:shadow-xl">
-          à¦²à¦—à¦‡à¦¨ à¦•à¦°à§à¦¨
+          লগইন করুন
         </button>
       </form>
       <p id="loginError" class="text-red-500 text-sm mt-4 text-center hidden"></p>
@@ -109,16 +127,16 @@
               <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border">
                 <button onclick="openProfileModal()" class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3">
                   <i class="fas fa-user text-primary"></i>
-                  <span>à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦²</span>
+                  <span>প্রোফাইল</span>
                 </button>
                 <button onclick="openSettingsModal()" class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3">
                   <i class="fas fa-cog text-primary"></i>
-                  <span>à¦¸à§‡à¦Ÿà¦¿à¦‚à¦¸</span>
+                  <span>সেটিংস</span>
                 </button>
                 <hr class="my-2">
                 <button id="logoutBtn" class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 text-red-600">
                   <i class="fas fa-sign-out-alt"></i>
-                  <span>à¦²à¦—à¦†à¦‰à¦Ÿ</span>
+                  <span>লগআউট</span>
                 </button>
               </div>
             </div>
@@ -133,27 +151,27 @@
         <nav class="p-4 space-y-1">
           <button data-page="dashboard" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-white">
             <i class="fas fa-chart-pie w-5"></i>
-            <span>à¦¡à§à¦¯à¦¾à¦¶à¦¬à§‹à¦°à§à¦¡</span>
+            <span>ড্যাশবোর্ড</span>
           </button>
           <button data-page="customers" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
             <i class="fas fa-users w-5"></i>
-            <span>à¦—à§à¦°à¦¾à¦¹à¦• à¦¬à§à¦¯à¦¬à¦¸à§à¦¥à¦¾à¦ªà¦¨à¦¾</span>
+            <span>গ্রাহক ব্যবস্থাপনা</span>
           </button>
           <button data-page="invoices" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
             <i class="fas fa-file-invoice w-5"></i>
-            <span>à¦‡à¦¨à¦­à¦¯à¦¼à§‡à¦¸</span>
+            <span>ইনভয়েস</span>
           </button>
           <button data-page="tickets" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
             <i class="fas fa-headset w-5"></i>
-            <span>à¦•à¦®à¦ªà§à¦²à§‡à¦‡à¦¨ à¦Ÿà¦¿à¦•à§‡à¦Ÿ</span>
+            <span>কমপ্লেইন টিকেট</span>
           </button>
           <button data-page="reports" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
             <i class="fas fa-chart-line w-5"></i>
-            <span>à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ</span>
+            <span>রিপোর্ট</span>
           </button>
           <button data-page="staff" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100" id="staffNavBtn">
             <i class="fas fa-user-tie w-5"></i>
-            <span>à¦¸à§à¦Ÿà¦¾à¦«</span>
+            <span>স্টাফ</span>
           </button>
         </nav>
       </aside>
@@ -163,12 +181,12 @@
         
         <!-- Dashboard Page -->
         <div id="dashboardPage" class="page">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">à¦¡à§à¦¯à¦¾à¦¶à¦¬à§‹à¦°à§à¦¡</h2>
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">ড্যাশবোর্ড</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-primary">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-gray-500 text-sm">à¦®à§‹à¦Ÿ à¦—à§à¦°à¦¾à¦¹à¦•</p>
+                  <p class="text-gray-500 text-sm">মোট গ্রাহক</p>
                   <p id="totalCustomers" class="text-3xl font-bold text-gray-800 mt-1">0</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -179,7 +197,7 @@
             <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-500">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-gray-500 text-sm">à¦¸à¦•à§à¦°à¦¿à¦¯à¦¼ à¦—à§à¦°à¦¾à¦¹à¦•</p>
+                  <p class="text-gray-500 text-sm">সক্রিয় গ্রাহক</p>
                   <p id="activeCustomers" class="text-3xl font-bold text-gray-800 mt-1">0</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -190,8 +208,8 @@
             <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-yellow-500">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-gray-500 text-sm">à¦¬à¦•à§‡à¦¯à¦¼à¦¾ à¦¬à¦¿à¦²</p>
-                  <p id="dueAmount" class="text-3xl font-bold text-gray-800 mt-1">à§³0</p>
+                  <p class="text-gray-500 text-sm">বকেয়া বিল</p>
+                  <p id="dueAmount" class="text-3xl font-bold text-gray-800 mt-1">৳0</p>
                 </div>
                 <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
                   <i class="fas fa-money-bill-wave text-yellow-500 text-xl"></i>
@@ -201,7 +219,7 @@
             <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-500">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-gray-500 text-sm">à¦ªà§‡à¦¨à§à¦¡à¦¿à¦‚ à¦Ÿà¦¿à¦•à§‡à¦Ÿ</p>
+                  <p class="text-gray-500 text-sm">পেন্ডিং টিকেট</p>
                   <p id="pendingTickets" class="text-3xl font-bold text-gray-800 mt-1">0</p>
                 </div>
                 <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -213,11 +231,11 @@
           
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white rounded-xl shadow-sm p-6">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">à¦®à¦¾à¦¸à¦¿à¦• à¦†à¦¯à¦¼</h3>
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">মাসিক আয়</h3>
               <canvas id="revenueChart"></canvas>
             </div>
             <div class="bg-white rounded-xl shadow-sm p-6">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">à¦—à§à¦°à¦¾à¦¹à¦• à¦…à¦¬à¦¸à§à¦¥à¦¾</h3>
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">গ্রাহক অবস্থা</h3>
               <canvas id="customerChart"></canvas>
             </div>
           </div>
@@ -226,30 +244,30 @@
         <!-- Customers Page -->
         <div id="customersPage" class="page hidden">
           <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">à¦—à§à¦°à¦¾à¦¹à¦• à¦¬à§à¦¯à¦¬à¦¸à§à¦¥à¦¾à¦ªà¦¨à¦¾</h2>
+            <h2 class="text-2xl font-bold text-gray-800">গ্রাহক ব্যবস্থাপনা</h2>
             <button id="addCustomerBtn" class="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg flex items-center gap-2 shadow-md transition">
               <i class="fas fa-plus"></i>
-              <span class="btn-text">à¦¨à¦¤à§à¦¨ à¦—à§à¦°à¦¾à¦¹à¦•</span>
+              <span class="btn-text">নতুন গ্রাহক</span>
             </button>
           </div>
 
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="p-4 border-b flex flex-wrap gap-3">
-              <input type="text" id="customerSearch" placeholder="à¦¨à¦¾à¦®, à¦®à§‹à¦¬à¦¾à¦‡à¦², à¦œà§‹à¦¨ à¦¦à¦¿à¦¯à¦¼à§‡ à¦–à§à¦à¦œà§à¦¨..." class="flex-1 min-w-[200px] px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
+              <input type="text" id="customerSearch" placeholder="নাম, মোবাইল, জোন দিয়ে খুঁজুন..." class="flex-1 min-w-[200px] px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
               <select id="zoneFilter" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
-                <option value="">à¦¸à¦¬ à¦œà§‹à¦¨</option>
+                <option value="">সব জোন</option>
               </select>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full table-responsive">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦¨à¦¾à¦®</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦®à§‹à¦¬à¦¾à¦‡à¦²</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦œà§‹à¦¨</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦ªà§à¦¯à¦¾à¦•à§‡à¦œ</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦¸à§à¦Ÿà§à¦¯à¦¾à¦Ÿà¦¾à¦¸</th>
-                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">à¦…à§à¦¯à¦¾à¦•à¦¶à¦¨</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">নাম</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">মোবাইল</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">জোন</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">প্যাকেজ</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">স্ট্যাটাস</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">অ্যাকশন</th>
                   </tr>
                 </thead>
                 <tbody id="customerTableBody" class="divide-y divide-gray-200"></tbody>
@@ -261,10 +279,10 @@
         <!-- Invoices Page -->
         <div id="invoicesPage" class="page hidden">
           <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">à¦‡à¦¨à¦­à¦¯à¦¼à§‡à¦¸ à¦®à§à¦¯à¦¾à¦¨à§‡à¦œà¦®à§‡à¦¨à§à¦Ÿ</h2>
+            <h2 class="text-2xl font-bold text-gray-800">ইনভয়েস ম্যানেজমেন্ট</h2>
             <button id="newInvoiceBtn" class="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg flex items-center gap-2 shadow-md transition">
               <i class="fas fa-plus"></i>
-              <span class="btn-text">à¦¨à¦¤à§à¦¨ à¦‡à¦¨à¦­à¦¯à¦¼à§‡à¦¸</span>
+              <span class="btn-text">নতুন ইনভয়েস</span>
             </button>
           </div>
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -272,12 +290,12 @@
               <table class="w-full table-responsive">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦‡à¦¨à¦­à¦¯à¦¼à§‡à¦¸ #</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦—à§à¦°à¦¾à¦¹à¦•</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦ªà¦°à¦¿à¦®à¦¾à¦£</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦¡à¦¿à¦‰ à¦¤à¦¾à¦°à¦¿à¦–</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦¸à§à¦Ÿà§à¦¯à¦¾à¦Ÿà¦¾à¦¸</th>
-                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">à¦…à§à¦¯à¦¾à¦•à¦¶à¦¨</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ইনভয়েস #</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">গ্রাহক</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">পরিমাণ</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ডিউ তারিখ</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">স্ট্যাটাস</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">অ্যাকশন</th>
                   </tr>
                 </thead>
                 <tbody id="invoiceTableBody" class="divide-y divide-gray-200"></tbody>
@@ -289,10 +307,10 @@
         <!-- Tickets Page -->
         <div id="ticketsPage" class="page hidden">
           <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">à¦•à¦®à¦ªà§à¦²à§‡à¦‡à¦¨ à¦Ÿà¦¿à¦•à§‡à¦Ÿ</h2>
+            <h2 class="text-2xl font-bold text-gray-800">কমপ্লেইন টিকেট</h2>
             <button id="newTicketBtn" class="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg flex items-center gap-2 shadow-md transition">
               <i class="fas fa-plus"></i>
-              <span class="btn-text">à¦¨à¦¤à§à¦¨ à¦Ÿà¦¿à¦•à§‡à¦Ÿ</span>
+              <span class="btn-text">নতুন টিকেট</span>
             </button>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="ticketGrid"></div>
@@ -300,25 +318,25 @@
 
         <!-- Reports Page -->
         <div id="reportsPage" class="page hidden">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ</h2>
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">রিপোর্ট</h2>
           <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h3 class="text-lg font-semibold mb-4">à¦«à¦¿à¦²à§à¦Ÿà¦¾à¦°</h3>
+            <h3 class="text-lg font-semibold mb-4">ফিল্টার</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <input type="text" id="filterCustomer" placeholder="à¦—à§à¦°à¦¾à¦¹à¦•à§‡à¦° à¦¨à¦¾à¦®" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
-              <input type="text" id="filterMobile" placeholder="à¦®à§‹à¦¬à¦¾à¦‡à¦²" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
+              <input type="text" id="filterCustomer" placeholder="গ্রাহকের নাম" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
+              <input type="text" id="filterMobile" placeholder="মোবাইল" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
               <select id="filterZone" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
-                <option value="">à¦¸à¦¬ à¦œà§‹à¦¨</option>
+                <option value="">সব জোন</option>
               </select>
               <select id="filterArea" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
-                <option value="">à¦¸à¦¬ à¦à¦°à¦¿à¦¯à¦¼à¦¾</option>
+                <option value="">সব এরিয়া</option>
               </select>
               <select id="filterStaff" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
-                <option value="">à¦¸à¦¬ à¦¸à§à¦Ÿà¦¾à¦«</option>
+                <option value="">সব স্টাফ</option>
               </select>
               <input type="date" id="filterDateFrom" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
               <input type="date" id="filterDateTo" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
               <div class="flex gap-2">
-                <button id="applyFilterBtn" class="flex-1 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg transition">à¦«à¦¿à¦²à§à¦Ÿà¦¾à¦°</button>
+                <button id="applyFilterBtn" class="flex-1 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg transition">ফিল্টার</button>
                 <button id="exportExcelBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
                   <i class="fas fa-file-excel"></i>
                 </button>
@@ -330,12 +348,12 @@
               <table class="w-full table-responsive">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">à¦¤à¦¾à¦°à¦¿à¦–</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">à¦—à§à¦°à¦¾à¦¹à¦•</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">à¦œà§‹à¦¨/à¦à¦°à¦¿à¦¯à¦¼à¦¾</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">à¦ªà¦°à¦¿à¦®à¦¾à¦£</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">à¦¸à§à¦Ÿà¦¾à¦«</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">à¦¸à§à¦Ÿà§à¦¯à¦¾à¦Ÿà¦¾à¦¸</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">তারিখ</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">গ্রাহক</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">জোন/এরিয়া</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">পরিমাণ</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">স্টাফ</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">স্ট্যাটাস</th>
                   </tr>
                 </thead>
                 <tbody id="reportTableBody" class="divide-y divide-gray-200"></tbody>
@@ -346,16 +364,16 @@
 
         <!-- Staff Page -->
         <div id="staffPage" class="page hidden">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6">à¦¸à§à¦Ÿà¦¾à¦« à¦®à§à¦¯à¦¾à¦¨à§‡à¦œà¦®à§‡à¦¨à§à¦Ÿ</h2>
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">স্টাফ ম্যানেজমেন্ট</h2>
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full table-responsive">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦¨à¦¾à¦®</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦‡à¦®à§‡à¦‡à¦²</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦°à§‹à¦²</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">à¦¸à§à¦Ÿà§à¦¯à¦¾à¦Ÿà¦¾à¦¸</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">নাম</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ইমেইল</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">রোল</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">স্ট্যাটাস</th>
                   </tr>
                 </thead>
                 <tbody id="staffTableBody" class="divide-y divide-gray-200"></tbody>
@@ -369,7 +387,7 @@
 
     <!-- Footer -->
     <footer class="bg-white border-t py-4 px-6 text-center text-sm text-gray-600">
-      Â© 2024 OWNS Link Solutions. All rights reserved.
+      © 2024 OWNS Link Solutions. All rights reserved.
     </footer>
   </div>
 </div>
@@ -380,7 +398,7 @@
   <div class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl animate-slide-in relative max-h-[90vh] overflow-y-auto">
       <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center z-10">
-        <h3 id="customerModalTitle" class="text-xl font-bold text-gray-800">à¦¨à¦¤à§à¦¨ à¦—à§à¦°à¦¾à¦¹à¦•</h3>
+        <h3 id="customerModalTitle" class="text-xl font-bold text-gray-800">নতুন গ্রাহক</h3>
         <button onclick="closeCustomerModal()" class="text-gray-400 hover:text-gray-600">
           <i class="fas fa-times text-xl"></i>
         </button>
@@ -389,25 +407,25 @@
         <input type="hidden" id="customerId">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦—à§à¦°à¦¾à¦¹à¦•à§‡à¦° à¦¨à¦¾à¦® *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">গ্রাহকের নাম *</label>
             <input type="text" id="custName" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦®à§‹à¦¬à¦¾à¦‡à¦² à¦¨à¦®à§à¦¬à¦° *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">মোবাইল নম্বর *</label>
             <input type="tel" id="custMobile" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp à¦¨à¦®à§à¦¬à¦°</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp নম্বর</label>
             <input type="tel" id="custWhatsapp" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Imo à¦¨à¦®à§à¦¬à¦°</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Imo নম্বর</label>
             <input type="tel" id="custImo" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦œà§‹à¦¨ *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">জোন *</label>
             <select id="custZone" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
-              <option value="">à¦¨à¦¿à¦°à§à¦¬à¦¾à¦šà¦¨ à¦•à¦°à§à¦¨</option>
+              <option value="">নির্বাচন করুন</option>
               <option value="Dhaka North">Dhaka North</option>
               <option value="Dhaka South">Dhaka South</option>
               <option value="Mirpur">Mirpur</option>
@@ -416,9 +434,9 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦à¦°à¦¿à¦¯à¦¼à¦¾ *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">এরিয়া *</label>
             <select id="custArea" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
-              <option value="">à¦¨à¦¿à¦°à§à¦¬à¦¾à¦šà¦¨ à¦•à¦°à§à¦¨</option>
+              <option value="">নির্বাচন করুন</option>
               <option value="Area 1">Area 1</option>
               <option value="Area 2">Area 2</option>
               <option value="Area 3">Area 3</option>
@@ -426,17 +444,17 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦ªà§à¦¯à¦¾à¦•à§‡à¦œ *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">প্যাকেজ *</label>
             <select id="custPackage" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
-              <option value="">à¦¨à¦¿à¦°à§à¦¬à¦¾à¦šà¦¨ à¦•à¦°à§à¦¨</option>
-              <option value="5 Mbps - 500">5 Mbps - à§³500</option>
-              <option value="10 Mbps - 800">10 Mbps - à§³800</option>
-              <option value="20 Mbps - 1200">20 Mbps - à§³1200</option>
-              <option value="50 Mbps - 2000">50 Mbps - à§³2000</option>
+              <option value="">নির্বাচন করুন</option>
+              <option value="5 Mbps - 500">5 Mbps - ৳500</option>
+              <option value="10 Mbps - 800">10 Mbps - ৳800</option>
+              <option value="20 Mbps - 1200">20 Mbps - ৳1200</option>
+              <option value="50 Mbps - 2000">50 Mbps - ৳2000</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦¸à§à¦Ÿà§à¦¯à¦¾à¦Ÿà¦¾à¦¸ *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">স্ট্যাটাস *</label>
             <select id="custStatus" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
@@ -444,29 +462,29 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦›à¦¬à¦¿ à¦†à¦ªà¦²à§‹à¦¡</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">ছবি আপলোড</label>
             <input type="file" id="custPhoto" accept="image/*" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
             <img id="photoPreview" class="hidden mt-2 w-20 h-20 object-cover rounded">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">NID à¦†à¦ªà¦²à§‹à¦¡</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">NID আপলোড</label>
             <input type="file" id="custNid" accept="image/*,.pdf" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
             <p id="nidFileName" class="text-sm text-gray-500 mt-1"></p>
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦ à¦¿à¦•à¦¾à¦¨à¦¾</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">ঠিকানা</label>
           <textarea id="custAddress" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none"></textarea>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦®à¦¾à¦¨à¦šà¦¿à¦¤à§à¦°à§‡ à¦…à¦¬à¦¸à§à¦¥à¦¾à¦¨ à¦¨à¦¿à¦°à§à¦¬à¦¾à¦šà¦¨ à¦•à¦°à§à¦¨</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">মানচিত্রে অবস্থান নির্বাচন করুন</label>
           <div id="map" class="rounded-lg border"></div>
           <input type="hidden" id="custLat">
           <input type="hidden" id="custLng">
         </div>
         <div class="flex gap-3 pt-4">
-          <button type="submit" class="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-semibold transition">à¦¸à§‡à¦­ à¦•à¦°à§à¦¨</button>
-          <button type="button" onclick="closeCustomerModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-lg font-semibold transition">à¦¬à¦¾à¦¤à¦¿à¦²</button>
+          <button type="submit" class="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-semibold transition">সেভ করুন</button>
+          <button type="button" onclick="closeCustomerModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-lg font-semibold transition">বাতিল</button>
         </div>
       </form>
     </div>
@@ -479,31 +497,31 @@
   <div class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-slide-in relative">
       <div class="border-b px-6 py-4 flex justify-between items-center">
-        <h3 class="text-xl font-bold text-gray-800">à¦¨à¦¤à§à¦¨ à¦‡à¦¨à¦­à¦¯à¦¼à§‡à¦¸</h3>
+        <h3 class="text-xl font-bold text-gray-800">নতুন ইনভয়েস</h3>
         <button onclick="closeInvoiceModal()" class="text-gray-400 hover:text-gray-600">
           <i class="fas fa-times text-xl"></i>
         </button>
       </div>
       <form id="invoiceForm" class="p-6 space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦—à§à¦°à¦¾à¦¹à¦• à¦¨à¦¿à¦°à§à¦¬à¦¾à¦šà¦¨ *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">গ্রাহক নির্বাচন *</label>
           <select id="invoiceCustomer" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none"></select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦ªà§à¦¯à¦¾à¦•à§‡à¦œ *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">প্যাকেজ *</label>
           <input type="text" id="invoicePackage" required readonly class="w-full px-4 py-2 border rounded-lg bg-gray-50 outline-none">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦ªà¦°à¦¿à¦®à¦¾à¦£ (à§³) *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">পরিমাণ (৳) *</label>
           <input type="number" id="invoiceAmount" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦¡à¦¿à¦‰ à¦¤à¦¾à¦°à¦¿à¦– *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">ডিউ তারিখ *</label>
           <input type="date" id="invoiceDueDate" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
         </div>
         <div class="flex gap-3 pt-4">
-          <button type="submit" class="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-semibold transition">à¦¤à§ˆà¦°à¦¿ à¦•à¦°à§à¦¨</button>
-          <button type="button" onclick="closeInvoiceModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-lg font-semibold transition">à¦¬à¦¾à¦¤à¦¿à¦²</button>
+          <button type="submit" class="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-semibold transition">তৈরি করুন</button>
+          <button type="button" onclick="closeInvoiceModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-lg font-semibold transition">বাতিল</button>
         </div>
       </form>
     </div>
@@ -516,7 +534,7 @@
   <div class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl animate-slide-in relative max-h-[90vh] overflow-y-auto">
       <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center z-10">
-        <h3 id="ticketModalTitle" class="text-xl font-bold text-gray-800">à¦¨à¦¤à§à¦¨ à¦Ÿà¦¿à¦•à§‡à¦Ÿ</h3>
+        <h3 id="ticketModalTitle" class="text-xl font-bold text-gray-800">নতুন টিকেট</h3>
         <button onclick="closeTicketModal()" class="text-gray-400 hover:text-gray-600">
           <i class="fas fa-times text-xl"></i>
         </button>
@@ -525,21 +543,21 @@
         <input type="hidden" id="ticketId">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦—à§à¦°à¦¾à¦¹à¦• *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">গ্রাহক *</label>
             <select id="ticketCustomer" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none"></select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦•à§à¦¯à¦¾à¦Ÿà¦¾à¦—à¦°à¦¿ *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">ক্যাটাগরি *</label>
             <select id="ticketCategory" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
-              <option value="">à¦¨à¦¿à¦°à§à¦¬à¦¾à¦šà¦¨ à¦•à¦°à§à¦¨</option>
-              <option value="Connection Issue">à¦•à¦¾à¦¨à§‡à¦•à¦¶à¦¨ à¦¸à¦®à¦¸à§à¦¯à¦¾</option>
-              <option value="Slow Speed">à¦§à§€à¦° à¦—à¦¤à¦¿</option>
-              <option value="Billing">à¦¬à¦¿à¦²à¦¿à¦‚</option>
-              <option value="Other">à¦…à¦¨à§à¦¯à¦¾à¦¨à§à¦¯</option>
+              <option value="">নির্বাচন করুন</option>
+              <option value="Connection Issue">কানেকশন সমস্যা</option>
+              <option value="Slow Speed">ধীর গতি</option>
+              <option value="Billing">বিলিং</option>
+              <option value="Other">অন্যান্য</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦ªà§à¦°à¦¾à¦¯à¦¼à§‹à¦°à¦¿à¦Ÿà¦¿ *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">প্রায়োরিটি *</label>
             <select id="ticketPriority" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
@@ -548,7 +566,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">à¦¸à§à¦Ÿà§à¦¯à¦¾à¦Ÿà¦¾à¦¸ *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">স্ট্যাটাস *</label>
             <select id="ticketStatus" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
               <option value="Open">Open</option>
               <option value="In Progress">In Progress</option>
@@ -558,18 +576,18 @@
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦¸à¦®à¦¸à§à¦¯à¦¾à¦° à¦¬à¦¿à¦¬à¦°à¦£ *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">সমস্যার বিবরণ *</label>
           <textarea id="ticketDescription" required rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none"></textarea>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">à¦…à¦¬à¦¸à§à¦¥à¦¾à¦¨ (à¦®à§à¦¯à¦¾à¦ª)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">অবস্থান (ম্যাপ)</label>
           <div id="ticketMap" class="rounded-lg border"></div>
           <input type="hidden" id="ticketLat">
           <input type="hidden" id="ticketLng">
         </div>
         <div class="flex gap-3 pt-4">
-          <button type="submit" class="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-semibold transition">à¦¸à§‡à¦­ à¦•à¦°à§à¦¨</button>
-          <button type="button" onclick="closeTicketModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-lg font-semibold transition">à¦¬à¦¾à¦¤à¦¿à¦²</button>
+          <button type="submit" class="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-semibold transition">সেভ করুন</button>
+          <button type="button" onclick="closeTicketModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-lg font-semibold transition">বাতিল</button>
         </div>
       </form>
     </div>
@@ -582,7 +600,7 @@
   <div class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slide-in relative">
       <div class="border-b px-6 py-4 flex justify-between items-center">
-        <h3 class="text-xl font-bold text-gray-800">à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦²</h3>
+        <h3 class="text-xl font-bold text-gray-800">প্রোফাইল</h3>
         <button onclick="closeProfileModal()" class="text-gray-400 hover:text-gray-600">
           <i class="fas fa-times text-xl"></i>
         </button>
@@ -605,26 +623,26 @@
   <div class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate-slide-in relative">
       <div class="border-b px-6 py-4 flex justify-between items-center">
-        <h3 class="text-xl font-bold text-gray-800">à¦¸à§‡à¦Ÿà¦¿à¦‚à¦¸</h3>
+        <h3 class="text-xl font-bold text-gray-800">সেটিংস</h3>
         <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600">
           <i class="fas fa-times text-xl"></i>
         </button>
       </div>
       <div class="p-6 space-y-4">
         <div class="flex items-center justify-between">
-          <span class="text-gray-700">à¦¡à¦¾à¦°à§à¦• à¦®à§‹à¦¡</span>
+          <span class="text-gray-700">ডার্ক মোড</span>
           <button class="w-12 h-6 bg-gray-300 rounded-full relative">
             <span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full"></span>
           </button>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-gray-700">à¦‡à¦®à§‡à¦‡à¦² à¦¨à§‹à¦Ÿà¦¿à¦«à¦¿à¦•à§‡à¦¶à¦¨</span>
+          <span class="text-gray-700">ইমেইল নোটিফিকেশন</span>
           <button class="w-12 h-6 bg-primary rounded-full relative">
             <span class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></span>
           </button>
         </div>
         <div class="pt-4 border-t">
-          <p class="text-sm text-gray-500">à¦­à¦¾à¦°à§à¦¸à¦¨: V3 Ultimate</p>
+          <p class="text-sm text-gray-500">ভার্সন: V3 Ultimate</p>
         </div>
       </div>
     </div>
@@ -684,7 +702,7 @@
         loadTickets();
         loadStaff();
       } else {
-        alert('à¦‡à¦‰à¦œà¦¾à¦° à¦¡à¦¾à¦Ÿà¦¾ à¦ªà¦¾à¦“à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿à¥¤ Admin à¦à¦° à¦¸à¦¾à¦¥à§‡ à¦¯à§‹à¦—à¦¾à¦¯à§‹à¦— à¦•à¦°à§à¦¨à¥¤');
+        alert('ইউজার ডাটা পাওয়া যায়নি। Admin এর সাথে যোগাযোগ করুন।');
         signOut(auth);
       }
     } else {
@@ -703,7 +721,7 @@
       await signInWithEmailAndPassword(auth, email, password);
       errorEl.classList.add('hidden');
     } catch (error) {
-      errorEl.textContent = 'à¦‡à¦®à§‡à¦‡à¦² à¦¬à¦¾ à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦­à§à¦²';
+      errorEl.textContent = 'ইমেইল বা পাসওয়ার্ড ভুল';
       errorEl.classList.remove('hidden');
     }
   });
@@ -773,7 +791,7 @@
     invoicesSnap.forEach(d => {
       if (d.data().status === 'Unpaid') dueAmount += d.data().amount || 0;
     });
-    document.getElementById('dueAmount').textContent = `à§³${dueAmount}`;
+    document.getElementById('dueAmount').textContent = `৳৳${dueAmount}`;
     document.getElementById('pendingTickets').textContent = ticketsSnap.size;
 
     // Charts
@@ -783,7 +801,7 @@
       data: {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
         datasets: [{
-          label: 'à¦†à¦¯à¦¼',
+          label: 'আয়',
           data: [12000, 19000, 15000, 25000, 22000, 30000],
           borderColor: '#1E40AF',
           backgroundColor: 'rgba(30, 64, 175, 0.1)',
@@ -809,7 +827,7 @@
 
   // Customers CRUD
   document.getElementById('addCustomerBtn').addEventListener('click', () => {
-    document.getElementById('customerModalTitle').textContent = 'à¦¨à¦¤à§à¦¨ à¦—à§à¦°à¦¾à¦¹à¦•';
+    document.getElementById('customerModalTitle').textContent = 'নতুন গ্রাহক';
     document.getElementById('customerForm').reset();
     document.getElementById('customerId').value = '';
     document.getElementById('photoPreview').classList.add('hidden');
@@ -903,7 +921,7 @@
       closeCustomerModal();
       loadCustomers();
     } catch (error) {
-      alert('à¦¤à§à¦°à§à¦Ÿà¦¿: ' + error.message);
+      alert('ত্রুটি: ' + error.message);
     }
   });
 
@@ -933,7 +951,7 @@
             <td class="px-4 py-3">${data.zone}</td>
             <td class="px-4 py-3">${data.package}</td>
             <td class="px-4 py-3">
-              <span class="px-2 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800">${data.status}</span>
+              <span class="px-2 py-1 text-xs font-semibold rounded-full bg-৳${statusColor}-100 text-৳${statusColor}-800">${data.status}</span>
             </td>
             <td class="px-4 py-3 text-center">
               <button onclick="editCustomer('${data.id}')" class="text-primary hover:text-primary-hover mx-1">
@@ -949,9 +967,9 @@
       
       // Update zone filter
       const zoneFilter = document.getElementById('zoneFilter');
-      zoneFilter.innerHTML = '<option value="">à¦¸à¦¬ à¦œà§‹à¦¨</option>';
+      zoneFilter.innerHTML = '<option value="">সব জোন</option>';
       zones.forEach(z => {
-        zoneFilter.innerHTML += `<option value="${z}">${z}</option>`;
+        zoneFilter.innerHTML += `<option value="৳${z}">৳${z}</option>`;
       });
       
       // Update customer dropdowns
@@ -963,7 +981,7 @@
     const docSnap = await getDoc(doc(db, 'customers', id));
     if (docSnap.exists()) {
       const data = docSnap.data();
-      document.getElementById('customerModalTitle').textContent = 'à¦—à§à¦°à¦¾à¦¹à¦• à¦à¦¡à¦¿à¦Ÿ';
+      document.getElementById('customerModalTitle').textContent = 'গ্রাহক এডিট';
       document.getElementById('customerId').value = id;
       document.getElementById('custName').value = data.name;
       document.getElementById('custMobile').value = data.mobile;
@@ -985,7 +1003,7 @@
   }
 
   window.deleteCustomer = async (id) => {
-    if (confirm('à¦†à¦ªà¦¨à¦¿ à¦•à¦¿ à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦à¦‡ à¦—à§à¦°à¦¾à¦¹à¦• à¦¡à¦¿à¦²à¦¿à¦Ÿ à¦•à¦°à¦¤à§‡ à¦šà¦¾à¦¨?')) {
+    if (confirm('আপনি কি নিশ্চিত এই গ্রাহক ডিলিট করতে চান?')) {
       await deleteDoc(doc(db, 'customers', id));
       loadCustomers();
     }
@@ -1022,7 +1040,7 @@
     const customer = allCustomers.find(c => c.id === e.target.value);
     if (customer) {
       document.getElementById('invoicePackage').value = customer.package;
-      const amount = customer.package.split('-')[1]?.replace('à§³', '').trim() || 0;
+      const amount = customer.package.split('-')[1]?.replace('৳', '').trim() || 0;
       document.getElementById('invoiceAmount').value = amount;
     }
   });
@@ -1066,10 +1084,10 @@
           <tr class="hover:bg-gray-50">
             <td class="px-4 py-3 font-medium">${data.invoiceNo}</td>
             <td class="px-4 py-3">${data.customerName}</td>
-            <td class="px-4 py-3">à§³${data.amount}</td>
-            <td class="px-4 py-3">${dueDate}</td>
+            <td class="px-4 py-3">৳${data.amount}</td>
+            <td class="px-4 py-3">৳${dueDate}</td>
             <td class="px-4 py-3">
-              <span class="px-2 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800">${data.status}</span>
+              <span class="px-2 py-1 text-xs font-semibold rounded-full bg-৳${statusColor}-100 text-৳${statusColor}-800">${data.status}</span>
             </td>
             <td class="px-4 py-3 text-center">
               ${data.status === 'Unpaid' ? `<button onclick="markPaid('${data.id}')" class="text-green-600 hover:text-green-700 mx-1"><i class="fas fa-check"></i></button>` : ''}
@@ -1086,14 +1104,14 @@
   }
 
   window.deleteInvoice = async (id) => {
-    if (confirm('à¦‡à¦¨à¦­à¦¯à¦¼à§‡à¦¸ à¦¡à¦¿à¦²à¦¿à¦Ÿ à¦•à¦°à¦¬à§‡à¦¨?')) {
+    if (confirm('ইনভয়েস ডিলিট করবেন?')) {
       await deleteDoc(doc(db, 'invoices', id));
     }
   }
 
   // Tickets
   document.getElementById('newTicketBtn').addEventListener('click', () => {
-    document.getElementById('ticketModalTitle').textContent = 'à¦¨à¦¤à§à¦¨ à¦Ÿà¦¿à¦•à§‡à¦Ÿ';
+    document.getElementById('ticketModalTitle').textContent = 'নতুন টিকেট';
     document.getElementById('ticketForm').reset();
     document.getElementById('ticketId').value = '';
     openTicketModal();
@@ -1166,21 +1184,21 @@
         const statusColor = { Open: 'red', 'In Progress': 'yellow', Resolved: 'green', Closed: 'gray' }[data.status];
         
         grid.innerHTML += `
-          <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-${priorityColor}-500">
+          <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-৳${priorityColor}-500">
             <div class="flex justify-between items-start mb-3">
               <div>
                 <h4 class="font-bold text-gray-800">${data.ticketNo}</h4>
                 <p class="text-sm text-gray-600">${data.customerName}</p>
               </div>
-              <span class="px-2 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800">${data.status}</span>
+              <span class="px-2 py-1 text-xs font-semibold rounded-full bg-৳${statusColor}-100 text-৳${statusColor}-800">${data.status}</span>
             </div>
             <p class="text-sm text-gray-700 mb-3">${data.description}</p>
             <div class="flex items-center justify-between text-xs text-gray-500">
               <span><i class="fas fa-tag mr-1"></i>${data.category}</span>
-              <span class="px-2 py-1 rounded bg-${priorityColor}-100 text-${priorityColor}-800">${data.priority}</span>
+              <span class="px-2 py-1 rounded bg-৳${priorityColor}-100 text-৳${priorityColor}-800">${data.priority}</span>
             </div>
             <button onclick="viewTicket('${data.id}')" class="mt-3 w-full bg-primary hover:bg-primary-hover text-white py-2 rounded-lg text-sm transition flex items-center justify-center gap-2">
-              <i class="fas fa-eye"></i> à¦¬à¦¿à¦¸à§à¦¤à¦¾à¦°à¦¿à¦¤ à¦¦à§‡à¦–à§à¦¨
+              <i class="fas fa-eye"></i> বিস্তারিত দেখুন
             </button>
           </div>
         `;
@@ -1192,7 +1210,7 @@
     const docSnap = await getDoc(doc(db, 'tickets', id));
     if (docSnap.exists()) {
       const data = docSnap.data();
-      document.getElementById('ticketModalTitle').textContent = data.ticketNo + ' - à¦à¦¡à¦¿à¦Ÿ';
+      document.getElementById('ticketModalTitle').textContent = data.ticketNo + ' - এডিট';
       document.getElementById('ticketId').value = id;
       document.getElementById('ticketCustomer').value = data.customerId;
       document.getElementById('ticketCategory').value = data.category;
@@ -1228,14 +1246,14 @@
           </td>
           <td class="px-4 py-3">${data.email}</td>
           <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${data.role}</span></td>
-          <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800">${data.active ? 'Active' : 'Inactive'}</span></td>
+          <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-৳${statusColor}-100 text-৳${statusColor}-800">${data.active ? 'Active' : 'Inactive'}</span></td>
         </tr>
       `;
     });
     
     // Update staff filter
     const staffFilter = document.getElementById('filterStaff');
-    staffFilter.innerHTML = '<option value="">à¦¸à¦¬ à¦¸à§à¦Ÿà¦¾à¦«</option>';
+    staffFilter.innerHTML = '<option value="">সব স্টাফ</option>';
     allStaff.forEach(s => {
       staffFilter.innerHTML += `<option value="${s.id}">${s.name}</option>`;
     });
@@ -1279,10 +1297,10 @@
       
       tbody.innerHTML += `
         <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3">${date}</td>
+          <td class="px-4 py-3">৳${date}</td>
           <td class="px-4 py-3">${item.customerName}</td>
           <td class="px-4 py-3">${customer?.zone || ''} / ${customer?.area || ''}</td>
-          <td class="px-4 py-3">à§³${item.amount}</td>
+          <td class="px-4 py-3">৳${item.amount}</td>
           <td class="px-4 py-3">${staff?.name || 'N/A'}</td>
           <td class="px-4 py-3">
             <span class="px-2 py-1 text-xs font-semibold rounded-full ${item.status === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${item.status}</span>
@@ -1293,7 +1311,7 @@
   }
 
   document.getElementById('exportExcelBtn').addEventListener('click', () => {
-    const rows = [['à¦¤à¦¾à¦°à¦¿à¦–', 'à¦—à§à¦°à¦¾à¦¹à¦•', 'à¦œà§‹à¦¨/à¦à¦°à¦¿à¦¯à¦¼à¦¾', 'à¦ªà¦°à¦¿à¦®à¦¾à¦£', 'à¦¸à§à¦Ÿà¦¾à¦«', 'à¦¸à§à¦Ÿà§à¦¯à¦¾à¦Ÿà¦¾à¦¸']];
+    const rows = [['তারিখ', 'গ্রাহক', 'জোন/এরিয়া', 'পরিমাণ', 'স্টাফ', 'স্ট্যাটাস']];
     document.querySelectorAll('#reportTableBody tr').forEach(tr => {
       const row = [];
       tr.querySelectorAll('td').forEach(td => row.push(td.textContent.trim()));
@@ -1318,7 +1336,7 @@
     const areas = new Set();
     
     selects.forEach(select => {
-      select.innerHTML = '<option value="">à¦—à§à¦°à¦¾à¦¹à¦• à¦¨à¦¿à¦°à§à¦¬à¦¾à¦šà¦¨ à¦•à¦°à§à¦¨</option>';
+      select.innerHTML = '<option value="">গ্রাহক নির্বাচন করুন</option>';
     });
     
     allCustomers.forEach(c => {
@@ -1329,11 +1347,11 @@
       });
     });
     
-    zoneFilter.innerHTML = '<option value="">à¦¸à¦¬ à¦œà§‹à¦¨</option>';
-    zones.forEach(z => zoneFilter.innerHTML += `<option value="${z}">${z}</option>`);
+    zoneFilter.innerHTML = '<option value="">সব জোন</option>';
+    zones.forEach(z => zoneFilter.innerHTML += `<option value="৳${z}">৳${z}</option>`);
     
-    areaFilter.innerHTML = '<option value="">à¦¸à¦¬ à¦à¦°à¦¿à¦¯à¦¼à¦¾</option>';
-    areas.forEach(a => areaFilter.innerHTML += `<option value="${a}">${a}</option>`);
+    areaFilter.innerHTML = '<option value="">সব এরিয়া</option>';
+    areas.forEach(a => areaFilter.innerHTML += `<option value="৳${a}">৳${a}</option>`);
   }
 
   // Profile & Settings Modals
@@ -1362,6 +1380,13 @@
   // Init
   renderReportTable([]);
 </script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+<script>
+  // Global error handler
+  window.onerror = function(msg, url, line, col, error) {
+    console.error('Global Error:', msg);
+    alert('একটি সমস্যা হয়েছে। পেজ রিফ্রেশ করুন।');
+    return true;
+  };
+(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
