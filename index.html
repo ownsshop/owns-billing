@@ -377,6 +377,11 @@ img,video{max-width:100%;height:auto}
 .sm\:text-3xl{font-size:1.875rem;line-height:2.25rem}
 .sm\:text-xl{font-size:1.25rem;line-height:1.75rem}
 }
+@media (min-width:768px){
+.md\:flex{display:flex}
+.md\:hidden{display:none}
+.md\:translate-x-0{--tw-translate-x:0px;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}
+}
 @media (min-width:1024px){
 .lg\:ml-64{margin-left:16rem}
 .lg\:flex{display:flex}
@@ -534,7 +539,7 @@ img,video{max-width:100%;height:auto}
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-3">
-                    <button id="sidebarToggle" class="lg:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    <button id="openSidebarBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
                     <div class="flex items-center gap-2">
@@ -577,7 +582,7 @@ img,video{max-width:100%;height:auto}
     </header>
 
     <div class="flex">
-        <aside id="sidebar" class="hidden lg:flex flex-col w-64 fixed left-0 top-16 bottom-0 glass border-r border-gray-200 dark:border-gray-700 overflow-y-auto custom-scrollbar">
+        <aside id="sidebar" class="hidden md:flex flex-col w-64 fixed left-0 top-16 bottom-0 glass border-r border-gray-200 dark:border-gray-700 overflow-y-auto custom-scrollbar md:translate-x-0">
             <nav class="flex-1 p-4 space-y-1" id="sidebarNav"></nav>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700">
                 <div class="bg-gradient-to-r from-primary-500 to-purple-600 rounded-xl p-4 text-white">
@@ -587,8 +592,8 @@ img,video{max-width:100%;height:auto}
             </div>
         </aside>
 
-        <div id="mobileSidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
-        <aside id="mobileSidebar" class="fixed left-0 top-0 bottom-0 w-72 z-50 glass transform -translate-x-full transition-transform duration-300 lg:hidden overflow-y-auto custom-scrollbar border-r border-gray-200 dark:border-gray-700">
+        <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"></div>
+        <aside id="mobileSidebar" class="fixed top-0 left-0 bottom-0 w-72 z-50 glass transform -translate-x-full transition-transform duration-300 md:hidden overflow-y-auto custom-scrollbar border-r border-gray-200 dark:border-gray-700">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -596,19 +601,19 @@ img,video{max-width:100%;height:auto}
                     </div>
                     <h2 class="font-bold">OwnsBilling</h2>
                 </div>
-                <button id="mobileSidebarClose" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+                <button id="closeSidebarBtn" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
             <nav class="p-4 space-y-1" id="mobileSidebarNav"></nav>
         </aside>
 
-        <main id="mainContent" class="flex-1 lg:ml-64 pb-20 lg:pb-6">
+        <main id="mainContent" class="flex-1 md:ml-64 pb-20 lg:pb-6">
             <div class="p-4 sm:p-6 lg:p-8" id="contentArea"></div>
         </main>
     </div>
 
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-gray-200 dark:border-gray-700 bottom-nav-safe z-40">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-gray-200 dark:border-gray-700 bottom-nav-safe z-40">
         <div class="flex justify-around items-center h-16" id="bottomNav"></div>
     </nav>
 
@@ -730,9 +735,14 @@ img,video{max-width:100%;height:auto}
         }, 3000);
     }
 
-    function closeMobileSidebar() {
+    function closeSidebar() {
         document.getElementById('mobileSidebar').classList.add('-translate-x-full');
-        document.getElementById('mobileSidebarOverlay').classList.add('hidden');
+        document.getElementById('sidebarOverlay').classList.add('hidden');
+    }
+
+    function openSidebar() {
+        document.getElementById('mobileSidebar').classList.remove('-translate-x-full');
+        document.getElementById('sidebarOverlay').classList.remove('hidden');
     }
 
     function showModal(title, content) {
@@ -947,7 +957,7 @@ img,video{max-width:100%;height:auto}
             document.querySelectorAll(`.nav-item-${pageId}`).forEach(el => {
                 el.classList.add('bg-primary-100', 'dark:bg-gray-800', 'text-primary-600');
             });
-            closeMobileSidebar();
+            if(window.innerWidth < 768) closeSidebar();
         }
     }
 
@@ -1264,7 +1274,6 @@ img,video{max-width:100%;height:auto}
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
-                        </div>
                         <div class="flex justify-between items-center py-2">
                             <span class="text-gray-600 dark:text-gray-400">Password</span>
                             <div class="flex items-center gap-2">
@@ -2847,6 +2856,23 @@ img,video{max-width:100%;height:auto}
                     break;
             }
         });
+
+        // Mobile sidebar specific listeners
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeSidebar);
+            closeBtn.addEventListener('touchstart', closeSidebar);
+        }
+
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', closeSidebar);
+        }
+
+        const openBtn = document.getElementById('openSidebarBtn');
+        if (openBtn) {
+            openBtn.addEventListener('click', openSidebar);
+        }
     }
 
     // 4. Auth State Listener with Error Handling
@@ -2886,7 +2912,6 @@ img,video{max-width:100%;height:auto}
 
     // Set persistence and timeout
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
-        // Persistence set successfully
         authTimeoutId = setTimeout(() => {
             if (!authInitialized) {
                 console.error('Auth timeout - Firebase took too long to respond');
@@ -2895,7 +2920,6 @@ img,video{max-width:100%;height:auto}
         }, 10000);
     }).catch((error) => {
         console.error('Persistence error:', error);
-        // Continue anyway - persistence is optional but helpful
     });
 
     async function loadUserData(uid) {
@@ -2986,13 +3010,6 @@ img,video{max-width:100%;height:auto}
             localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
         });
 
-        document.getElementById('sidebarToggle').addEventListener('click', () => {
-            document.getElementById('mobileSidebar').classList.remove('-translate-x-full');
-            document.getElementById('mobileSidebarOverlay').classList.remove('hidden');
-        });
-        document.getElementById('mobileSidebarClose').addEventListener('click', closeMobileSidebar);
-        document.getElementById('mobileSidebarOverlay').addEventListener('click', closeMobileSidebar);
-
         document.getElementById('profileBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             document.getElementById('profileDropdown').classList.toggle('hidden');
@@ -3036,6 +3053,7 @@ img,video{max-width:100%;height:auto}
         });
     }
 </script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
