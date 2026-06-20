@@ -2,12 +2,11 @@
 <html lang="en" class="scroll-smooth">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>OwnsBilling - ISP Billing Management</title>
 <meta name="description" content="Complete ISP Billing Solution with role-based access">
 <meta name="theme-color" content="#0ea5e9">
 <style>
-/* Tailwind CSS v3.4.1 - Compiled Core Utilities Only */
 *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
 ::before,::after{--tw-content:''}
 html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
@@ -353,7 +352,7 @@ img,video{max-width:100%;height:auto}
 .hover\:text-green-700:hover{--tw-text-opacity:1;color:rgb(21 128 61 / var(--tw-text-opacity))}
 .hover\:text-primary-600:hover{--tw-text-opacity:1;color:rgb(2 132 199 / var(--tw-text-opacity))}
 .hover\:text-primary-700:hover{--tw-text-opacity:1;color:rgb(3 105 161 / var(--tw-text-opacity))}
-.hover\:text-red-700:hover{--tw-text-opacity:1;color:rgb(185 28 28 / var(--tw-text-opacity))}
+.hover\:text-red-700:hover{--tw-text-opacity:1;color:rgb(185 28 / var(--tw-text-opacity))}
 .hover\:underline:hover{text-decoration:underline}
 .hover\:shadow-xl:hover{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1),0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color),0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
 .focus\:border-transparent:focus{border-color:transparent}
@@ -449,21 +448,33 @@ img,video{max-width:100%;height:auto}
 .bottom-nav-safe{padding-bottom:env(safe-area-inset-bottom)}
 .loader{border:3px solid #f3f3f3;border-top:3px solid var(--primary);border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite}
 .badge-count{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;background:#ef4444;color:white;border-radius:9px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.error-state{text-align:center;padding:2rem}
+.chart-placeholder{min-height:200px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.03);border-radius:0.75rem}
+.dark .chart-placeholder{background:rgba(255,255,255,0.03)}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiT3duc0JpbGxpbmciLCJzaG9ydF9uYW1lIjoiT3duc0JpbGxpbmciLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzBlYTVlOSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUIzYVdSMGFEMGlNVEk0SWlCb1pXbG5hSFE5SWpFNU1pSWdkbWxsZDBKdmVEMGlNQ0F3SlRJd0pUZ2lJSGh0Ykc1elBTSWpNalUySWlCNVBTSXhNaUlCQm1qNE5EUXhJalQ5SWlNOVpXeHNMekV1SWlCdmNtMW1JaUJ5WVdKaVltRnVheUk5SWpZMlBpQkRiMjUwWlhoMFBTSXlNQ0lpSUhaMGJEd0NiM0prWlhKMGIydDFabUZ5YzJFdlltVTlJVGxEYVZoQklpd2lMejFqWldNaWZTd2lmVFNBWDFKU1ZXVlgwZ1JhbDNaVmtVUm1WSlZURmlVMUozVVdKVVRVVUlmUT09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwiLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn1dfQ==">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiT3duc0JpbGxpbmciLCJzaG9ydF9uYW1lIjoiT3duc0JpbGxpbmciLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZiIsInRoZW1lX2NvbG9yIjoiIzBlYTVlOSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUIzYVdSMGFEMGlNVEk0SWlCb1pXbG5hSFE5SWpFNU1pSWdkbWxsZDBKdmVEMGlNQ0F3SlRJd0pUZ2lJSGh0Ykc1elBTSWpNalUySWlCNVBTSXhNaUlCQm1qNE5EUXhJalQ5SWlNOVpXeHNMekV1SWlCdmNtMW1JaUJ5WVdKaVltRnVheUk5SWpZMlBpQkRiMjUwWlhoMFBTSXlNQ0lpSUhaMGJEd0NiM0prWlhKMGIydDFabUZ5YzJFdlltVTlJVGxEYVZoQklpd2lMejFqWldNaWZTd2lmVFNBWDFKU1ZXVlgwZ1JhbDNaVmtVUm1WSlZURmlVMUozVVdKVVRVVUlmUT09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwiLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn1dfQ==">
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
-<div id="loadingScreen" class="fixed inset-0 z-[100] bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
-    <div class="text-center">
+<div id="appLoader" class="fixed inset-0 z-[100] bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
+    <div class="text-center px-4">
         <div class="loader mx-auto mb-4"></div>
         <h2 class="text-white text-2xl font-bold">OwnsBilling</h2>
-        <p class="text-white/80 text-sm mt-2">Loading ISP Management...</p>
+        <p id="loaderText" class="text-white/80 text-sm mt-2">Loading ISP Management...</p>
+        <div id="loaderError" class="hidden mt-4">
+            <p class="text-white/90 text-sm mb-4">Connection timeout. Please check your internet.</p>
+            <button onclick="window.location.reload()" class="bg-white text-primary-600 font-semibold px-6 py-2 rounded-xl">
+                <i class="fas fa-redo mr-2"></i>Retry
+            </button>
+        </div>
     </div>
 </div>
 
@@ -612,14 +623,8 @@ img,video{max-width:100%;height:auto}
 
 <div id="modalContainer"></div>
 
-<script type="module">
-    // 1. Imports
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-    import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
-
-    // 2. Firebase Config + Init
+<script>
+    // 1. Firebase Config + Init with Compat SDK
     const firebaseConfig = {
         apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
         authDomain: "owns-billing.firebaseapp.com",
@@ -629,12 +634,22 @@ img,video{max-width:100%;height:auto}
         appId: "1:1036958677443:web:5541baa54edc6e5f582576"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
+    let app, auth, db, storage;
+    let authInitialized = false;
+    let authTimeoutId = null;
+    let chartLoaded = false;
 
-    // 3. All const/let variables
+    try {
+        app = firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+        storage = firebase.storage();
+    } catch (error) {
+        console.error('Firebase initialization error:', error);
+        hideLoaderWithError('Failed to initialize app. Please refresh.');
+    }
+
+    // 2. All const/let variables
     let currentUser = null;
     let userRole = null;
     let companyData = null;
@@ -678,7 +693,19 @@ img,video{max-width:100%;height:auto}
         ]
     };
 
-    // 4. All function declarations
+    // 3. Helper Functions
+    function hideLoader() {
+        const loader = document.getElementById('appLoader');
+        if (loader) loader.classList.add('hidden');
+    }
+
+    function hideLoaderWithError(message) {
+        const loaderText = document.getElementById('loaderText');
+        const loaderError = document.getElementById('loaderError');
+        if (loaderText) loaderText.textContent = message;
+        if (loaderError) loaderError.classList.remove('hidden');
+    }
+
     function showToast(message, type = 'success') {
         const colors = {
             success: 'bg-green-500',
@@ -735,16 +762,35 @@ img,video{max-width:100%;height:auto}
 
     async function addLog(action, details) {
         try {
-            await addDoc(collection(db, 'logs'), {
+            await db.collection('logs').add({
                 action,
                 details,
                 userId: currentUser.uid,
                 userName: document.getElementById('userName').textContent,
-                timestamp: serverTimestamp()
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         } catch (error) {
             console.error('Error adding log:', error);
         }
+    }
+
+    function loadChartJS(callback) {
+        if (window.Chart || chartLoaded) {
+            callback();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+        script.defer = true;
+        script.onload = function() {
+            chartLoaded = true;
+            callback();
+        };
+        script.onerror = function() {
+            console.error('Failed to load Chart.js');
+            callback(new Error('Chart load failed'));
+        };
+        document.head.appendChild(script);
     }
 
     function updateNotificationBadge() {
@@ -763,6 +809,7 @@ img,video{max-width:100%;height:auto}
 
     function renderNotifications() {
         const list = document.getElementById('notificationList');
+        if (!list) return;
         const relevant = allData.complaints.filter(c => 
             (userRole === 'admin') ||
             (userRole === 'staff' && c.assignedStaff === currentUser.uid) ||
@@ -913,7 +960,6 @@ img,video{max-width:100%;height:auto}
         const dueBills = allData.bills.filter(b => b.status === 'Due' || b.status === 'Partial');
         const paidBills = allData.bills.filter(b => b.status === 'Paid');
         const totalCollection = paidBills.reduce((sum, b) => sum + (b.paidAmount || 0), 0);
-        const totalDue = dueBills.reduce((sum, b) => sum + ((b.amount || 0) - (b.paidAmount || 0)), 0);
         
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -980,11 +1026,19 @@ img,video{max-width:100%;height:auto}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                         <h3 class="font-semibold mb-4">Monthly Collection</h3>
-                        <canvas id="collectionChart"></canvas>
+                        <div id="collectionChartContainer">
+                            <div class="chart-placeholder">
+                                <i class="fas fa-chart-line text-gray-400 text-4xl"></i>
+                            </div>
+                        </div>
                     </div>
                     <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                         <h3 class="font-semibold mb-4">Due vs Paid</h3>
-                        <canvas id="statusChart"></canvas>
+                        <div id="statusChartContainer">
+                            <div class="chart-placeholder">
+                                <i class="fas fa-chart-pie text-gray-400 text-4xl"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1007,12 +1061,22 @@ img,video{max-width:100%;height:auto}
             </div>
         `;
 
-        setTimeout(renderAdminCharts, 100);
+        setTimeout(() => renderAdminCharts(), 100);
     }
 
     function renderAdminCharts() {
-        const ctx1 = document.getElementById('collectionChart');
-        if (ctx1) {
+        loadChartJS((error) => {
+            if (error) {
+                document.getElementById('collectionChartContainer').innerHTML = '<div class="chart-placeholder"><p class="text-gray-500">Charts unavailable</p></div>';
+                document.getElementById('statusChartContainer').innerHTML = '<div class="chart-placeholder"><p class="text-gray-500">Charts unavailable</p></div>';
+                return;
+            }
+
+            const ctx1 = document.createElement('canvas');
+            ctx1.id = 'collectionChart';
+            document.getElementById('collectionChartContainer').innerHTML = '';
+            document.getElementById('collectionChartContainer').appendChild(ctx1);
+            
             new Chart(ctx1, {
                 type: 'line',
                 data: {
@@ -1032,10 +1096,12 @@ img,video{max-width:100%;height:auto}
                     plugins: { legend: { display: false } }
                 }
             });
-        }
 
-        const ctx2 = document.getElementById('statusChart');
-        if (ctx2) {
+            const ctx2 = document.createElement('canvas');
+            ctx2.id = 'statusChart';
+            document.getElementById('statusChartContainer').innerHTML = '';
+            document.getElementById('statusChartContainer').appendChild(ctx2);
+            
             const paid = allData.bills.filter(b => b.status === 'Paid').length;
             const due = allData.bills.filter(b => b.status === 'Due').length;
             const partial = allData.bills.filter(b => b.status === 'Partial').length;
@@ -1053,7 +1119,7 @@ img,video{max-width:100%;height:auto}
                     maintainAspectRatio: true
                 }
             });
-        }
+        });
     }
 
     function showStaffDashboard() {
@@ -1207,6 +1273,7 @@ img,video{max-width:100%;height:auto}
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
+                        </div>
                         <button data-action="checkPPPoEStatus" class="w-full mt-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-xl transition">
                             <i class="fas fa-satellite-dish mr-2"></i>Check Connection Status
                         </button>
@@ -1221,8 +1288,15 @@ img,video{max-width:100%;height:auto}
     }
 
     function copyToClipboard(text) {
-        navigator.clipboard.writeText(text);
-        showToast('Copied to clipboard!', 'success');
+        if (!text || text === 'N/A') {
+            showToast('Nothing to copy', 'warning');
+            return;
+        }
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Copied to clipboard!', 'success');
+        }).catch(() => {
+            showToast('Copy failed', 'error');
+        });
     }
 
     function showPaymentInfo() {
@@ -1252,6 +1326,11 @@ img,video{max-width:100%;height:auto}
     function showCustomers() { showDataTable('customers', 'Customers', allData.customers); }
     function showStaff() { showDataTable('staff', 'Staff', allData.staff); }
     function showPackages() { showDataTable('packages', 'Packages', allData.packages); }
+    function showStaffCustomers() {
+        const myCustomers = allData.customers.filter(c => c.assignedStaff === currentUser.uid);
+        showDataTable('customers', 'My Customers', myCustomers, true);
+    }
+
     function showInvoiceGenerator() {
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
@@ -1375,10 +1454,10 @@ img,video{max-width:100%;height:auto}
             data.amount = Number(data.amount);
             data.paidAmount = data.status === 'Paid' ? data.amount : 0;
             data.createdBy = currentUser.uid;
-            data.createdAt = serverTimestamp();
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
 
             try {
-                const docRef = await addDoc(collection(db, 'bills'), data);
+                await db.collection('bills').add(data);
                 await addLog('Bill created', `Bill for month ${data.month} created`);
                 showToast('Invoice created successfully!', 'success');
                 
@@ -1406,11 +1485,6 @@ img,video{max-width:100%;height:auto}
 
     function showBulkBillModal() {
         showToast('Auto bill generation for 1st of month - Cron job placeholder', 'info');
-    }
-
-    function showStaffCustomers() {
-        const myCustomers = allData.customers.filter(c => c.assignedStaff === currentUser.uid);
-        showDataTable('customers', 'My Customers', myCustomers, true);
     }
 
     function showStaffDueBills() {
@@ -1533,22 +1607,22 @@ img,video{max-width:100%;height:auto}
             
             try {
                 if (existing) {
-                    await updateDoc(doc(db, 'promiseDates', existing.id), {
+                    await db.collection('promiseDates').doc(existing.id).update({
                         promiseDate: data.promiseDate,
                         note: data.note,
-                        updatedAt: serverTimestamp()
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     await addLog('Promise date updated', `Updated promise date for ${customer?.name}`);
                     showToast('Promise date updated!', 'success');
                 } else {
-                    await addDoc(collection(db, 'promiseDates'), {
+                    await db.collection('promiseDates').add({
                         billId,
                         customerId,
                         promiseDate: data.promiseDate,
                         note: data.note,
                         createdBy: currentUser.uid,
                         status: 'pending',
-                        createdAt: serverTimestamp()
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     await addLog('Promise date set', `Set promise date for ${customer?.name} - ${data.promiseDate}`);
                     showToast('Promise date saved!', 'success');
@@ -1657,9 +1731,9 @@ img,video{max-width:100%;height:auto}
     async function markPromiseCollected(promiseId) {
         if (!confirm('Mark this as collected?')) return;
         try {
-            await updateDoc(doc(db, 'promiseDates', promiseId), {
+            await db.collection('promiseDates').doc(promiseId).update({
                 status: 'done',
-                collectedAt: serverTimestamp(),
+                collectedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 collectedBy: currentUser.uid
             });
             await addLog('Promise collected', 'Bill collected on promise date');
@@ -1940,6 +2014,10 @@ img,video{max-width:100%;height:auto}
     }
 
     function exportToPDF() {
+        if (!window.jspdf) {
+            showToast('PDF library not loaded', 'error');
+            return;
+        }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
@@ -1955,6 +2033,10 @@ img,video{max-width:100%;height:auto}
     }
 
     function exportToExcel() {
+        if (!window.XLSX) {
+            showToast('Excel library not loaded', 'error');
+            return;
+        }
         const table = document.getElementById('reportTable');
         const wb = XLSX.utils.table_to_book(table);
         XLSX.writeFile(wb, 'bills-report.xlsx');
@@ -2034,9 +2116,9 @@ img,video{max-width:100%;height:auto}
 
     async function markComplaintSolved(complaintId) {
         try {
-            await updateDoc(doc(db, 'complaints', complaintId), { 
+            await db.collection('complaints').doc(complaintId).update({ 
                 status: 'Solved', 
-                solvedAt: serverTimestamp(),
+                solvedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 solvedBy: currentUser.uid
             });
             await addLog('Complaint solved', 'Complaint marked as solved by staff');
@@ -2091,10 +2173,10 @@ img,video{max-width:100%;height:auto}
             const data = Object.fromEntries(formData);
             data.customerId = currentUser.uid;
             data.status = 'Pending';
-            data.createdAt = serverTimestamp();
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
 
             try {
-                await addDoc(collection(db, 'complaints'), data);
+                await db.collection('complaints').add(data);
                 await addLog('Complaint submitted', 'New complaint submitted by customer');
                 showToast('Complaint submitted successfully!', 'success');
                 e.target.reset();
@@ -2190,8 +2272,8 @@ img,video{max-width:100%;height:auto}
             const data = Object.fromEntries(formData);
             
             try {
-                const companyRef = doc(db, 'company', 'main');
-                await setDoc(companyRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+                const companyRef = db.collection('company').doc('main');
+                await companyRef.set({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
                 await addLog('Company info updated', 'Company information updated');
                 showToast('Company info saved successfully!', 'success');
             } catch (error) {
@@ -2518,11 +2600,11 @@ img,video{max-width:100%;height:auto}
             
             try {
                 if (customerId) {
-                    await updateDoc(doc(db, 'customers', customerId), { ...data, updatedAt: serverTimestamp() });
+                    await db.collection('customers').doc(customerId).update({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
                     await addLog('Customer updated', `${data.name} details updated`);
                     showToast('Customer updated successfully!', 'success');
                 } else {
-                    await addDoc(collection(db, 'customers'), { ...data, createdAt: serverTimestamp(), status: 'Active' });
+                    await db.collection('customers').add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp(), status: 'Active' });
                     await addLog('Customer added', `${data.name} added to system`);
                     showToast('Customer added successfully!', 'success');
                 }
@@ -2558,6 +2640,7 @@ img,video{max-width:100%;height:auto}
                         <label class="block text-sm font-medium mb-2">Address</label>
                         <input type="text" name="address" value="${staff?.address || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
                     </div>
+                </div>
                 <div class="flex gap-3 pt-4">
                     <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
                         ${staff ? 'Update' : 'Add'} Staff
@@ -2574,11 +2657,11 @@ img,video{max-width:100%;height:auto}
             
             try {
                 if (staffId) {
-                    await updateDoc(doc(db, 'staff', staffId), { ...data, updatedAt: serverTimestamp() });
+                    await db.collection('staff').doc(staffId).update({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
                     await addLog('Staff updated', `${data.name} details updated`);
                     showToast('Staff updated successfully!', 'success');
                 } else {
-                    await addDoc(collection(db, 'staff'), { ...data, createdAt: serverTimestamp() });
+                    await db.collection('staff').add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                     await addLog('Staff added', `${data.name} added to system`);
                     showToast('Staff added successfully!', 'success');
                 }
@@ -2623,11 +2706,11 @@ img,video{max-width:100%;height:auto}
             
             try {
                 if (packageId) {
-                    await updateDoc(doc(db, 'packages', packageId), { ...data, updatedAt: serverTimestamp() });
+                    await db.collection('packages').doc(packageId).update({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
                     await addLog('Package updated', `${data.name} updated`);
                     showToast('Package updated successfully!', 'success');
                 } else {
-                    await addDoc(collection(db, 'packages'), { ...data, createdAt: serverTimestamp() });
+                    await db.collection('packages').add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                     await addLog('Package added', `${data.name} created`);
                     showToast('Package added successfully!', 'success');
                 }
@@ -2647,7 +2730,7 @@ img,video{max-width:100%;height:auto}
     async function deleteItem(type, id) {
         if (!confirm('Are you sure you want to delete this item?')) return;
         try {
-            await deleteDoc(doc(db, type, id));
+            await db.collection(type).doc(id).delete();
             await addLog(`${type} deleted`, `Item ${id} removed`);
             showToast('Deleted successfully!', 'success');
         } catch (error) {
@@ -2656,8 +2739,12 @@ img,video{max-width:100%;height:auto}
     }
 
     async function handleLogout() {
-        await signOut(auth);
-        showToast('Logged out successfully', 'info');
+        try {
+            await auth.signOut();
+            showToast('Logged out successfully', 'info');
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
     }
 
     function initializeAppUI() {
@@ -2762,90 +2849,131 @@ img,video{max-width:100%;height:auto}
         });
     }
 
-    // 5. onAuthStateChanged listener
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            currentUser = user;
-            await loadUserData(user.uid);
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-            initializeAppUI();
-            checkTodayPromiseDates();
-        } else {
-            currentUser = null;
-            userRole = null;
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('app').classList.add('hidden');
+    // 4. Auth State Listener with Error Handling
+    auth.onAuthStateChanged((user) => {
+        try {
+            if (authTimeoutId) {
+                clearTimeout(authTimeoutId);
+                authTimeoutId = null;
+            }
+
+            if (user) {
+                currentUser = user;
+                authInitialized = true;
+                loadUserData(user.uid).then(() => {
+                    hideLoader();
+                    document.getElementById('authScreen').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
+                    initializeAppUI();
+                    checkTodayPromiseDates();
+                }).catch((error) => {
+                    console.error('Error loading user data:', error);
+                    hideLoaderWithError('Failed to load user data');
+                });
+            } else {
+                currentUser = null;
+                userRole = null;
+                authInitialized = true;
+                hideLoader();
+                document.getElementById('authScreen').classList.remove('hidden');
+                document.getElementById('app').classList.add('hidden');
+            }
+        } catch (error) {
+            console.error('Auth state change error:', error);
+            hideLoaderWithError('Authentication error occurred');
         }
     });
 
+    // Set persistence and timeout
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+        // Persistence set successfully
+        authTimeoutId = setTimeout(() => {
+            if (!authInitialized) {
+                console.error('Auth timeout - Firebase took too long to respond');
+                hideLoaderWithError('Connection timeout');
+            }
+        }, 10000);
+    }).catch((error) => {
+        console.error('Persistence error:', error);
+        // Continue anyway - persistence is optional but helpful
+    });
+
     async function loadUserData(uid) {
-        if (currentUser.email === 'admin@owns.com') {
-            userRole = 'admin';
-        } else {
-            const staffDoc = await getDoc(doc(db, 'staff', uid));
-            if (staffDoc.exists()) {
-                userRole = 'staff';
+        try {
+            if (currentUser.email === 'admin@owns.com') {
+                userRole = 'admin';
             } else {
-                const customerDoc = await getDoc(doc(db, 'customers', uid));
-                if (customerDoc.exists()) {
-                    userRole = 'customer';
+                const staffDoc = await db.collection('staff').doc(uid).get();
+                if (staffDoc.exists) {
+                    userRole = 'staff';
+                } else {
+                    const customerDoc = await db.collection('customers').doc(uid).get();
+                    if (customerDoc.exists) {
+                        userRole = 'customer';
+                    } else {
+                        throw new Error('User not found in system');
+                    }
                 }
             }
+
+            const userDoc = userRole === 'admin' ? {data: () => ({name: 'Admin', email: currentUser.email})} :
+                           await db.collection(userRole === 'staff' ? 'staff' : 'customers').doc(uid).get();
+            
+            const userData = userDoc.data();
+            document.getElementById('userName').textContent = userData.name || 'User';
+            document.getElementById('userRole').textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+            document.getElementById('userAvatar').src = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=0ea5e9&color=fff`;
+
+            const companySnapshot = await db.collection('company').get();
+            if (!companySnapshot.empty) {
+                companyData = companySnapshot.docs[0].data();
+                document.getElementById('companyNameSidebar').textContent = companyData.name || 'Owns ISP';
+            }
+
+            setupRealtimeListeners();
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            throw error;
         }
-
-        const userDoc = userRole === 'admin' ? {data: () => ({name: 'Admin', email: currentUser.email})} :
-                       await getDoc(doc(db, userRole === 'staff' ? 'staff' : 'customers', uid));
-        
-        const userData = userDoc.data();
-        document.getElementById('userName').textContent = userData.name || 'User';
-        document.getElementById('userRole').textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
-        document.getElementById('userAvatar').src = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=0ea5e9&color=fff`;
-
-        const companySnapshot = await getDocs(collection(db, 'company'));
-        if (!companySnapshot.empty) {
-            companyData = companySnapshot.docs[0].data();
-            document.getElementById('companyNameSidebar').textContent = companyData.name || 'Owns ISP';
-        }
-
-        setupRealtimeListeners();
     }
 
     function setupRealtimeListeners() {
-        onSnapshot(collection(db, 'customers'), (snapshot) => {
-            allData.customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            if (window.currentPage) refreshCurrentPage();
-        });
+        try {
+            db.collection('customers').onSnapshot((snapshot) => {
+                allData.customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (window.currentPage && ['customers', 'dashboard'].includes(window.currentPage)) refreshCurrentPage();
+            }, (error) => console.error('Customers listener error:', error));
 
-        onSnapshot(collection(db, 'staff'), (snapshot) => {
-            allData.staff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        });
+            db.collection('staff').onSnapshot((snapshot) => {
+                allData.staff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }, (error) => console.error('Staff listener error:', error));
 
-        onSnapshot(collection(db, 'packages'), (snapshot) => {
-            allData.packages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        });
+            db.collection('packages').onSnapshot((snapshot) => {
+                allData.packages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }, (error) => console.error('Packages listener error:', error));
 
-        onSnapshot(collection(db, 'bills'), (snapshot) => {
-            allData.bills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            if (window.currentPage) refreshCurrentPage();
-        });
+            db.collection('bills').onSnapshot((snapshot) => {
+                allData.bills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (window.currentPage) refreshCurrentPage();
+            }, (error) => console.error('Bills listener error:', error));
 
-        onSnapshot(collection(db, 'complaints'), (snapshot) => {
-            allData.complaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            updateNotificationBadge();
-        });
+            db.collection('complaints').onSnapshot((snapshot) => {
+                allData.complaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateNotificationBadge();
+            }, (error) => console.error('Complaints listener error:', error));
 
-        onSnapshot(query(collection(db, 'logs'), orderBy('timestamp', 'desc')), (snapshot) => {
-            allData.logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        });
+            db.collection('logs').orderBy('timestamp', 'desc').limit(100).onSnapshot((snapshot) => {
+                allData.logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }, (error) => console.error('Logs listener error:', error));
 
-        onSnapshot(collection(db, 'promiseDates'), (snapshot) => {
-            allData.promiseDates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            updateFollowUpBadges();
-            if (window.currentPage === 'followup' || window.currentPage === 'promisedates') refreshCurrentPage();
-        });
+            db.collection('promiseDates').onSnapshot((snapshot) => {
+                allData.promiseDates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateFollowUpBadges();
+                if (window.currentPage === 'followup' || window.currentPage === 'promisedates') refreshCurrentPage();
+            }, (error) => console.error('PromiseDates listener error:', error));
+        } catch (error) {
+            console.error('Error setting up listeners:', error);
+        }
     }
 
     // 6. DOMContentLoaded init
@@ -2884,7 +3012,7 @@ img,video{max-width:100%;height:auto}
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                await auth.signInWithEmailAndPassword(email, password);
                 showToast('Login successful!', 'success');
             } catch (error) {
                 showToast(error.message, 'error');
@@ -2893,32 +3021,6 @@ img,video{max-width:100%;height:auto}
 
         setupEventListeners();
     });
-
-    // Make functions available globally for onclick in generated HTML
-    window.showToast = showToast;
-    window.copyToClipboard = copyToClipboard;
-    window.checkPPPoEStatus = checkPPPoEStatus;
-    window.showPaymentInfo = showPaymentInfo;
-    window.editItem = editItem;
-    window.deleteItem = deleteItem;
-    window.showAddCustomersModal = showAddCustomersModal;
-    window.showAddStaffModal = showAddStaffModal;
-    window.showAddPackagesModal = showAddPackagesModal;
-    window.showBulkBillModal = showBulkBillModal;
-    window.sendWhatsAppPrompt = sendWhatsAppPrompt;
-    window.showPromiseDateModal = showPromiseDateModal;
-    window.reschedulePromise = reschedulePromise;
-    window.markPromiseCollected = markPromiseCollected;
-    window.filterFollowUp = filterFollowUp;
-    window.adminEditPromise = adminEditPromise;
-    window.applyPromiseFilter = applyPromiseFilter;
-    window.applyFilters = applyFilters;
-    window.exportToPDF = exportToPDF;
-    window.exportToExcel = exportToExcel;
-    window.forwardComplaint = forwardComplaint;
-    window.markComplaintSolved = markComplaintSolved;
-    window.closeModal = closeModal;
-    window.navigateTo = navigateTo;
 
     // PWA Registration
     if ('serviceWorker' in navigator) {
@@ -2934,6 +3036,7 @@ img,video{max-width:100%;height:auto}
         });
     }
 </script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
