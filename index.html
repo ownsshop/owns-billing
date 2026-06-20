@@ -3,1275 +3,980 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWNS Billing Pro Max</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>OWNS Billing Pro Max V2 Complete</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #f0f2f5; }
-     .hidden { display: none!important; }
-     .login-container { display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-     .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 400px; }
-     .google-btn { background: #4285f4; color: white; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; margin: 0 auto; }
-     .google-btn:hover { background: #357ae8; }
-     .header { background: #1a73e8; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-     .user-info { display: flex; align-items: center; gap: 15px; }
-     .user-info img { width: 40px; height: 40px; border-radius: 50%; }
-     .logout-btn { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-     .container { max-width: 1600px; margin: 20px auto; padding: 0 20px; }
-     .card { background: white; border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-     .form-group { margin-bottom: 15px; }
-     .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
-        label { display: block; margin-bottom: 5px; color: #333; font-weight: 500; font-size: 14px; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-        input[readonly], textarea[readonly] { background: #f8f9fa; cursor: not-allowed; }
-     .btn { background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
-     .btn:hover { background: #1557b0; }
-     .btn-success { background: #34a853; }
-     .btn-danger { background: #ea4335; }
-     .btn-warning { background: #f9ab00; }
-     .btn-sm { padding: 6px 12px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f8f9fa; font-weight: 600; position: sticky; top: 70px; }
-     .admin-badge { background: #ea4335; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 10px; }
-     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-     .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; }
-     .stat-card h3 { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
-     .stat-card.number { font-size: 28px; font-weight: bold; }
-     .tabs { display: flex; gap: 10px; border-bottom: 2px solid #ddd; margin-bottom: 20px; overflow-x: auto; }
-     .tab { padding: 12px 20px; cursor: pointer; border: none; background: none; font-size: 15px; white-space: nowrap; }
-     .tab.active { border-bottom: 3px solid #1a73e8; color: #1a73e8; font-weight: 600; }
-     .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
-     .badge-pending { background: #fef3c7; color: #92400e; }
-     .badge-approved { background: #d1fae5; color: #065f46; }
-     .badge-due { background: #fee2e2; color: #991b1b; }
-     .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
-     .search-box input { flex: 1; }
-     .grid-2 { display: grid; grid-template-columns: 450px 1fr; gap: 20px; }
-        #invoicePreview { background: white; padding: 40px; min-height: 800px; }
-     .invoice-header { display: flex; justify-content: space-between; border-bottom: 3px solid #1a73e8; padding-bottom: 20px; margin-bottom: 30px; }
-     .company-logo { width: 60px; height: 60px; background: #1a73e8; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; border-radius: 8px; overflow: hidden; }
-     .company-logo img { width: 100%; height: 100%; object-fit: cover; }
-     .error-msg { color: #ea4335; font-size: 14px; margin-top: 10px; text-align: center; }
-        @media print {.no-print,.tabs,.header { display: none!important; }.grid-2 { display: block; } }
-        @media (max-width: 1100px) {.grid-2 { grid-template-columns: 1fr; } }
+      .hidden { display: none!important; }
+      .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+      .menu-btn.active { background-color: #dbeafe; color: #1e40af; }
+      .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+      .modal-content { background-color: white; margin: 10% auto; padding: 20px; border-radius: 8px; width: 500px; }
     </style>
 </head>
-<body>
-
-<div id="loginScreen" class="login-container">
-    <div class="login-box">
-        <h1>OWNS Billing Pro Max</h1>
-        <p>Complete ISP Management System</p>
-        <button class="google-btn" id="loginBtn">
-            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Login with Google
-        </button>
-        <div id="loginError" class="error-msg hidden"></div>
-    </div>
-</div>
-
-<div id="mainApp" class="hidden">
-    <div class="header no-print">
-        <h2>OWNS Billing Pro Max</h2>
-        <div class="user-info">
-            <img id="userPhoto" src="" alt="User">
-            <div>
-                <div id="userName"></div>
-                <span id="adminBadge" class="admin-badge hidden">ADMIN</span>
-            </div>
-            <button class="logout-btn" id="logoutBtn">Logout</button>
+<body class="bg-gray-100">
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-96">
+            <h1 class="text-3xl font-bold text-center mb-2">OWNS Billing Pro</h1>
+            <p class="text-center text-gray-600 mb-6">Complete ISP Management System V2</p>
+            <input type="email" id="loginEmail" placeholder="Email" class="w-full p-3 border rounded mb-3">
+            <input type="password" id="loginPassword" placeholder="Password" class="w-full p-3 border rounded mb-4">
+            <button id="loginBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Login</button>
+            <p id="loginError" class="text-red-500 text-sm mt-2 hidden"></p>
         </div>
     </div>
 
-    <div class="container">
-        <div class="tabs no-print">
-            <button class="tab active" data-tab="dashboard">Dashboard</button>
-            <button class="tab" data-tab="invoice">Invoice Generator</button>
-            <button class="tab" data-tab="customers">Customers</button>
-            <button class="tab" data-tab="reports">Reports</button>
-            <button class="tab admin-only hidden" data-tab="staff">Staff Report</button>
-            <button class="tab admin-only hidden" data-tab="logs">Activity Logs</button>
-            <button class="tab admin-only hidden" data-tab="settings">Settings</button>
-        </div>
-
-        <!-- Dashboard Tab -->
-        <div id="dashboard" class="tab-content">
-            <div class="stats no-print">
-                <div class="stat-card"><h3>Total Bills</h3><div class="number" id="totalBills">0</div></div>
-                <div class="stat-card"><h3>Total Revenue</h3><div class="number">৳<span id="totalRevenue">0</span></div></div>
-                <div class="stat-card"><h3>Due This Month</h3><div class="number" id="dueCount">0</div></div>
-                <div class="stat-card admin-only hidden"><h3>Pending Approval</h3><div class="number" id="pendingCount">0</div></div>
+    <div id="appScreen" class="hidden">
+        <nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">OWNS Billing Pro Max V2</h1>
+            <div class="flex items-center gap-4">
+                <span id="userName" class="font-semibold"></span>
+                <span id="userRole" class="bg-blue-800 px-3 py-1 rounded text-sm"></span>
+                <button id="logoutBtn" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600">Logout</button>
             </div>
-            <div class="card">
-                <h2>Recent Bills</h2>
-                <div class="search-box no-print">
-                    <input type="text" id="searchInput" placeholder="Search by name or phone...">
-                    <button class="btn btn-sm" id="searchBtn">Search</button>
-                    <button class="btn btn-sm" id="clearSearch">Clear</button>
+        </nav>
+
+        <div class="flex">
+            <div id="sidebar" class="w-64 bg-white h-screen shadow-lg overflow-y-auto">
+                <div id="adminMenu" class="p-4 hidden">
+                    <h3 class="font-bold text-gray-700 mb-3">Admin Panel</h3>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="dashboard">📊 Dashboard</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="invoice">📄 Invoice Generator</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="customers">👥 All Customers</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="reports">📈 Reports</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="staff">👔 Staff Report</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="complaints">🎫 Complaints</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="logs">📋 Activity Logs</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="settings">⚙️ Settings</button>
                 </div>
-                <table id="billsTable">
-                    <thead><tr><th>Date</th><th>Bill No</th><th>Customer</th><th>Phone</th><th>Area</th><th>Amount</th><th>Status</th><th class="admin-only hidden">Staff</th><th class="no-print">Action</th></tr></thead>
-                    <tbody id="billsBody"></tbody>
-                </table>
+                <div id="staffMenu" class="p-4 hidden">
+                    <h3 class="font-bold text-gray-700 mb-3">Staff Panel</h3>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="dashboard">📊 Dashboard</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="invoice">📄 Create Invoice</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="mycustomers">👥 My Customers</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="complaints">🎫 My Complaints</button>
+                </div>
+                <div id="customerMenu" class="p-4 hidden">
+                    <h3 class="font-bold text-gray-700 mb-3">Customer Panel</h3>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="mybills">💳 My Bills</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="myprofile">👤 My Profile</button>
+                    <button class="menu-btn w-full text-left p-3 hover:bg-blue-50 rounded mb-1" data-tab="mycomplaints">🎫 My Complaints</button>
+                </div>
             </div>
-        </div>
 
-        <!-- Invoice Generator Tab -->
-        <div id="invoice" class="tab-content hidden">
-            <div class="grid-2">
-                <div class="no-print">
-                    <div class="card">
-                        <h3>📝 Generate Invoice</h3>
-                        
-                        <!-- Customer Search with Autocomplete -->
-                        <div class="form-group" style="position:relative">
-                            <label>Customer Name / কাস্টমার নাম *</label>
-                            <input type="text" id="customerNameInput" placeholder="Type to search customer..." autocomplete="off">
-                            <div id="customerDropdown" style="position:absolute;width:100%;background:white;border:1px solid #ddd;border-radius:4px;max-height:200px;overflow-y:auto;z-index:10;display:none;box-shadow:0 4px 6px rgba(0,0,0,0.1)"></div>
+            <div class="flex-1 p-6 overflow-y-auto h-screen">
+                <!-- Dashboard -->
+                <div id="dashboardTab" class="tab-content">
+                    <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="bg-purple-500 text-white p-6 rounded-lg"><p class="text-sm">Total Bills</p><p id="totalBills" class="text-3xl font-bold">0</p></div>
+                        <div class="bg-green-500 text-white p-6 rounded-lg"><p class="text-sm">Total Revenue</p><p id="totalRevenue" class="text-3xl font-bold">৳0</p></div>
+                        <div class="bg-yellow-500 text-white p-6 rounded-lg"><p class="text-sm">Due This Month</p><p id="dueMonth" class="text-3xl font-bold">0</p></div>
+                        <div class="bg-red-500 text-white p-6 rounded-lg"><p class="text-sm">Pending Complaints</p><p id="pendingComplaints" class="text-3xl font-bold">0</p></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-xl font-bold mb-4">Monthly Revenue Chart</h3>
+                            <canvas id="revenueChart"></canvas>
                         </div>
-
-                        <div class="form-row">
-                            <div class="form-group"><label>WhatsApp Number *</label><input type="tel" id="customerPhone" readonly></div>
-                            <div class="form-group"><label>Area *</label><input type="text" id="customerArea" readonly></div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-xl font-bold mb-4">Customer Status</h3>
+                            <canvas id="customerChart"></canvas>
                         </div>
-                        
-                        <div class="form-group"><label>Address</label><textarea id="customerAddress" rows="2" readonly></textarea></div>
-                        
-                        <hr style="margin:20px 0;border:none;border-top:1px solid #eee">
-                        
-                        <div class="form-row">
-                            <div class="form-group"><label>Connection Type</label><select id="connectionType"><option value="">Select</option><option value="PPPoE">PPPoE</option><option value="Static IP">Static IP</option><option value="DHCP">DHCP</option></select></div>
-                            <div class="form-group"><label>Package *</label><select id="package"><option value="">Loading...</option></select></div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group"><label>Bill Month *</label><input type="month" id="billMonth"></div>
-                            <div class="form-group"><label>Due Date</label><input type="date" id="dueDate"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Additional Notes</label>
-                            <textarea id="billNotes" rows="2" placeholder="Any special notes..."></textarea>
-                        </div>
-
-                        <button class="btn btn-success" id="saveBillBtn">💾 Save Bill</button>
-                        <button class="btn btn-warning" id="savePrintBtn">🖨 Save & Print</button>
-                        <button class="btn" id="saveWhatsAppBtn">📱 Save & WhatsApp</button>
-                        <button class="btn btn-sm" id="clearInvoiceBtn">🗑️ Clear Form</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-bold mb-4">Recent Bills</h3>
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Bill No</th><th class="text-left p-2">Customer</th><th class="text-left p-2">Amount</th><th class="text-left p-2">Status</th><th class="text-left p-2">Action</th></tr></thead><tbody id="recentBillsTable"></tbody></table>
                     </div>
                 </div>
 
-                <div id="invoicePreview">
-                    <div class="invoice-header">
-                        <div style="display:flex;gap:15px">
-                            <div class="company-logo" id="previewLogo">ISP</div>
-                            <div>
-                                <h1 id="previewCompanyName" style="color:#1a73e8;margin:0">Your ISP Name</h1>
-                                <p id="previewCompanyAddress" style="margin:5px 0;color:#666">Company Address</p>
-                                <p id="previewCompanyContact" style="margin:5px 0;color:#666">Phone | Email</p>
+                <!-- Invoice Generator -->
+                <div id="invoiceTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">Generate Invoice</h2>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block mb-2 font-semibold">Customer Name *</label><select id="customerSelect" class="w-full p-3 border rounded"><option value="">Select Customer</option></select></div>
+                            <div><label class="block mb-2 font-semibold">Package *</label><select id="packageSelect" class="w-full p-3 border rounded"><option value="">Select Package</option></select></div>
+                            <div><label class="block mb-2 font-semibold">WhatsApp Number</label><input type="text" id="invoiceWhatsApp" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block mb-2 font-semibold">Imo Number</label><input type="text" id="invoiceImo" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div class="col-span-2"><label class="block mb-2 font-semibold">Address</label><input type="text" id="invoiceAddress" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block mb-2 font-semibold">Bill Month *</label><input type="month" id="billMonth" class="w-full p-3 border rounded"></div>
+                            <div><label class="block mb-2 font-semibold">Amount *</label><input type="number" id="billAmount" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block mb-2 font-semibold">Due Date *</label><input type="date" id="dueDate" class="w-full p-3 border rounded"></div>
+                        </div>
+                        <button id="generateInvoiceBtn" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Generate Invoice</button>
+                    </div>
+                </div>
+
+                <!-- All Customers -->
+                <div id="customersTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">All Customers</h2>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex gap-4 mb-4">
+                            <input type="text" id="customerSearch" placeholder="Search by name or phone..." class="flex-1 p-3 border rounded">
+                            <button id="exportCustomersBtn" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700">Export Excel</button>
+                        </div>
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Name</th><th class="text-left p-2">Phone</th><th class="text-left p-2">Area</th><th class="text-left p-2">Package</th><th class="text-left p-2">PPPoE User</th><th class="text-left p-2">Status</th><th class="text-left p-2">Action</th></tr></thead><tbody id="allCustomersTable"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Reports -->
+                <div id="reportsTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">Reports</h2>
+                    <div class="bg-white p-6 rounded-lg shadow mb-6">
+                        <h3 class="text-xl font-bold mb-4">Date Range Report</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div><label class="block mb-2">From Date</label><input type="date" id="reportFromDate" class="w-full p-3 border rounded"></div>
+                            <div><label class="block mb-2">To Date</label><input type="date" id="reportToDate" class="w-full p-3 border rounded"></div>
+                            <div class="flex items-end"><button id="generateReportBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Generate Report</button></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Date</th><th class="text-left p-2">Total Bills</th><th class="text-left p-2">Paid</th><th class="text-left p-2">Pending</th><th class="text-left p-2">Revenue</th></tr></thead><tbody id="reportTable"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Staff Report -->
+                <div id="staffTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">Staff Wise Collection Report</h2>
+                    <div class="bg-white p-6 rounded-lg shadow mb-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block mb-2">Select Month</label><input type="month" id="staffReportMonth" class="w-full p-3 border rounded"></div>
+                            <div class="flex items-end"><button id="loadStaffReportBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Load Report</button></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Staff Name</th><th class="text-left p-2">Email</th><th class="text-left p-2">Total Bills</th><th class="text-left p-2">Total Collection</th><th class="text-left p-2">Pending</th></tr></thead><tbody id="staffReportTable"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div id="settingsTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">Settings</h2>
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-xl font-bold mb-4">Add Customer</h3>
+                            <input type="text" id="custName" placeholder="Customer Name *" class="w-full p-3 border rounded mb-3">
+                            <input type="text" id="custZone" placeholder="Zone *" class="w-full p-3 border rounded mb-3">
+                            <input type="text" id="custArea" placeholder="Area *" class="w-full p-3 border rounded mb-3">
+                            <input type="text" id="custAddress" placeholder="Address *" class="w-full p-3 border rounded mb-3">
+                            <input type="text" id="custPhone" placeholder="Phone Number *" class="w-full p-3 border rounded mb-3">
+                            <input type="text" id="custWhatsApp" placeholder="WhatsApp Number" class="w-full p-3 border rounded mb-3">
+                            <input type="text" id="custImo" placeholder="Imo Number" class="w-full p-3 border rounded mb-3">
+                            <input type="text" id="custPPPoEUser" placeholder="PPPoE Username" class="w-full p-3 border rounded mb-3">
+                            <input type="password" id="custPPPoEPass" placeholder="PPPoE Password" class="w-full p-3 border rounded mb-3">
+                            <select id="custPackage" class="w-full p-3 border rounded mb-3"><option value="">Select Package *</option></select>
+                            <select id="custAssignedStaff" class="w-full p-3 border rounded mb-3"><option value="">Assign Staff</option></select>
+                            <button id="saveCustomerBtn" class="w-full bg-green-600 text-white p-3 rounded hover:bg-green-700">Save Customer</button>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-xl font-bold mb-4">User Management</h3>
+                            <input type="email" id="newUserEmail" placeholder="Email *" class="w-full p-3 border rounded mb-3">
+                            <input type="password" id="newUserPassword" placeholder="Password *" class="w-full p-3 border rounded mb-3">
+                            <select id="newUserRole" class="w-full p-3 border rounded mb-3"><option value="staff">Staff</option><option value="customer">Customer</option></select>
+                            <button id="createUserBtn" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 mb-4">Create User</button>
+                            <h3 class="text-xl font-bold mb-4 mt-6">Package Manager</h3>
+                            <input type="text" id="pkgName" placeholder="Package Name" class="w-full p-3 border rounded mb-3">
+                            <input type="number" id="pkgPrice" placeholder="Price" class="w-full p-3 border rounded mb-3">
+                            <input type="text" id="pkgSpeed" placeholder="Speed (e.g. 10 Mbps)" class="w-full p-3 border rounded mb-3">
+                            <button id="addPackageBtn" class="w-full bg-purple-600 text-white p-3 rounded hover:bg-purple-700 mb-4">Add Package</button>
+                            <table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left p-2">Package</th><th class="text-left p-2">Price</th><th class="text-left p-2">Action</th></tr></thead><tbody id="packageListTable"></tbody></table>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-bold mb-4">Company Information</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="companyName" placeholder="Company Name" class="w-full p-3 border rounded">
+                            <input type="text" id="companyPhone" placeholder="Phone" class="w-full p-3 border rounded">
+                            <input type="text" id="companyAddress" placeholder="Address" class="w-full p-3 border rounded col-span-2">
+                            <input type="email" id="companyEmail" placeholder="Email" class="w-full p-3 border rounded">
+                            <input type="url" id="companyLogo" placeholder="Logo URL" class="w-full p-3 border rounded">
+                        </div>
+                        <button id="saveCompanyBtn" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Save Company Info</button>
+                    </div>
+                </div>
+
+                <!-- Complaints -->
+                <div id="complaintsTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">Complaints Management</h2>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div id="adminComplaintView" class="hidden">
+                            <div class="flex justify-between mb-4">
+                                <h3 class="font-bold">All Complaints</h3>
+                                <select id="complaintFilter" class="p-2 border rounded"><option value="all">All</option><option value="pending">Pending</option><option value="assigned">Assigned</option><option value="resolved">Resolved</option></select>
                             </div>
+                            <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Customer</th><th class="text-left p-2">Issue</th><th class="text-left p-2">Status</th><th class="text-left p-2">Assigned To</th><th class="text-left p-2">Date</th><th class="text-left p-2">Action</th></tr></thead><tbody id="complaintsTable"></tbody></table>
                         </div>
-                        <div style="text-align:right">
-                            <h2 style="margin:0">INVOICE</h2>
-                            <p style="color:#666">ইনভয়েস</p>
-                            <p style="margin-top:10px"><strong>Invoice #:</strong> <span id="previewInvoiceNo">INV-1000</span></p>
-                            <p><strong>Issue Date:</strong> <span id="previewIssueDate">-</span></p>
+                        <div id="staffComplaintView" class="hidden">
+                            <h3 class="font-bold mb-3">Assigned Complaints</h3>
+                            <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Customer</th><th class="text-left p-2">Issue</th><th class="text-left p-2">Status</th><th class="text-left p-2">Action</th></tr></thead><tbody id="staffComplaintsTable"></tbody></table>
                         </div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-bottom:30px">
-                        <div>
-                            <h4 style="color:#1a73e8;margin-bottom:10px">BILL TO / গ্রাহক</h4>
-                            <p id="previewCustomerName" style="font-weight:bold;font-size:16px">-</p>
-                            <p id="previewCustomerArea">-</p>
-                            <p id="previewCustomerAddress">-</p>
-                            <p id="previewCustomerPhone">-</p>
-                        </div>
-                        <div>
-                            <h4 style="color:#1a73e8;margin-bottom:10px">BILLING INFO / বিল তথ্য</h4>
-                            <p><strong>Connection Type:</strong> <span id="previewConnectionType">-</span></p>
-                            <p><strong>Package / প্যাকেজ:</strong> <span id="previewPackage">-</span></p>
-                            <p><strong>Bill Month / মাস:</strong> <span id="previewBillMonth">-</span></p>
-                            <p style="color:#ea4335"><strong>Due Date / শেষ তারিখ:</strong> <span id="previewDueDate">-</span></p>
-                        </div>
-                    </div>
-                    <table>
-                        <thead><tr><th>DESCRIPTION / বিবরণ</th><th style="text-align:right">AMOUNT / টাকা</th></tr></thead>
-                        <tbody>
-                            <tr><td>Monthly Internet Bill - <span id="previewBillMonthDesc">-</span></td><td style="text-align:right" id="previewAmount">৳ 0.00</td></tr>
-                            <tr><td colspan="2" style="border:none;height:20px"></td></tr>
-                            <tr><td style="text-align:right"><strong>Subtotal / উপমোট:</strong></td><td style="text-align:right" id="previewSubtotal">৳ 0.00</td></tr>
-                            <tr style="font-weight:bold;font-size:18px;background:#f8f9fa"><td style="text-align:right;padding:15px"><strong>Total Amount / সর্বমোট:</strong></td><td style="text-align:right;color:#1a73e8;padding:15px" id="previewTotal">৳ 0.00</td></tr>
-                        </tbody>
-                    </table>
-                    <div id="previewNotes" style="margin-top:20px;padding:15px;background:#fff3cd;border-left:4px solid #f9ab00;display:none">
-                        <strong>Note:</strong> <span id="previewNotesText"></span>
-                    </div>
-                    <div style="margin-top:50px;text-align:center;color:#666;font-size:12px;border-top:1px solid #ddd;padding-top:20px">
-                        <p>Thank you for your business! / আপনার ব্যবসার জন্য ধন্যবাদ!</p>
-                        <p>This is a computer generated invoice / এটি একটি কম্পিউটার জেনারেটেড ইনভয়েস</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Customers Tab -->
-        <div id="customers" class="tab-content hidden">
-            <div class="card">
-                <h2>Due List - <span id="currentMonth"></span></h2>
-                <div class="search-box no-print">
-                    <select id="areaFilter" style="max-width:200px"><option value="">All Areas</option></select>
-                    <button class="btn btn-sm" id="filterAreaBtn">Filter Area</button>
-                    <button class="btn btn-sm" id="exportDueBtn">Export Due List</button>
-                </div>
-                <table><thead><tr><th>Customer</th><th>Phone</th><th>Area</th><th>Package</th><th>Address</th><th>Last Payment</th><th class="no-print">Action</th></tr></thead><tbody id="dueListBody"></tbody></table>
-            </div>
-            <div class="card">
-                <h2>Customer History</h2>
-                <div class="search-box no-print">
-                    <input type="text" id="historySearch" placeholder="Enter phone number...">
-                    <button class="btn btn-sm" id="historyBtn">View History</button>
-                </div>
-                <div id="historyResult"></div>
-            </div>
-        </div>
-
-        <!-- Reports Tab -->
-        <div id="reports" class="tab-content hidden">
-            <div class="card no-print">
-                <h2>Date Range Report</h2>
-                <div class="form-row">
-                    <div class="form-group"><label>From Date</label><input type="date" id="reportFrom"></div>
-                    <div class="form-group"><label>To Date</label><input type="date" id="reportTo"></div>
-                </div>
-                <button class="btn" id="generateReport">Generate Report</button>
-                <button class="btn btn-success" id="exportExcel">Export to Excel</button>
-                <div id="reportResult" style="margin-top:20px"></div>
-            </div>
-            <div class="card">
-                <h2>Monthly Revenue Chart</h2>
-                <canvas id="revenueChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Staff Report Tab -->
-        <div id="staff" class="tab-content hidden">
-            <div class="card">
-                <h2>Staff Wise Collection Report</h2>
-                <div class="form-row no-print">
-                    <div class="form-group"><label>Select Month</label><input type="month" id="staffMonth"></div>
-                    <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn" id="staffReportBtn">Generate</button></div>
-                </div>
-                <table><thead><tr><th>Staff Name</th><th>Email</th><th>Total Bills</th><th>Total Collection</th><th>Pending</th></tr></thead><tbody id="staffReportBody"></tbody></table>
-            </div>
-        </div>
-
-        <!-- Logs Tab -->
-        <div id="logs" class="tab-content hidden">
-            <div class="card">
-                <h2>Activity Logs</h2>
-                <button class="btn btn-sm no-print" id="exportLogs">Export Logs</button>
-                <table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody id="logsBody"></tbody></table>
-            </div>
-        </div>
-
-        <!-- Settings Tab -->
-        <div id="settings" class="tab-content hidden">
-            <div class="grid-2">
-                <div>
-                    <!-- Company Info -->
-                    <div class="card">
-                        <h3>🏢 Company Information</h3>
-                        <div class="form-group"><label>Company Name *</label><input type="text" id="setCompanyName"></div>
-                        <div class="form-group"><label>Logo URL</label><input type="text" id="setCompanyLogo" placeholder="https://..."></div>
-                        <div class="form-group"><label>Address</label><textarea id="setCompanyAddress" rows="2"></textarea></div>
-                        <div class="form-row">
-                            <div class="form-group"><label>Phone *</label><input type="tel" id="setCompanyPhone"></div>
-                            <div class="form-group"><label>Email</label><input type="email" id="setCompanyEmail"></div>
-                        </div>
-                        <div class="form-group"><label>Website</label><input type="text" id="setCompanyWebsite"></div>
-                        <div class="form-group"><label>WhatsApp Number for Bill Send</label><input type="tel" id="setCompanyWhatsApp" placeholder="01XXXXXXXXX"></div>
-                        <button class="btn btn-success" id="saveCompanySettings">💾 Save Company Info</button>
-                    </div>
-
-                    <!-- SMS Gateway -->
-                    <div class="card">
-                        <h3>📱 SMS Gateway Settings</h3>
-                        <div class="form-group"><label>SMS Provider</label><select id="smsProvider"><option value="">Select Provider</option><option value="bulksmsbd">BulkSMSBD</option><option value="ssl">SSL Wireless</option><option value="mim">MiMS</option></select></div>
-                        <div class="form-group"><label>API Key / Token</label><input type="password" id="smsApiKey" placeholder="Your API Key"></div>
-                        <div class="form-group"><label>Sender ID</label><input type="text" id="smsSenderId" placeholder="e.g: OWNSISP"></div>
-                        <button class="btn btn-success" id="saveSmsSettings">💾 Save SMS Settings</button>
-                        <button class="btn btn-sm" id="testSms">📤 Send Test SMS</button>
                     </div>
                 </div>
 
-                <div>
-                    <!-- Package Manager -->
-                    <div class="card">
-                        <h3>📦 Package Manager</h3>
-                        <div class="form-row">
-                            <div class="form-group"><label>Speed</label><input type="text" id="pkgSpeed" placeholder="e.g: 10 Mbps"></div>
-                            <div class="form-group"><label>Price ৳</label><input type="number" id="pkgPrice" placeholder="800"></div>
-                        </div>
-                        <button class="btn btn-success btn-sm" id="addPackage">➕ Add Package</button>
-                        <table style="margin-top:15px"><thead><tr><th>Package</th><th>Price</th><th>Action</th></tr></thead><tbody id="packageTableBody"></tbody></table>
+                <!-- Activity Logs -->
+                <div id="logsTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">Activity Logs</h2>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <button id="exportLogsBtn" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 mb-4">Export Logs</button>
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Time</th><th class="text-left p-2">User</th><th class="text-left p-2">Action</th><th class="text-left p-2">Details</th></tr></thead><tbody id="logsTable"></tbody></table>
                     </div>
+                </div>
 
-                    <!-- Area Manager -->
-                    <div class="card">
-                        <h3>📍 Area Manager</h3>
-                        <div class="form-group">
-                            <label>Add New Area</label>
-                            <div style="display:flex;gap:10px">
-                                <input type="text" id="newArea" placeholder="e.g: Munshiganj Sadar">
-                                <button class="btn btn-success btn-sm" id="addArea">➕ Add</button>
-                            </div>
-                        </div>
-                        <table><thead><tr><th>Area Name</th><th>Action</th></tr></thead><tbody id="areaTableBody"></tbody></table>
+                <!-- My Customers (Staff) -->
+                <div id="mycustomersTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">My Customers</h2>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Name</th><th class="text-left p-2">Phone</th><th class="text-left p-2">Area</th><th class="text-left p-2">Package</th><th class="text-left p-2">Status</th><th class="text-left p-2">Due</th></tr></thead><tbody id="myCustomersTable"></tbody></table>
                     </div>
+                </div>
 
-                    <!-- Staff Manager -->
-                    <div class="card">
-                        <h3>👥 Staff Manager</h3>
-                        <div class="form-group">
-                            <label>Staff Email</label>
-                            <div style="display:flex;gap:10px">
-                                <input type="email" id="newStaffEmail" placeholder="staff@gmail.com">
-                                <button class="btn btn-success btn-sm" id="addStaff">➕ Add Staff</button>
-                            </div>
-                        </div>
-                        <table><thead><tr><th>Email</th><th>Role</th><th>Action</th></tr></thead><tbody id="staffTableBody"></tbody></table>
+                <!-- Customer: My Bills -->
+                <div id="mybillsTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">My Bills</h2>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <table class="w-full"><thead><tr class="border-b"><th class="text-left p-2">Bill No</th><th class="text-left p-2">Month</th><th class="text-left p-2">Amount</th><th class="text-left p-2">Status</th><th class="text-left p-2">Due Date</th><th class="text-left p-2">Action</th></tr></thead><tbody id="myBillsTable"></tbody></table>
                     </div>
+                </div>
 
-                    <!-- Backup -->
-                    <div class="card">
-                        <h3>💾 Data Backup & Restore</h3>
-                        <p style="color:#666;font-size:14px;margin-bottom:15px">Download all data as Excel file for backup</p>
-                        <button class="btn btn-warning" id="backupAll">📥 Download Full Backup</button>
-                        <button class="btn btn-danger" id="clearCache">🗑️ Clear Browser Cache</button>
+                <!-- Customer: My Profile -->
+                <div id="myprofileTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">My Profile</h2>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block font-semibold">Name</label><input type="text" id="myName" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block font-semibold">Phone</label><input type="text" id="myPhone" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block font-semibold">WhatsApp</label><input type="text" id="myWhatsApp" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block font-semibold">Imo</label><input type="text" id="myImo" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block font-semibold">PPPoE Username</label><input type="text" id="myPPPoEUser" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block font-semibold">PPPoE Password</label><input type="text" id="myPPPoEPass" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block font-semibold">Package</label><input type="text" id="myPackage" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div><label class="block font-semibold">Zone/Area</label><input type="text" id="myZoneArea" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                            <div class="col-span-2"><label class="block font-semibold">Address</label><input type="text" id="myAddress" class="w-full p-3 border rounded bg-gray-100" readonly></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer: My Complaints -->
+                <div id="mycomplaintsTab" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4">My Complaints</h2>
+                    <div class="bg-white p-6 rounded-lg shadow mb-4">
+                        <h3 class="font-bold mb-3">Submit New Complaint</h3>
+                        <textarea id="complaintText" placeholder="Describe your issue..." class="w-full p-3 border rounded mb-3 h-32"></textarea>
+                        <button id="submitComplaintBtn" class="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700">Submit Complaint</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="font-bold mb-3">Complaint History</h3>
+                        <div id="myComplaintsList"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Modals -->
+    <div id="forwardModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">Forward Complaint to Staff</h3>
+            <select id="forwardStaffSelect" class="w-full p-3 border rounded mb-4"><option value="">Select Staff</option></select>
+            <div class="flex gap-4">
+                <button id="confirmForwardBtn" class="flex-1 bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Forward</button>
+                <button onclick="document.getElementById('forwardModal').style.display='none'" class="flex-1 bg-gray-400 text-white p-3 rounded hover:bg-gray-500">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="replyModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">Reply to Complaint</h3>
+            <textarea id="replyText" placeholder="Enter your reply..." class="w-full p-3 border rounded mb-4 h-32"></textarea>
+            <div class="flex gap-4">
+                <button id="confirmReplyBtn" class="flex-1 bg-green-600 text-white p-3 rounded hover:bg-green-700">Send Reply</button>
+                <button onclick="document.getElementById('replyModal').style.display='none'" class="flex-1 bg-gray-400 text-white p-3 rounded hover:bg-gray-500">Cancel</button>
+            </div>
+        </div>
+    </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc, serverTimestamp, getCountFromServer, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
-        apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
+        apiKey: "AIzaSyD0CZXbcjaAds52kyQ9DqwIgbQQtQRumTY",
         authDomain: "owns-billing.firebaseapp.com",
         projectId: "owns-billing",
         storageBucket: "owns-billing.firebasestorage.app",
-        messagingSenderId: "1036958677443",
-        appId: "1:1036958677443:web:fbd4ee2f0d0a24c4582576"
+        messagingSenderId: "1088822623143",
+        appId: "1:1088822623143:web:16f82d1e14ed5b32b83779"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
-    const ADMIN_EMAIL = "ownslink@gmail.com";
-    let currentUser = null;
-    let isAdmin = false;
-    let billCounter = 1000;
-    let revenueChart = null;
-    let companyData = {};
-    let customers = [];
-    let selectedCustomer = null;
-    let allPackages = [];
 
-    // Auth
+    let currentUser = null;
+    let currentRole = null;
+    let currentUserData = null;
+    let currentComplaintId = null;
+    let revenueChart = null;
+    let customerChart = null;
+
     document.getElementById('loginBtn').onclick = async () => {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
         try {
-            await signInWithPopup(auth, provider);
+            await signInWithEmailAndPassword(auth, email, password);
+            document.getElementById('loginError').classList.add('hidden');
         } catch (error) {
-            document.getElementById('loginError').textContent = 'Login failed: ' + error.message;
+            document.getElementById('loginError').textContent = error.message;
             document.getElementById('loginError').classList.remove('hidden');
         }
     };
-    
-    document.getElementById('logoutBtn').onclick = () => signOut(auth);
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
-            isAdmin = user.email === ADMIN_EMAIL;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('userName').textContent = user.displayName;
-            document.getElementById('userPhoto').src = user.photoURL;
-            if (isAdmin) {
-                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-                document.getElementById('adminBadge').classList.remove('hidden');
+            const userQuery = query(collection(db, 'users'), where('email', '==', user.email));
+            const userDoc = await getDocs(userQuery);
+            if (!userDoc.empty) {
+                currentUserData = userDoc.docs[0].data();
+                currentRole = currentUserData.role;
+            } else {
+                currentRole = 'admin';
             }
-            initApp();
+            showApp();
         } else {
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('mainApp').classList.add('hidden');
+            showLogin();
         }
     });
 
-    // Tabs
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.onclick = () => {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            tab.classList.add('active');
-            document.getElementById(tab.dataset.tab).classList.remove('hidden');
+    function showLogin() {
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('appScreen').classList.add('hidden');
+    }
+
+    async function showApp() {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('appScreen').classList.remove('hidden');
+        document.getElementById('userName').textContent = currentUser.email;
+        document.getElementById('userRole').textContent = currentRole.toUpperCase();
+
+        document.getElementById('adminMenu').classList.add('hidden');
+        document.getElementById('staffMenu').classList.add('hidden');
+        document.getElementById('customerMenu').classList.add('hidden');
+
+        if (currentRole === 'admin') {
+            document.getElementById('adminMenu').classList.remove('hidden');
+            document.getElementById('adminComplaintView').classList.remove('hidden');
+        } else if (currentRole === 'staff') {
+            document.getElementById('staffMenu').classList.remove('hidden');
+            document.getElementById('staffComplaintView').classList.remove('hidden');
+            loadMyCustomers();
+        } else {
+            document.getElementById('customerMenu').classList.remove('hidden');
+            loadMyProfile();
+            loadMyBills();
+        }
+
+        await loadDashboard();
+        await loadCustomers();
+        await loadPackages();
+        await loadStaffList();
+        showTab('dashboard');
+    }
+
+    document.getElementById('logoutBtn').onclick = () => signOut(auth);
+
+    document.querySelectorAll('.menu-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            showTab(btn.dataset.tab);
         };
     });
 
-    async function initApp() {
-        const today = new Date();
-        document.getElementById('billMonth').value = today.toISOString().slice(0, 7);
-        document.getElementById('currentMonth').textContent = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        document.getElementById('reportTo').value = today.toISOString().split('T')[0];
-        document.getElementById('reportFrom').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-        document.getElementById('staffMonth').value = today.toISOString().slice(0, 7);
-        document.getElementById('billMonth').dispatchEvent(new Event('change'));
-
-        await getBillCounter();
-        await loadCompanyData();
-        await loadCustomers();
-        await loadBills();
-        await loadDueList();
-        await loadChart();
-        await loadSettings();
-        await loadPackageDropdown();
-        if (isAdmin) await loadLogs();
+    function showTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+        document.getElementById(tab + 'Tab')?.classList.remove('hidden');
+        if (tab === 'customers') loadAllCustomers();
+        if (tab === 'complaints') loadComplaints();
+        if (tab === 'mybills') loadMyBills();
+        if (tab === 'mycomplaints') loadMyComplaints();
+        if (tab === 'myprofile') loadMyProfile();
+        if (tab === 'mycustomers') loadMyCustomers();
+        if (tab === 'logs') loadLogs();
+        if (tab === 'reports') loadReports();
+        if (tab === 'staff') loadStaffReport();
     }
 
-    async function getBillCounter() {
-        const snapshot = await getCountFromServer(collection(db, 'bills'));
-        billCounter = snapshot.data().count + 1000;
-        document.getElementById('previewInvoiceNo').textContent = `INV-${billCounter}`;
+    async function loadDashboard() {
+        const bills = await getDocs(collection(db, 'bills'));
+        const complaints = await getDocs(query(collection(db, 'complaints'), where('status', '==', 'pending')));
+        document.getElementById('totalBills').textContent = bills.size;
+        document.getElementById('pendingComplaints').textContent = complaints.size;
+        let revenue = 0;
+        bills.forEach(doc => revenue += doc.data().amount || 0);
+        document.getElementById('totalRevenue').textContent = '৳' + revenue.toLocaleString();
+        await loadRecentBills();
+        await loadCharts();
     }
 
-    // Company Data
-    async function loadCompanyData() {
-        const docSnap = await getDoc(doc(db, 'settings', 'company'));
-        if (docSnap.exists()) {
-            companyData = docSnap.data();
-            updatePreview();
+    async function loadCharts() {
+        const bills = await getDocs(collection(db, 'bills'));
+        const monthlyData = {};
+        bills.forEach(doc => {
+            const month = doc.data().month;
+            monthlyData[month] = (monthlyData[month] || 0) + doc.data().amount;
+        });
+
+        if (revenueChart) revenueChart.destroy();
+        const ctx1 = document.getElementById('revenueChart');
+        if (ctx1) {
+            revenueChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(monthlyData),
+                    datasets: [{ label: 'Revenue', data: Object.values(monthlyData), borderColor: '#3b82f6', tension: 0.3 }]
+                }
+            });
+        }
+
+        const customers = await getDocs(collection(db, 'customers'));
+        const statusCount = { Active: 0, Inactive: 0 };
+        customers.forEach(doc => {
+            const status = doc.data().status || 'Active';
+            statusCount[status] = (statusCount[status] || 0) + 1;
+        });
+
+        if (customerChart) customerChart.destroy();
+        const ctx2 = document.getElementById('customerChart');
+        if (ctx2) {
+            customerChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCount),
+                    datasets: [{ data: Object.values(statusCount), backgroundColor: ['#10b981', '#ef4444'] }]
+                }
+            });
         }
     }
 
-    // Customers
+        document.getElementById('saveCustomerBtn').onclick = async () => {
+        const customerData = {
+            name: document.getElementById('custName').value,
+            zone: document.getElementById('custZone').value,
+            area: document.getElementById('custArea').value,
+            address: document.getElementById('custAddress').value,
+            phone: document.getElementById('custPhone').value,
+            whatsapp: document.getElementById('custWhatsApp').value,
+            imo: document.getElementById('custImo').value,
+            pppoeUser: document.getElementById('custPPPoEUser').value,
+            pppoePass: document.getElementById('custPPPoEPass').value,
+            package: document.getElementById('custPackage').value,
+            assignedStaff: document.getElementById('custAssignedStaff').value,
+            status: 'Active',
+            createdAt: serverTimestamp(),
+            createdBy: currentUser.email
+        };
+        if (!customerData.name ||!customerData.phone ||!customerData.package) {
+            alert('Please fill required fields: Name, Phone, Package');
+            return;
+        }
+        await addDoc(collection(db, 'customers'), customerData);
+        await logActivity('ADD_CUSTOMER', customerData.name);
+        alert('Customer Added Successfully!');
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        document.getElementById('custAddress').value = '';
+        document.getElementById('custWhatsApp').value = '';
+        document.getElementById('custImo').value = '';
+        document.getElementById('custPPPoEUser').value = '';
+        document.getElementById('custPPPoEPass').value = '';
+        loadCustomers();
+        loadAllCustomers();
+    };
+
     async function loadCustomers() {
         const snapshot = await getDocs(collection(db, 'customers'));
-        customers = [];
-        snapshot.forEach(doc => customers.push({ id: doc.id,...doc.data() }));
-    }
-
-        // Customer Autocomplete
-    document.getElementById('customerNameInput').addEventListener('input', async (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        const dropdown = document.getElementById('customerDropdown');
-        
-        if (searchTerm.length < 2) {
-            dropdown.style.display = 'none';
-            return;
-        }
-
-        const matches = customers.filter(c => 
-            c.name.toLowerCase().includes(searchTerm) || 
-            c.phone.includes(searchTerm)
-        ).slice(0, 8);
-
-        if (matches.length === 0) {
-            dropdown.style.display = 'none';
-            return;
-        }
-
-        dropdown.innerHTML = matches.map(c => `
-            <div style="padding:10px;cursor:pointer;border-bottom:1px solid #eee" 
-                 onmouseover="this.style.background='#f0f2f5'" 
-                 onmouseout="this.style.background='white'"
-                 onclick="selectCustomer('${c.phone}')">
-                <div style="font-weight:600">${c.name}</div>
-                <div style="font-size:12px;color:#666">${c.phone} | ${c.area} | ৳${c.package || 'N/A'}</div>
-            </div>
-        `).join('');
-        dropdown.style.display = 'block';
-    });
-
-    window.selectCustomer = (phone) => {
-        const c = customers.find(cus => cus.phone === phone);
-        if (c) {
-            selectedCustomer = c;
-            document.getElementById('customerNameInput').value = c.name;
-            document.getElementById('customerPhone').value = c.phone;
-            document.getElementById('customerArea').value = c.area;
-            document.getElementById('customerAddress').value = c.address || '';
-            document.getElementById('connectionType').value = c.connectionType || '';
-            document.getElementById('package').value = c.package || '';
-            document.getElementById('customerDropdown').style.display = 'none';
-            updatePreview();
-        }
-    };
-
-    // Hide dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('#customerNameInput') &&!e.target.closest('#customerDropdown')) {
-            document.getElementById('customerDropdown').style.display = 'none';
-        }
-    });
-
-    // Load packages dynamically
-    async function loadPackageDropdown() {
-        const snapshot = await getDocs(collection(db, 'settings', 'packages', 'list'));
-        allPackages = [];
-        const select = document.getElementById('package');
-        select.innerHTML = '<option value="">Select Package</option>';
-        
-        snapshot.forEach(docSnap => {
-            const p = docSnap.data();
-            allPackages.push(p);
-            select.innerHTML += `<option value="${p.price}">${p.speed} - ৳${p.price}</option>`;
-        });
-    }
-
-    // Clear Form
-    document.getElementById('clearInvoiceBtn').onclick = () => {
-        selectedCustomer = null;
-        document.getElementById('customerNameInput').value = '';
-        document.getElementById('customerPhone').value = '';
-        document.getElementById('customerArea').value = '';
-        document.getElementById('customerAddress').value = '';
-        document.getElementById('connectionType').value = '';
-        document.getElementById('package').value = '';
-        document.getElementById('billNotes').value = '';
-        updatePreview();
-    };
-
-    // Save & WhatsApp
-    document.getElementById('saveWhatsAppBtn').onclick = async () => {
-        const customerName = document.getElementById('customerNameInput').value.trim();
-        const customerPhone = document.getElementById('customerPhone').value.trim();
-        const customerArea = document.getElementById('customerArea').value;
-        const packageAmount = document.getElementById('package').value;
-        const billMonth = document.getElementById('billMonth').value;
-        const dueDate = document.getElementById('dueDate').value;
-
-        if (!customerName ||!customerPhone ||!packageAmount ||!billMonth) {
-            alert('Please fill Customer, Package and Bill Month');
-            return;
-        }
-
-        billCounter++;
-        const billData = {
-            billNo: `OWNS-${String(billCounter).padStart(4, '0')}`,
-            invoiceNo: `INV-${billCounter}`,
-            customerName,
-            customerPhone,
-            customerAddress: document.getElementById('customerAddress').value,
-            customerArea,
-            connectionType: document.getElementById('connectionType').value,
-            amount: parseInt(packageAmount),
-            month: billMonth,
-            dueDate,
-            notes: document.getElementById('billNotes').value,
-            staffEmail: currentUser.email,
-            staffName: currentUser.displayName,
-            status: isAdmin? 'approved' : 'pending',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        await addDoc(collection(db, 'bills'), billData);
-        await logActivity('CREATE_BILL', `${billData.billNo} for ${customerName}`);
-
-        const waMsg = `*${companyData.name || 'OWNS'} Internet Bill*%0A%0A*Invoice:* ${billData.invoiceNo}%0A*Customer:* ${customerName}%0A*Area:* ${customerArea}%0A*Month:* ${billMonth}%0A*Amount:* ৳${packageAmount}%0A*Due Date:* ${dueDate}%0A%0APlease pay on time. Thank you!`;
-        window.open(`https://wa.me/88${customerPhone}?text=${waMsg}`, '_blank');
-
-        document.getElementById('clearInvoiceBtn').click();
-        await loadBills();
-        await loadDueList();
-    };
-
-    // Update preview for notes
-    document.getElementById('billNotes').addEventListener('input', (e) => {
-        const notes = e.target.value;
-        if (notes) {
-            document.getElementById('previewNotes').style.display = 'block';
-            document.getElementById('previewNotesText').textContent = notes;
-        } else {
-            document.getElementById('previewNotes').style.display = 'none';
-        }
-    });
-
-    // Save Bill - Updated
-    document.getElementById('saveBillBtn').onclick = async () => {
-        const customerName = document.getElementById('customerNameInput').value.trim();
-        const customerPhone = document.getElementById('customerPhone').value.trim();
-        const customerArea = document.getElementById('customerArea').value;
-        const packageAmount = document.getElementById('package').value;
-        const billMonth = document.getElementById('billMonth').value;
-        const dueDate = document.getElementById('dueDate').value;
-
-        if (!customerName ||!customerPhone ||!customerArea ||!packageAmount ||!billMonth) {
-            alert('Please fill Customer Name, Phone, Area, Package and Bill Month');
-            return;
-        }
-
-        billCounter++;
-        const billData = {
-            billNo: `OWNS-${String(billCounter).padStart(4, '0')}`,
-            invoiceNo: `INV-${billCounter}`,
-            customerName,
-            customerPhone,
-            customerAddress: document.getElementById('customerAddress').value,
-            customerArea,
-            connectionType: document.getElementById('connectionType').value,
-            amount: parseInt(packageAmount),
-            month: billMonth,
-            dueDate,
-            notes: document.getElementById('billNotes').value,
-            staffEmail: currentUser.email,
-            staffName: currentUser.displayName,
-            status: isAdmin? 'approved' : 'pending',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        await addDoc(collection(db, 'bills'), billData);
-        await logActivity('CREATE_BILL', `${billData.billNo} for ${customerName}`);
-        alert('Bill Saved Successfully! ✅');
-        document.getElementById('clearInvoiceBtn').click();
-        await loadBills();
-        await loadDueList();
-    };
-
-    // Save & Print - Updated
-    document.getElementById('savePrintBtn').onclick = async () => {
-        const customerName = document.getElementById('customerNameInput').value.trim();
-        if (!customerName) {
-            alert('Please fill customer details first');
-            return;
-        }
-        await document.getElementById('saveBillBtn').click();
-        setTimeout(() => window.print(), 1000);
-    };
-
-    // Bill Month Auto Due Date
-    document.getElementById('billMonth').onchange = (e) => {
-        if (e.target.value) {
-            const [year, month] = e.target.value.split('-');
-            const nextMonth = new Date(year, month, 10);
-            document.getElementById('dueDate').value = nextMonth.toISOString().split('T')[0];
-            updatePreview();
-        }
-    };
-
-    // Update Preview - Modified for new fields
-    function updatePreview() {
-        // Company
-        document.getElementById('previewCompanyName').textContent = companyData.name || 'Your ISP Name';
-        document.getElementById('previewCompanyAddress').textContent = companyData.address || 'Company Address';
-        document.getElementById('previewCompanyContact').textContent = `${companyData.phone || 'Phone'} | ${companyData.email || 'Email'}`;
-        if (companyData.logo) {
-            document.getElementById('previewLogo').innerHTML = `<img src="${companyData.logo}" style="width:100%;height:100%;object-fit:cover">`;
-        }
-
-        // Invoice
-        document.getElementById('previewInvoiceNo').textContent = `INV-${billCounter}`;
-        document.getElementById('previewIssueDate').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-        // Customer
-        const name = document.getElementById('customerNameInput').value;
-        const area = document.getElementById('customerArea').value;
-        const address = document.getElementById('customerAddress').value;
-        const phone = document.getElementById('customerPhone').value;
-        document.getElementById('previewCustomerName').textContent = name || '-';
-        document.getElementById('previewCustomerArea').textContent = area || '-';
-        document.getElementById('previewCustomerAddress').textContent = address || '-';
-        document.getElementById('previewCustomerPhone').textContent = phone || '-';
-
-        // Billing
-        const connType = document.getElementById('connectionType').value;
-        const pkg = document.getElementById('package');
-        const pkgText = pkg.options[pkg.selectedIndex]?.text || '-';
-        const billMonth = document.getElementById('billMonth').value;
-        const dueDate = document.getElementById('dueDate').value;
-        const amount = pkg.value || 0;
-
-        document.getElementById('previewConnectionType').textContent = connType || '-';
-        document.getElementById('previewPackage').textContent = pkgText;
-        document.getElementById('previewBillMonth').textContent = billMonth? new Date(billMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '-';
-        document.getElementById('previewBillMonthDesc').textContent = billMonth? new Date(billMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '-';
-        document.getElementById('previewDueDate').textContent = dueDate? new Date(dueDate).toLocaleDateString('en-GB') : '-';
-        document.getElementById('previewAmount').textContent = `৳ ${amount}.00`;
-        document.getElementById('previewSubtotal').textContent = `৳ ${amount}.00`;
-        document.getElementById('previewTotal').textContent = `৳ ${amount}.00`;
-    }
-
-    // Real-time Update
-    document.querySelectorAll('input, select, textarea').forEach(el => {
-        el.addEventListener('input', updatePreview);
-        el.addEventListener('change', updatePreview);
-    });
-
-    // Bills Management
-    async function loadBills(filter = '') {
-        const billsBody = document.getElementById('billsBody');
-        billsBody.innerHTML = '<tr><td colspan="9">Loading...</td></tr>';
-
-        let q = query(collection(db, 'bills'), orderBy('createdAt', 'desc'));
-        if (!isAdmin) {
-            q = query(collection(db, 'bills'), where('staffEmail', '==', currentUser.email), orderBy('createdAt', 'desc'));
-        }
-
-        const querySnapshot = await getDocs(q);
-        let totalRevenue = 0, pendingCount = 0;
-        billsBody.innerHTML = '';
-
-        querySnapshot.forEach((docSnap) => {
-            const bill = docSnap.data();
-            if (filter &&!bill.customerName.toLowerCase().includes(filter.toLowerCase()) &&!bill.customerPhone.includes(filter)) return;
-
-            if (bill.status === 'approved') totalRevenue += bill.amount;
-            if (bill.status === 'pending') pendingCount++;
-
-            const statusBadge = bill.status === 'approved'? '<span class="badge badge-approved">Approved</span>' : '<span class="badge badge-pending">Pending</span>';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${new Date(bill.createdAt).toLocaleDateString()}</td>
-                <td>${bill.billNo}</td>
-                <td>${bill.customerName}</td>
-                <td>${bill.customerPhone}</td>
-                <td><span class="badge badge-due">${bill.customerArea || '-'}</span></td>
-                <td>৳${bill.amount}</td>
-                <td>${statusBadge}</td>
-                ${isAdmin? `<td>${bill.staffName}</td>` : ''}
-                <td class="no-print">
-                    <button class="btn btn-sm" onclick='printBill(${JSON.stringify(bill).replace(/'/g, "&apos;")})'>Print</button>
-                    ${isAdmin && bill.status === 'pending'? `<button class="btn btn-sm btn-success" onclick='approveBill("${docSnap.id}")'>Approve</button>` : ''}
-                    ${isAdmin? `<button class="btn btn-sm btn-danger" onclick='deleteBill("${docSnap.id}", "${bill.billNo}")'>Delete</button>` : ''}
-                </td>
-            `;
-            billsBody.appendChild(tr);
-        });
-
-        document.getElementById('totalBills').textContent = querySnapshot.size;
-        document.getElementById('totalRevenue').textContent = totalRevenue;
-        document.getElementById('pendingCount').textContent = pendingCount;
-    }
-
-    window.approveBill = async (id) => {
-        await updateDoc(doc(db, 'bills', id), { status: 'approved', updatedAt: new Date().toISOString() });
-        await logActivity('APPROVE_BILL', id);
-        loadBills();
-        loadDueList();
-    };
-
-    window.deleteBill = async (id, billNo) => {
-        if (confirm(`Delete ${billNo}?`)) {
-            await deleteDoc(doc(db, 'bills', id));
-            await logActivity('DELETE_BILL', billNo);
-            loadBills();
-            loadDueList();
-        }
-    };
-
-    window.printBill = (bill) => {
-        const billHTML = `
-            <div style="max-width:800px;margin:0 auto;font-family:Arial">
-                <div style="text-align:center;border-bottom:3px solid #1a73e8;padding-bottom:20px;margin-bottom:30px">
-                    <h1 style="color:#1a73e8;margin:0">${companyData.name || 'OWNS Internet'}</h1>
-                    <p style="margin:5px 0">${companyData.address || 'ISP Reseller Billing System'}</p>
-                    <p style="margin:5px 0;font-size:14px">${companyData.phone || 'Munshiganj'} | ${companyData.email || 'WhatsApp: 019XXXXXXXX'}</p>
-                </div>
-                <table style="width:100%;margin-bottom:30px">
-                    <tr><td><strong>Bill No:</strong> ${bill.billNo}</td><td style="text-align:right"><strong>Date:</strong> ${new Date(bill.createdAt).toLocaleDateString()}</td></tr>
-                    <tr><td><strong>Customer:</strong> ${bill.customerName}</td><td style="text-align:right"><strong>Month:</strong> ${bill.month}</td></tr>
-                    <tr><td><strong>Phone:</strong> ${bill.customerPhone}</td><td style="text-align:right"><strong>Area:</strong> ${bill.customerArea || '-'}</td></tr>
-                    <tr><td colspan="2"><strong>Address:</strong> ${bill.customerAddress || '-'}</td></tr>
-                </table>
-                <table style="width:100%;border-collapse:collapse">
-                    <tr style="background:#1a73e8;color:white"><th style="padding:12px;text-align:left">Description</th><th style="padding:12px;text-align:right">Amount</th></tr>
-                    <tr><td style="padding:12px;border-bottom:1px solid #ddd">Internet Package - ${bill.month} (${bill.connectionType || 'PPPoE'})</td><td style="padding:12px;text-align:right;border-bottom:1px solid #ddd">৳${bill.amount}</td></tr>
-                    <tr style="font-weight:bold;font-size:18px"><td style="padding:12px">Total</td><td style="padding:12px;text-align:right">৳${bill.amount}</td></tr>
-                </table>
-                <div style="margin-top:50px;text-align:center;color:#666;font-size:12px">
-                    <p>Thank you for choosing ${companyData.name || 'OWNS Internet'}</p>
-                    <p>Billed by: ${bill.staffName} | Status: ${bill.status}</p>
-                    <p style="color:#ea4335;margin-top:10px">Due Date: ${bill.dueDate || '-'}</p>
-                </div>
-            </div>
-        `;
-        const printWindow = window.open('', '', 'width=800,height=600');
-        printWindow.document.write(`<html><head><title>Invoice</title></head><body>${billHTML}</body></html>`);
-        printWindow.document.close();
-        printWindow.print();
-    };
-
-    // Search
-    document.getElementById('searchBtn').onclick = () => loadBills(document.getElementById('searchInput').value);
-    document.getElementById('clearSearch').onclick = () => { document.getElementById('searchInput').value = ''; loadBills(); };
-
-    // Due List
-    async function loadDueList(areaFilter = '') {
-        const currentMonth = new Date().toISOString().slice(0, 7);
-        const allBills = await getDocs(query(collection(db, 'bills'), where('status', '==', 'approved')));
-        const paidCustomers = new Set();
-        allBills.forEach(doc => {
-            const bill = doc.data();
-            if (bill.month === currentMonth) paidCustomers.add(bill.customerPhone);
-        });
-
-        const allCustomers = {};
-        allBills.forEach(doc => {
-            const bill = doc.data();
-            if (!allCustomers[bill.customerPhone]) {
-                allCustomers[bill.customerPhone] = bill;
-            }
-        });
-
-        const dueListBody = document.getElementById('dueListBody');
-        dueListBody.innerHTML = '';
-        let dueCount = 0;
-
-        Object.values(allCustomers).forEach(customer => {
-            if (!paidCustomers.has(customer.customerPhone)) {
-                if (areaFilter && customer.customerArea!== areaFilter) return;
-                dueCount++;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${customer.customerName}</td>
-                    <td>${customer.customerPhone}</td>
-                    <td><span class="badge badge-due">${customer.customerArea || '-'}</span></td>
-                    <td>৳${customer.amount}</td>
-                    <td>${customer.customerAddress || '-'}</td>
-                    <td>${new Date(customer.createdAt).toLocaleDateString()}</td>
-                    <td class="no-print"><button class="btn btn-sm btn-warning" onclick='sendReminder("${customer.customerPhone}", "${customer.customerName}", "${customer.customerArea}")'>Send Reminder</button></td>
-                `;
-                dueListBody.appendChild(tr);
-            }
-        });
-        document.getElementById('dueCount').textContent = dueCount;
-    }
-
-    document.getElementById('filterAreaBtn').onclick = () => {
-        const area = document.getElementById('areaFilter').value;
-        loadDueList(area);
-    };
-
-    window.sendReminder = (phone, name, area) => {
-        const msg = `Hi ${name},%0A%0AThis is a reminder from ${companyData.name || 'OWNS Internet'}. Your bill for ${new Date().toLocaleDateString('en-US', {month: 'long'})} is due.%0AArea: ${area}%0A%0APlease pay to continue service.%0A%0AThank you!`;
-        window.open(`https://wa.me/88${phone}?text=${msg}`, '_blank');
-    };
-
-    // Customer History
-    document.getElementById('historyBtn').onclick = async () => {
-        const phone = document.getElementById('historySearch').value.trim();
-        if (!phone) return alert('Enter phone number');
-
-        const q = query(collection(db, 'bills'), where('customerPhone', '==', phone), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-
-        let html = '<table><thead><tr><th>Date</th><th>Bill No</th><th>Month</th><th>Area</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
-        let total = 0;
+        const select = document.getElementById('customerSelect');
+        select.innerHTML = '<option value="">Select Customer</option>';
         snapshot.forEach(doc => {
-            const bill = doc.data();
-            if (bill.status === 'approved') total += bill.amount;
-            html += `<tr><td>${new Date(bill.createdAt).toLocaleDateString()}</td><td>${bill.billNo}</td><td>${bill.month}</td><td>${bill.customerArea || '-'}</td><td>৳${bill.amount}</td><td><span class="badge badge-${bill.status === 'approved'? 'approved' : 'pending'}">${bill.status}</span></td></tr>`;
-        });
-        html += `</tbody></table><p style="margin-top:15px;font-weight:bold">Total Paid: ৳${total}</p>`;
-        document.getElementById('historyResult').innerHTML = html;
-    };
-
-    // Reports
-    document.getElementById('generateReport').onclick = async () => {
-        const from = document.getElementById('reportFrom').value;
-        const to = document.getElementById('reportTo').value;
-        if (!from ||!to) return alert('Select date range');
-
-        const q = query(collection(db, 'bills'), where('status', '==', 'approved'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-        let total = 0, count = 0;
-
-        snapshot.forEach(doc => {
-            const bill = doc.data();
-            const billDate = bill.createdAt.split('T')[0];
-            if (billDate >= from && billDate <= to) {
-                total += bill.amount;
-                count++;
-            }
-        });
-
-        document.getElementById('reportResult').innerHTML = `
-            <div class="stat-card"><h3>Period: ${from} to ${to}</h3><div class="number">৳${total}</div><p>Total Bills: ${count}</p></div>
-        `;
-    };
-
-    document.getElementById('exportExcel').onclick = async () => {
-        const snapshot = await getDocs(query(collection(db, 'bills'), orderBy('createdAt', 'desc')));
-        const data = [['Bill No', 'Date', 'Customer', 'Phone', 'Area', 'Address', 'Month', 'Amount', 'Status', 'Staff']];
-        snapshot.forEach(doc => {
-            const b = doc.data();
-            data.push([b.billNo, new Date(b.createdAt).toLocaleDateString(), b.customerName, b.customerPhone, b.customerArea || '', b.customerAddress || '', b.month, b.amount, b.status, b.staffName]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Bills');
-        XLSX.writeFile(wb, `OWNS_Bills_${new Date().toISOString().split('T')[0]}.xlsx`);
-        await logActivity('EXPORT_EXCEL', 'All bills');
-    };
-
-    // Export Due List
-    document.getElementById('exportDueBtn').onclick = () => {
-        const rows = [['Customer', 'Phone', 'Area', 'Package', 'Address', 'Last Payment']];
-        document.querySelectorAll('#dueListBody tr').forEach(tr => {
-            const cells = tr.querySelectorAll('td');
-            if (cells.length > 1) {
-                rows.push([cells[0].innerText, cells[1].innerText, cells[2].innerText, cells[3].innerText, cells[4].innerText, cells[5].innerText]);
-            }
-        });
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Due List');
-        XLSX.writeFile(wb, `OWNS_DueList_${new Date().toISOString().split('T')[0]}.xlsx`);
-        logActivity('EXPORT_DUE_LIST', 'Due customers');
-    };
-
-    // Staff Report
-    document.getElementById('staffReportBtn').onclick = async () => {
-        const month = document.getElementById('staffMonth').value;
-        if (!month) return alert('Select month');
-
-        const q = query(collection(db, 'bills'), where('month', '==', month), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-        const staffData = {};
-
-        snapshot.forEach(doc => {
-            const bill = doc.data();
-            if (!staffData[bill.staffEmail]) {
-                staffData[bill.staffEmail] = { name: bill.staffName, email: bill.staffEmail, total: 0, approved: 0, pending: 0 };
-            }
-            if (bill.status === 'approved') {
-                staffData[bill.staffEmail].total += bill.amount;
-                staffData[bill.staffEmail].approved++;
-            } else {
-                staffData[bill.staffEmail].pending++;
-            }
-        });
-
-        const tbody = document.getElementById('staffReportBody');
-        tbody.innerHTML = '';
-        Object.values(staffData).forEach(staff => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${staff.name}</td>
-                <td>${staff.email}</td>
-                <td>${staff.approved + staff.pending}</td>
-                <td>৳${staff.total}</td>
-                <td>${staff.pending}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    };
-
-    // Activity Logs
-    async function loadLogs() {
-        const q = query(collection(db, 'logs'), orderBy('timestamp', 'desc'));
-        const snapshot = await getDocs(q);
-        const tbody = document.getElementById('logsBody');
-        tbody.innerHTML = '';
-
-        snapshot.forEach(doc => {
-            const log = doc.data();
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${log.timestamp? new Date(log.timestamp.toDate()).toLocaleString() : '-'}</td>
-                <td>${log.user}</td>
-                <td>${log.action}</td>
-                <td>${log.details}</td>
-            `;
-            tbody.appendChild(tr);
+            const data = doc.data();
+            select.innerHTML += `<option value="${doc.id}" data-whatsapp="${data.whatsapp || ''}" data-imo="${data.imo || ''}" data-address="${data.address || ''}" data-name="${data.name}">${data.name} - ${data.phone}</option>`;
         });
     }
 
-    document.getElementById('exportLogs').onclick = async () => {
-        const snapshot = await getDocs(query(collection(db, 'logs'), orderBy('timestamp', 'desc')));
-        const data = [['Time', 'User', 'Email', 'Action', 'Details']];
-        snapshot.forEach(doc => {
-            const log = doc.data();
-            data.push([
-                log.timestamp? new Date(log.timestamp.toDate()).toLocaleString() : '-',
-                log.user,
-                log.email,
-                log.action,
-                log.details
-            ]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Activity Logs');
-        XLSX.writeFile(wb, `OWNS_Logs_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.getElementById('customerSelect').onchange = (e) => {
+        const opt = e.target.selectedOptions[0];
+        document.getElementById('invoiceWhatsApp').value = opt.dataset.whatsapp || '';
+        document.getElementById('invoiceImo').value = opt.dataset.imo || '';
+        document.getElementById('invoiceAddress').value = opt.dataset.address || '';
     };
 
-    // Monthly Revenue Chart
-    async function loadChart() {
-        const snapshot = await getDocs(query(collection(db, 'bills'), where('status', '==', 'approved')));
-        const monthlyData = {};
-
-        snapshot.forEach(doc => {
-            const bill = doc.data();
-            const month = bill.month;
-            if (!monthlyData[month]) monthlyData[month] = 0;
-            monthlyData[month] += bill.amount;
-        });
-
-        const labels = Object.keys(monthlyData).sort();
-        const data = labels.map(m => monthlyData[m]);
-
-        const ctx = document.getElementById('revenueChart').getContext('2d');
-        if (revenueChart) revenueChart.destroy();
-        revenueChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Monthly Revenue ৳',
-                    data: data,
-                    borderColor: '#1a73e8',
-                    backgroundColor: 'rgba(26, 115, 232, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: true },
-                    title: { display: true, text: 'Revenue Trend' }
-                },
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    }
-
-    // Settings Functions
-    async function loadSettings() {
-        // Load Company
-        const companySnap = await getDoc(doc(db, 'settings', 'company'));
-        if (companySnap.exists()) {
-            const c = companySnap.data();
-            document.getElementById('setCompanyName').value = c.name || '';
-            document.getElementById('setCompanyLogo').value = c.logo || '';
-            document.getElementById('setCompanyAddress').value = c.address || '';
-            document.getElementById('setCompanyPhone').value = c.phone || '';
-            document.getElementById('setCompanyEmail').value = c.email || '';
-            document.getElementById('setCompanyWebsite').value = c.website || '';
-            document.getElementById('setCompanyWhatsApp').value = c.whatsapp || '';
-        }
-        
-        // Load SMS
-        const smsSnap = await getDoc(doc(db, 'settings', 'sms'));
-        if (smsSnap.exists()) {
-            const s = smsSnap.data();
-            document.getElementById('smsProvider').value = s.provider || '';
-            document.getElementById('smsApiKey').value = s.apiKey || '';
-            document.getElementById('smsSenderId').value = s.senderId || '';
-        }
-        
-        await loadPackages();
-        await loadAreas();
-        await loadStaff();
-    }
-
-    // Save Company Settings
-    document.getElementById('saveCompanySettings').onclick = async () => {
-        const data = {
-            name: document.getElementById('setCompanyName').value,
-            logo: document.getElementById('setCompanyLogo').value,
-            address: document.getElementById('setCompanyAddress').value,
-            phone: document.getElementById('setCompanyPhone').value,
-            email: document.getElementById('setCompanyEmail').value,
-            website: document.getElementById('setCompanyWebsite').value,
-            whatsapp: document.getElementById('setCompanyWhatsApp').value,
-            updatedAt: new Date().toISOString()
-        };
-        await setDoc(doc(db, 'settings', 'company'), data);
-        companyData = data;
-        updatePreview();
-        alert('Company Info Saved! ✅');
-        await logActivity('UPDATE_COMPANY', 'Company info updated from Settings');
-    };
-
-    // SMS Settings
-    document.getElementById('saveSmsSettings').onclick = async () => {
-        const data = {
-            provider: document.getElementById('smsProvider').value,
-            apiKey: document.getElementById('smsApiKey').value,
-            senderId: document.getElementById('smsSenderId').value
-        };
-        await setDoc(doc(db, 'settings', 'sms'), data);
-        alert('SMS Settings Saved! ✅');
-    };
-
-    // Package Manager
     async function loadPackages() {
-        const snapshot = await getDocs(collection(db, 'settings', 'packages', 'list'));
-        const tbody = document.getElementById('packageTableBody');
-        tbody.innerHTML = '';
-        
-        if (snapshot.empty) {
-            const defaults = [
-                { speed: '5 Mbps', price: 500 },
-                { speed: '10 Mbps', price: 800 },
-                { speed: '15 Mbps', price: 1000 },
-                { speed: '20 Mbps', price: 1500 },
-                { speed: '30 Mbps', price: 2000 },
-                { speed: '50 Mbps', price: 3000 }
-            ];
-            for (let p of defaults) {
-                await addDoc(collection(db, 'settings', 'packages', 'list'), p);
+        const snapshot = await getDocs(collection(db, 'packages'));
+        const selects = [document.getElementById('packageSelect'), document.getElementById('custPackage')];
+        selects.forEach(select => {
+            if (select) {
+                select.innerHTML = '<option value="">Select Package</option>';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    select.innerHTML += `<option value="${doc.id}" data-price="${data.price}">${data.name} - ৳${data.price} (${data.speed})</option>`;
+                });
             }
-            return loadPackages();
-        }
-        
-        snapshot.forEach(docSnap => {
-            const p = docSnap.data();
-            tbody.innerHTML += `<tr><td>${p.speed}</td><td>৳${p.price}</td><td><button class="btn btn-sm btn-danger" onclick="deletePackage('${docSnap.id}')">Delete</button></td></tr>`;
         });
+        loadPackageTable();
     }
 
-       document.getElementById('addPackage').onclick = async () => {
+    async function loadPackageTable() {
+        const snapshot = await getDocs(collection(db, 'packages'));
+        const tbody = document.getElementById('packageListTable');
+        if (tbody) {
+            tbody.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">৳${data.price}</td><td class="p-2"><button onclick="deletePackage('${doc.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Delete</button></td></tr>`;
+            });
+        }
+    }
+
+    async function loadStaffList() {
+        const q = query(collection(db, 'users'), where('role', '==', 'staff'));
+        const snapshot = await getDocs(q);
+        const select = document.getElementById('custAssignedStaff');
+        if (select) {
+            select.innerHTML = '<option value="">Assign Staff</option>';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                select.innerHTML += `<option value="${data.email}">${data.email}</option>`;
+            });
+        }
+    }
+
+    document.getElementById('packageSelect').onchange = (e) => {
+        const opt = e.target.selectedOptions[0];
+        document.getElementById('billAmount').value = opt.dataset.price || '';
+    };
+
+    document.getElementById('generateInvoiceBtn').onclick = async () => {
+        const customerId = document.getElementById('customerSelect').value;
+        const packageId = document.getElementById('packageSelect').value;
+        const month = document.getElementById('billMonth').value;
+        const amount = parseFloat(document.getElementById('billAmount').value);
+        const dueDate = document.getElementById('dueDate').value;
+        const customerName = document.getElementById('customerSelect').selectedOptions[0].dataset.name;
+
+        if (!customerId ||!packageId ||!month ||!amount ||!dueDate) {
+            alert('Please fill all required fields');
+            return;
+        }
+
+        await addDoc(collection(db, 'bills'), {
+            customerId,
+            customerName,
+            packageId,
+            month,
+            amount,
+            dueDate,
+            status: 'pending',
+            createdBy: currentUser.email,
+            createdAt: serverTimestamp()
+        });
+        await logActivity('GENERATE_INVOICE', `Bill for ${customerName} - ${month}`);
+        alert('Invoice Generated Successfully!');
+        document.getElementById('billMonth').value = '';
+        document.getElementById('dueDate').value = '';
+        loadDashboard();
+    };
+
+    document.getElementById('createUserBtn').onclick = async () => {
+        const email = document.getElementById('newUserEmail').value;
+        const password = document.getElementById('newUserPassword').value;
+        const role = document.getElementById('newUserRole').value;
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            await addDoc(collection(db, 'users'), { email, role, createdAt: serverTimestamp(), createdBy: currentUser.email });
+            await logActivity('CREATE_USER', `${email} - ${role}`);
+            alert('User Created Successfully!');
+            document.getElementById('newUserEmail').value = '';
+            document.getElementById('newUserPassword').value = '';
+            loadStaffList();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    };
+
+    document.getElementById('addPackageBtn').onclick = async () => {
+        const name = document.getElementById('pkgName').value;
+        const price = parseFloat(document.getElementById('pkgPrice').value);
         const speed = document.getElementById('pkgSpeed').value;
-        const price = parseInt(document.getElementById('pkgPrice').value);
-        if (!speed || !price) return alert('Fill both fields');
-        await addDoc(collection(db, 'settings', 'packages', 'list'), { speed, price });
-        document.getElementById('pkgSpeed').value = '';
+        if (!name ||!price) {
+            alert('Please fill all fields');
+            return;
+        }
+        await addDoc(collection(db, 'packages'), { name, price, speed, createdAt: serverTimestamp() });
+        await logActivity('ADD_PACKAGE', name);
+        alert('Package Added!');
+        document.getElementById('pkgName').value = '';
         document.getElementById('pkgPrice').value = '';
+        document.getElementById('pkgSpeed').value = '';
         loadPackages();
-        loadPackageDropdown();
-        alert('Package Added! ✅');
     };
 
     window.deletePackage = async (id) => {
+        if (currentRole!== 'admin') {
+            alert('Only admin can delete packages');
+            return;
+        }
         if (confirm('Delete this package?')) {
-            await deleteDoc(doc(db, 'settings', 'packages', 'list', id));
+            await deleteDoc(doc(db, 'packages', id));
+            await logActivity('DELETE_PACKAGE', id);
             loadPackages();
-            loadPackageDropdown();
         }
     };
 
-    // Area Manager
-    async function loadAreas() {
-        const snapshot = await getDocs(collection(db, 'settings', 'areas', 'list'));
-        const tbody = document.getElementById('areaTableBody');
-        const areaSelect = document.getElementById('areaFilter');
-        tbody.innerHTML = '';
-        areaSelect.innerHTML = '<option value="">All Areas</option>';
-        
-        snapshot.forEach(docSnap => {
-            const a = docSnap.data();
-            tbody.innerHTML += `<tr><td>${a.name}</td><td><button class="btn btn-sm btn-danger" onclick="deleteArea('${docSnap.id}')">Delete</button></td></tr>`;
-            areaSelect.innerHTML += `<option value="${a.name}">${a.name}</option>`;
-        });
-    }
-
-    document.getElementById('addArea').onclick = async () => {
-        const name = document.getElementById('newArea').value.trim();
-        if (!name) return alert('Enter area name');
-        await addDoc(collection(db, 'settings', 'areas', 'list'), { name });
-        document.getElementById('newArea').value = '';
-        loadAreas();
-        alert('Area Added! ✅');
-    };
-
-    window.deleteArea = async (id) => {
-        if (confirm('Delete this area?')) {
-            await deleteDoc(doc(db, 'settings', 'areas', 'list', id));
-            loadAreas();
-        }
-    };
-
-    // Staff Manager
-    async function loadStaff() {
-        const snapshot = await getDocs(collection(db, 'settings', 'staff', 'list'));
-        const tbody = document.getElementById('staffTableBody');
-        tbody.innerHTML = '';
-        snapshot.forEach(docSnap => {
-            const s = docSnap.data();
-            tbody.innerHTML += `<tr><td>${s.email}</td><td>${s.role}</td><td><button class="btn btn-sm btn-danger" onclick="deleteStaff('${docSnap.id}')">Remove</button></td></tr>`;
-        });
-    }
-
-    document.getElementById('addStaff').onclick = async () => {
-        const email = document.getElementById('newStaffEmail').value.trim();
-        if (!email) return;
-        await addDoc(collection(db, 'settings', 'staff', 'list'), { email, role: 'staff', addedAt: new Date().toISOString() });
-        document.getElementById('newStaffEmail').value = '';
-        loadStaff();
-        alert('Staff Added! They can now login ✅');
-    };
-
-    window.deleteStaff = async (id) => {
-        if (confirm('Remove this staff?')) {
-            await deleteDoc(doc(db, 'settings', 'staff', 'list', id));
-            loadStaff();
-        }
-    };
-
-    // Backup All Data
-    document.getElementById('backupAll').onclick = async () => {
-        const bills = await getDocs(collection(db, 'bills'));
-        const customers = await getDocs(collection(db, 'customers'));
-        const logs = await getDocs(collection(db, 'logs'));
-        
-        const data = {
-            bills: bills.docs.map(d => ({ id: d.id, ...d.data() })),
-            customers: customers.docs.map(d => ({ id: d.id, ...d.data() })),
-            logs: logs.docs.map(d => ({ id: d.id, ...d.data() })),
-            backupDate: new Date().toISOString()
+    document.getElementById('saveCompanyBtn').onclick = async () => {
+        const companyData = {
+            name: document.getElementById('companyName').value,
+            phone: document.getElementById('companyPhone').value,
+            address: document.getElementById('companyAddress').value,
+            email: document.getElementById('companyEmail').value,
+            logo: document.getElementById('companyLogo').value,
+            updatedAt: serverTimestamp()
         };
-        
-        const ws1 = XLSX.utils.json_to_sheet(data.bills);
-        const ws2 = XLSX.utils.json_to_sheet(data.customers);
-        const ws3 = XLSX.utils.json_to_sheet(data.logs);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws1, 'Bills');
-        XLSX.utils.book_append_sheet(wb, ws2, 'Customers');
-        XLSX.utils.book_append_sheet(wb, ws3, 'Logs');
-        XLSX.writeFile(wb, `OWNS_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
-        await logActivity('BACKUP', 'Full database backup downloaded');
+        await addDoc(collection(db, 'settings'), companyData);
+        alert('Company Info Saved!');
     };
 
-    document.getElementById('clearCache').onclick = () => {
-        if (confirm('Clear browser cache? This will log you out.')) {
-            localStorage.clear();
-            location.reload();
+    async function loadAllCustomers() {
+        const snapshot = await getDocs(collection(db, 'customers'));
+        const tbody = document.getElementById('allCustomersTable');
+        tbody.innerHTML = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const deleteBtn = currentRole === 'admin'? `<button onclick="deleteCustomer('${doc.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Delete</button>` : '';
+            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">${data.phone}</td><td class="p-2">${data.area}</td><td class="p-2">${data.package || 'N/A'}</td><td class="p-2">${data.pppoeUser || 'N/A'}</td><td class="p-2"><span class="bg-green-500 text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${deleteBtn}</td></tr>`;
+        });
+    }
+
+    document.getElementById('customerSearch').onkeyup = (e) => {
+        const search = e.target.value.toLowerCase();
+        const rows = document.getElementById('allCustomersTable').getElementsByTagName('tr');
+        for (let row of rows) {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(search)? '' : 'none';
         }
     };
 
-    document.getElementById('testSms').onclick = async () => {
-        const smsSnap = await getDoc(doc(db, 'settings', 'sms'));
-        if (!smsSnap.exists()) return alert('Please save SMS settings first');
-        const s = smsSnap.data();
-        if (!s.provider || !s.apiKey) return alert('SMS Provider or API Key missing');
-        alert(`Test SMS will be sent via ${s.provider} to ${companyData.whatsapp || 'your number'}.\nSender ID: ${s.senderId}\n\nNote: Actual SMS sending requires backend integration.`);
+    window.deleteCustomer = async (id) => {
+        if (currentRole!== 'admin') {
+            alert('Only admin can delete customers');
+            return;
+        }
+        if (confirm('Delete this customer? This will also delete all related bills.')) {
+            await deleteDoc(doc(db, 'customers', id));
+            await logActivity('DELETE_CUSTOMER', id);
+            loadAllCustomers();
+            loadCustomers();
+        }
     };
+
+    document.getElementById('exportCustomersBtn').onclick = () => {
+        alert('Export feature: Copy table data to Excel manually. Full Excel export needs SheetJS library.');
+    };
+
+    document.getElementById('submitComplaintBtn').onclick = async () => {
+        const text = document.getElementById('complaintText').value;
+        if (!text) {
+            alert('Please describe your issue');
+            return;
+        }
+        await addDoc(collection(db, 'complaints'), {
+            customerEmail: currentUser.email,
+            issue: text,
+            status: 'pending',
+            assignedTo: null,
+            createdAt: serverTimestamp()
+        });
+        await logActivity('SUBMIT_COMPLAINT', text.substring(0, 50));
+        alert('Complaint Submitted Successfully!');
+        document.getElementById('complaintText').value = '';
+        loadMyComplaints();
+        loadDashboard();
+    };
+
+    async function loadComplaints() {
+        const filter = document.getElementById('complaintFilter')?.value || 'all';
+        let q = collection(db, 'complaints');
+        if (filter!== 'all') {
+            q = query(collection(db, 'complaints'), where('status', '==', filter));
+        }
+        const snapshot = await getDocs(q);
+        const tbody = document.getElementById('complaintsTable');
+        tbody.innerHTML = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const statusColor = data.status === 'pending'? 'bg-yellow-500' : data.status === 'assigned'? 'bg-blue-500' : 'bg-green-500';
+            const actionBtn = data.status === 'pending'? `<button onclick="openForwardModal('${doc.id}')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Forward</button>` : data.status === 'assigned'? `<button onclick="openReplyModal('${doc.id}')" class="bg-green-500 text-white px-3 py-1 rounded text-sm">Reply</button>` : '';
+            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.customerEmail}</td><td class="p-2">${data.issue.substring(0, 50)}...</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${data.assignedTo || 'Unassigned'}</td><td class="p-2">${new Date(data.createdAt?.toDate()).toLocaleDateString()}</td><td class="p-2">${actionBtn}</td></tr>`;
+        });
+    }
+
+    document.getElementById('complaintFilter').onchange = () => loadComplaints();
+
+    window.openForwardModal = (id) => {
+        currentComplaintId = id;
+        document.getElementById('forwardModal').style.display = 'block';
+        loadStaffForForward();
+    };
+
+    async function loadStaffForForward() {
+        const q = query(collection(db, 'users'), where('role', '==', 'staff'));
+        const snapshot = await getDocs(q);
+        const select = document.getElementById('forwardStaffSelect');
+        select.innerHTML = '<option value="">Select Staff</option>';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            select.innerHTML += `<option value="${data.email}">${data.email}</option>`;
+        });
+    }
+
+    document.getElementById('confirmForwardBtn').onclick = async () => {
+        const staffEmail = document.getElementById('forwardStaffSelect').value;
+        if (!staffEmail) {
+            alert('Please select staff');
+            return;
+        }
+        await updateDoc(doc(db, 'complaints', currentComplaintId), { 
+            status: 'assigned', 
+            assignedTo: staffEmail,
+            assignedAt: serverTimestamp()
+        });
+        await logActivity('FORWARD_COMPLAINT', `To ${staffEmail}`);
+        document.getElementById('forwardModal').style.display = 'none';
+        loadComplaints();
+        loadDashboard();
+    };
+
+    window.openReplyModal = (id) => {
+        currentComplaintId = id;
+        document.getElementById('replyModal').style.display = 'block';
+    };
+
+    document.getElementById('confirmReplyBtn').onclick = async () => {
+        const reply = document.getElementById('replyText').value;
+        if (!reply) {
+            alert('Please enter reply');
+            return;
+        }
+        await updateDoc(doc(db, 'complaints', currentComplaintId), { 
+            status: 'resolved', 
+            staffReply: reply,
+            resolvedAt: serverTimestamp(),
+            resolvedBy: currentUser.email
+        });
+        await logActivity('RESOLVE_COMPLAINT', currentComplaintId);
+        document.getElementById('replyModal').style.display = 'none';
+        document.getElementById('replyText').value = '';
+        loadComplaints();
+        loadDashboard();
+    };
+
+    async function loadMyProfile() {
+        const q = query(collection(db, 'customers'), where('phone', '==', currentUserData?.phone || currentUser.email));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            document.getElementById('myName').value = data.name || '';
+            document.getElementById('myPhone').value = data.phone || '';
+            document.getElementById('myWhatsApp').value = data.whatsapp || '';
+            document.getElementById('myImo').value = data.imo || '';
+            document.getElementById('myPPPoEUser').value = data.pppoeUser || '';
+            document.getElementById('myPPPoEPass').value = data.pppoePass || '';
+            document.getElementById('myPackage').value = data.package || '';
+            document.getElementById('myZoneArea').value = `${data.zone || ''} / ${data.area || ''}`;
+            document.getElementById('myAddress').value = data.address || '';
+        }
+    }
+
+    async function loadMyComplaints() {
+        const q = query(collection(db, 'complaints'), where('customerEmail', '==', currentUser.email), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const list = document.getElementById('myComplaintsList');
+        list.innerHTML = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const statusColor = data.status === 'pending'? 'bg-yellow-500' : data.status === 'assigned'? 'bg-blue-500' : 'bg-green-500';
+            const reply = data.staffReply? `<p class="text-sm text-gray-600 mt-2"><strong>Staff Reply:</strong> ${data.staffReply}</p>` : '';
+            list.innerHTML += `<div class="border p-4 rounded mb-3"><div class="flex justify-between items-start"><div class="flex-1"><p class="font-semibold">${data.issue}</p><p class="text-xs text-gray-500 mt-1">${new Date(data.createdAt?.toDate()).toLocaleString()}</p>${reply}</div><span class="${statusColor} text-white px-3 py-1 rounded text-xs">${data.status}</span></div></div>`;
+        });
+    }
+
+    async function loadMyBills() {
+        const customerQuery = query(collection(db, 'customers'), where('phone', '==', currentUserData?.phone || currentUser.email));
+        const customerSnap = await getDocs(customerQuery);
+        if (!customerSnap.empty) {
+            const customerId = customerSnap.docs[0].id;
+            const billsQuery = query(collection(db, 'bills'), where('customerId', '==', customerId), orderBy('createdAt', 'desc'));
+            const billsSnap = await getDocs(billsQuery);
+            const tbody = document.getElementById('myBillsTable');
+            tbody.innerHTML = '';
+            billsSnap.forEach(doc => {
+                const data = doc.data();
+                const statusColor = data.status === 'paid'? 'bg-green-500' : data.status === 'approved'? 'bg-blue-500' : 'bg-red-500';
+                const payBtn = data.status!== 'paid'? `<button onclick="payBill('${doc.id}')" class="bg-green-500 text-white px-3 py-1 rounded text-xs">Pay Now</button>` : '';
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${doc.id.substring(0,8)}</td><td class="p-2">${data.month}</td><td class="p-2">৳${data.amount}</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${data.dueDate || 'N/A'}</td><td class="p-2">${payBtn}</td></tr>`;
+            });
+        }
+    }
+
+    window.payBill = async (id) => {
+        if (confirm('Mark this bill as paid?')) {
+            await updateDoc(doc(db, 'bills', id), { status: 'paid', paidAt: serverTimestamp() });
+            await logActivity('PAY_BILL', id);
+            loadMyBills();
+            loadDashboard();
+        }
+    };
+
+    async function loadMyCustomers() {
+        const q = query(collection(db, 'customers'), where('assignedStaff', '==', currentUser.email));
+        const snapshot = await getDocs(q);
+        const tbody = document.getElementById('myCustomersTable');
+        if (tbody) {
+            tbody.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${data.name}</td><td class="p-2">${data.phone}</td><td class="p-2">${data.area}</td><td class="p-2">${data.package || 'N/A'}</td><td class="p-2"><span class="bg-green-500 text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">৳0</td></tr>`;
+            });
+        }
+    }
+
+    async function loadRecentBills() {
+        const billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(billsQuery);
+        const tbody = document.getElementById('recentBillsTable');
+        if (tbody) {
+            tbody.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const statusColor = data.status === 'paid'? 'bg-green-500' : data.status === 'approved'? 'bg-blue-500' : 'bg-yellow-500';
+                const deleteBtn = currentRole === 'admin'? `<button onclick="deleteBill('${doc.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Delete</button>` : '';
+                const approveBtn = data.status === 'pending'? `<button onclick="approveBill('${doc.id}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button>` : '';
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${doc.id.substring(0,8)}</td><td class="p-2">${data.customerName || 'N/A'}</td><td class="p-2">৳${data.amount}</td><td class="p-2"><span class="${statusColor} text-white px-2 py-1 rounded text-xs">${data.status}</span></td><td class="p-2">${approveBtn}${deleteBtn}</td></tr>`;
+            });
+        }
+    }
+
+    window.deleteBill = async (id) => {
+        if (currentRole!== 'admin') {
+            alert('Only admin can delete bills');
+            return;
+        }
+        if (confirm('Delete this bill?')) {
+            await deleteDoc(doc(db, 'bills', id));
+            await logActivity('DELETE_BILL', id);
+            loadDashboard();
+            loadRecentBills();
+        }
+    };
+
+    window.approveBill = async (id) => {
+        await updateDoc(doc(db, 'bills', id), { status: 'approved', approvedBy: currentUser.email, approvedAt: serverTimestamp() });
+        await logActivity('APPROVE_BILL', id);
+        loadRecentBills();
+        loadDashboard();
+    };
+
+    async function loadLogs() {
+        const snapshot = await getDocs(query(collection(db, 'logs'), orderBy('timestamp', 'desc')));
+        const tbody = document.getElementById('logsTable');
+        if (tbody) {
+            tbody.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2">${new Date(data.timestamp?.toDate()).toLocaleString()}</td><td class="p-2">${data.user}</td><td class="p-2">${data.action}</td><td class="p-2">${data.details}</td></tr>`;
+            });
+        }
+    }
 
     async function logActivity(action, details) {
         await addDoc(collection(db, 'logs'), {
-            user: currentUser.displayName,
-            email: currentUser.email,
+            user: currentUser.email,
             action,
             details,
             timestamp: serverTimestamp()
         });
     }
 
-</script>
+    document.getElementById('exportLogsBtn').onclick = () => {
+        alert('Export feature: Copy table to Excel. For full Excel export, add SheetJS library.');
+    };
 
+    async function loadReports() {
+        // Placeholder for date range reports
+    }
+
+    document.getElementById('generateReportBtn').onclick = async () => {
+        const fromDate = document.getElementById('reportFromDate').value;
+        const toDate = document.getElementById('reportToDate').value;
+        if (!fromDate ||!toDate) {
+            alert('Please select date range');
+            return;
+        }
+        const bills = await getDocs(collection(db, 'bills'));
+        const reportData = {};
+        bills.forEach(doc => {
+            const data = doc.data();
+            const date = data.createdAt?.toDate().toISOString().split('T')[0];
+            if (date >= fromDate && date <= toDate) {
+                if (!reportData[date]) reportData[date] = { total: 0, paid: 0, pending: 0, revenue: 0 };
+                reportData[date].total++;
+                if (data.status === 'paid') {
+                    reportData[date].paid++;
+                    reportData[date].revenue += data.amount;
+                } else {
+                    reportData[date].pending++;
+                }
+            }
+        });
+        const tbody = document.getElementById('reportTable');
+        tbody.innerHTML = '';
+        Object.keys(reportData).sort().forEach(date => {
+            const d = reportData[date];
+            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${date}</td><td class="p-2">${d.total}</td><td class="p-2">${d.paid}</td><td class="p-2">${d.pending}</td><td class="p-2">৳${d.revenue}</td></tr>`;
+        });
+    };
+
+    async function loadStaffReport() {
+        // Load staff report for selected month
+    }
+
+    document.getElementById('loadStaffReportBtn').onclick = async () => {
+        const month = document.getElementById('staffReportMonth').value;
+        if (!month) {
+            alert('Please select month');
+            return;
+        }
+        const users = await getDocs(query(collection(db, 'users'), where('role', '==', 'staff')));
+        const tbody = document.getElementById('staffReportTable');
+        tbody.innerHTML = '';
+        for (const userDoc of users.docs) {
+            const staffEmail = userDoc.data().email;
+            const bills = await getDocs(query(collection(db, 'bills'), where('createdBy', '==', staffEmail)));
+            let total = 0, collected = 0, pending = 0;
+            bills.forEach(billDoc => {
+                const bill = billDoc.data();
+                if (bill.month === month) {
+                    total++;
+                    if (bill.status === 'paid') collected += bill.amount;
+                    else pending += bill.amount;
+                }
+            });
+            tbody.innerHTML += `<tr class="border-b"><td class="p-2">${staffEmail}</td><td class="p-2">${staffEmail}</td><td class="p-2">${total}</td><td class="p-2">৳${collected}</td><td class="p-2">৳${pending}</td></tr>`;
+        }
+    };
+</script>
 </body>
 </html>
