@@ -686,8 +686,8 @@ document.addEventListener('DOMContentLoaded', function() {
         await auth.signInWithEmailAndPassword(email, password);
         console.log('Login success');
         // Hide login, show app
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('appScreen').style.display = 'block';
+        document.getElementById('loginScreen')?.style.display = 'none';
+        document.getElementById('appScreen')?.style.display = 'block';
       } catch (error) {
         console.error('Login error:', error);
         if (errorBox) {
@@ -706,11 +706,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Auth state check
   auth.onAuthStateChanged((user) => {
     if (user) {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('appScreen').style.display = 'block';
+      document.getElementById('loginScreen')?.style.display = 'none';
+      document.getElementById('appScreen')?.style.display = 'block';
     } else {
-      document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('appScreen').style.display = 'none';
+      document.getElementById('loginScreen')?.style.display = 'flex';
+      document.getElementById('appScreen')?.style.display = 'none';
     }
   });
 });
