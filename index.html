@@ -358,6 +358,10 @@ img,video{max-width:100%;height:auto}
 .focus\:border-transparent:focus{border-color:transparent}
 .focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 #0000)}
 .focus\:ring-primary-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(14 165 233 / var(--tw-ring-opacity))}
+@media (max-width:767px){
+#sidebar{display:none !important}
+#openSidebarBtn{display:none !important}
+}
 @media (min-width:640px){
 .sm\:block{display:block}
 .sm\:flex{display:flex}
@@ -469,6 +473,39 @@ img,video{max-width:100%;height:auto}
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
+<script>
+// BULLETPROOF SIDEBAR FUNCTIONS - Global scope for inline onclick
+window.closeMobileSidebar = function() {
+    console.log('[Sidebar] closeMobileSidebar called');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if(sidebar) {
+        sidebar.classList.add('-translate-x-full');
+        console.log('[Sidebar] Added -translate-x-full');
+    }
+    if(overlay) {
+        overlay.classList.add('hidden');
+        console.log('[Sidebar] Overlay hidden');
+    }
+    document.body.style.overflow = 'auto';
+}
+
+window.openMobileSidebar = function() {
+    console.log('[Sidebar] openMobileSidebar called');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if(sidebar) {
+        sidebar.classList.remove('-translate-x-full');
+        console.log('[Sidebar] Removed -translate-x-full');
+    }
+    if(overlay) {
+        overlay.classList.remove('hidden');
+        console.log('[Sidebar] Overlay shown');
+    }
+    document.body.style.overflow = 'hidden';
+}
+</script>
+
 <div id="appLoader" class="fixed inset-0 z-[100] bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
     <div class="text-center px-4">
         <div class="loader mx-auto mb-4"></div>
@@ -539,7 +576,7 @@ img,video{max-width:100%;height:auto}
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-3">
-                    <button id="openSidebarBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    <button id="openSidebarBtn" onclick="window.openMobileSidebar()" class="md:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
                     <div class="flex items-center gap-2">
@@ -548,7 +585,6 @@ img,video{max-width:100%;height:auto}
                         </div>
                         <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">OwnsBilling</h1>
                     </div>
-                </div>
                 <div class="flex items-center gap-2 sm:gap-3">
                     <button id="notificationBtn" class="relative p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                         <i class="fas fa-bell text-lg"></i>
@@ -582,7 +618,19 @@ img,video{max-width:100%;height:auto}
     </header>
 
     <div class="flex">
-        <aside id="sidebar" class="hidden md:flex flex-col w-64 fixed left-0 top-16 bottom-0 glass border-r border-gray-200 dark:border-gray-700 overflow-y-auto custom-scrollbar md:translate-x-0">
+        <div id="sidebarOverlay" onclick="window.closeMobileSidebar()" class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"></div>
+        <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-64 z-50 glass border-r border-gray-200 dark:border-gray-700 overflow-y-auto custom-scrollbar transform -translate-x-full md:translate-x-0 transition-transform duration-300 md:fixed md:top-16">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between md:hidden">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-wifi text-white text-sm"></i>
+                    </div>
+                    <h2 class="font-bold">OwnsBilling</h2>
+                </div>
+                <button id="closeSidebarBtn" onclick="window.closeMobileSidebar()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
             <nav class="flex-1 p-4 space-y-1" id="sidebarNav"></nav>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700">
                 <div class="bg-gradient-to-r from-primary-500 to-purple-600 rounded-xl p-4 text-white">
@@ -590,22 +638,6 @@ img,video{max-width:100%;height:auto}
                     <p class="font-semibold" id="companyNameSidebar">Owns ISP</p>
                 </div>
             </div>
-        </aside>
-
-        <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"></div>
-        <aside id="mobileSidebar" class="fixed top-0 left-0 bottom-0 w-72 z-50 glass transform -translate-x-full transition-transform duration-300 md:hidden overflow-y-auto custom-scrollbar border-r border-gray-200 dark:border-gray-700">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-wifi text-white text-sm"></i>
-                    </div>
-                    <h2 class="font-bold">OwnsBilling</h2>
-                </div>
-                <button id="closeSidebarBtn" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <nav class="p-4 space-y-1" id="mobileSidebarNav"></nav>
         </aside>
 
         <main id="mainContent" class="flex-1 md:ml-64 pb-20 lg:pb-6">
@@ -733,16 +765,6 @@ img,video{max-width:100%;height:auto}
             toast.style.transform = 'translateX(100px)';
             setTimeout(() => toast.remove(), 300);
         }, 3000);
-    }
-
-    function closeSidebar() {
-        document.getElementById('mobileSidebar').classList.add('-translate-x-full');
-        document.getElementById('sidebarOverlay').classList.add('hidden');
-    }
-
-    function openSidebar() {
-        document.getElementById('mobileSidebar').classList.remove('-translate-x-full');
-        document.getElementById('sidebarOverlay').classList.remove('hidden');
     }
 
     function showModal(title, content) {
@@ -898,7 +920,6 @@ img,video{max-width:100%;height:auto}
     function renderNavigation() {
         const nav = navConfig[userRole];
         const sidebarNav = document.getElementById('sidebarNav');
-        const mobileSidebarNav = document.getElementById('mobileSidebarNav');
         const bottomNav = document.getElementById('bottomNav');
 
         const navHTML = nav.map(item => {
@@ -912,7 +933,6 @@ img,video{max-width:100%;height:auto}
         `}).join('');
 
         sidebarNav.innerHTML = navHTML;
-        mobileSidebarNav.innerHTML = navHTML;
 
         bottomNav.innerHTML = nav.slice(0, 5).map(item => {
             const badgeId = item.id === 'followup' ? 'bottom-followup-badge' : '';
@@ -957,7 +977,7 @@ img,video{max-width:100%;height:auto}
             document.querySelectorAll(`.nav-item-${pageId}`).forEach(el => {
                 el.classList.add('bg-primary-100', 'dark:bg-gray-800', 'text-primary-600');
             });
-            if(window.innerWidth < 768) closeSidebar();
+            if(window.innerWidth < 768) window.closeMobileSidebar();
         }
     }
 
@@ -1231,7 +1251,7 @@ img,video{max-width:100%;height:auto}
                     ${dueBill ? `<button data-action="showPaymentInfo" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl transition">Pay Now</button>` : ''}
                 </div>
 
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <div class="glass rounded-2xl p-6 border-gray-200 dark:border-gray-700">
                     <h3 class="font-semibold mb-4 flex items-center gap-2">
                         <i class="fas fa-wifi text-primary-600"></i>
                         Package Details
@@ -1274,6 +1294,7 @@ img,video{max-width:100%;height:auto}
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
+                        </div>
                         <div class="flex justify-between items-center py-2">
                             <span class="text-gray-600 dark:text-gray-400">Password</span>
                             <div class="flex items-center gap-2">
@@ -2649,7 +2670,6 @@ img,video{max-width:100%;height:auto}
                         <label class="block text-sm font-medium mb-2">Address</label>
                         <input type="text" name="address" value="${staff?.address || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
                     </div>
-                </div>
                 <div class="flex gap-3 pt-4">
                     <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
                         ${staff ? 'Update' : 'Add'} Staff
@@ -2856,23 +2876,6 @@ img,video{max-width:100%;height:auto}
                     break;
             }
         });
-
-        // Mobile sidebar specific listeners
-        const closeBtn = document.getElementById('closeSidebarBtn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeSidebar);
-            closeBtn.addEventListener('touchstart', closeSidebar);
-        }
-
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', closeSidebar);
-        }
-
-        const openBtn = document.getElementById('openSidebarBtn');
-        if (openBtn) {
-            openBtn.addEventListener('click', openSidebar);
-        }
     }
 
     // 4. Auth State Listener with Error Handling
@@ -3053,9 +3056,6 @@ img,video{max-width:100%;height:auto}
         });
     }
 </script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
