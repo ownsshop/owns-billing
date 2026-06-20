@@ -6,117 +6,459 @@
 <title>OwnsBilling - ISP Billing Management</title>
 <meta name="description" content="Complete ISP Billing Solution with role-based access">
 <meta name="theme-color" content="#0ea5e9">
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiT3duc0JpbGxpbmciLCJzaG9ydF9uYW1lIjoiT3duc0JpbGxpbmciLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzBlYTVlOSIsImljb25zIjpbeyJzcmMiOiJodHRwczovL3N3Y3dkbi5zaG9waWZ5LmNvbS9zL2Fzc2V0cy9pbmRleC1mYXZpY29uLTgxNzYzYWZiZDFkMzM5N2NmZjc4NzQwNTUzNzMwOTMyODU0NTUzMzJjNGVlOWIyMzAzYjMzZmYzZTU3MDA2MjgucG5nIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=">
-<script src="https://cdn.tailwindcss.com"></script>
+<style>
+/* Tailwind CSS v3.4.1 - Compiled Core Utilities Only */
+*,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
+::before,::after{--tw-content:''}
+html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
+body{margin:0;line-height:inherit}
+hr{height:0;color:inherit;border-top-width:1px}
+abbr:where([title]){text-decoration:underline dotted}
+h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}
+a{color:inherit;text-decoration:inherit}
+b,strong{font-weight:bolder}
+code,kbd,samp,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:1em}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sub{bottom:-.25em}
+sup{top:-.5em}
+table{text-indent:0;border-color:inherit;border-collapse:collapse}
+button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;font-weight:inherit;line-height:inherit;color:inherit;margin:0;padding:0}
+button,select{text-transform:none}
+button,[type='button'],[type='reset'],[type='submit']{-webkit-appearance:button;background-color:transparent;background-image:none}
+:-moz-focusring{outline:auto}
+:-moz-ui-invalid{box-shadow:none}
+progress{vertical-align:baseline}
+::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}
+[type='search']{-webkit-appearance:textfield;outline-offset:-2px}
+::-webkit-search-decoration{-webkit-appearance:none}
+::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}
+summary{display:list-item}
+blockquote,dl,dd,h1,h2,h3,h4,h5,h6,hr,figure,p,pre{margin:0}
+fieldset{margin:0;padding:0}
+legend{padding:0}
+ol,ul,menu{list-style:none;margin:0;padding:0}
+textarea{resize:vertical}
+input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}
+button,[role="button"]{cursor:pointer}
+:disabled{cursor:default}
+img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:middle}
+img,video{max-width:100%;height:auto}
+[hidden]{display:none}
+.fixed{position:fixed}
+.absolute{position:absolute}
+.relative{position:relative}
+.sticky{position:sticky}
+.inset-0{inset:0px}
+.bottom-0{bottom:0px}
+.left-0{left:0px}
+.left-3{left:0.75rem}
+.right-0{right:0px}
+.right-4{right:1rem}
+.top-0{top:0px}
+.top-1{top:0.25rem}
+.top-1\/2{top:50%}
+.top-16{top:4rem}
+.top-20{top:5rem}
+.top-4{top:1rem}
+.-top-1{top:-0.25rem}
+.-right-1{right:-0.25rem}
+.-right-6{right:-1.5rem}
+.-top-6{top:-1.5rem}
+.z-40{z-index:40}
+.z-50{z-index:50}
+.z-90{z-index:90}
+.z-\[100\]{z-index:100}
+.z-\[80\]{z-index:80}
+.mx-auto{margin-left:auto;margin-right:auto}
+.mb-1{margin-bottom:0.25rem}
+.mb-2{margin-bottom:0.5rem}
+.mb-4{margin-bottom:1rem}
+.mb-8{margin-bottom:2rem}
+.ml-2{margin-left:0.5rem}
+.mr-1{margin-right:0.25rem}
+.mr-2{margin-right:0.5rem}
+.mt-1{margin-top:0.25rem}
+.mt-2{margin-top:0.5rem}
+.mt-4{margin-top:1rem}
+.mt-6{margin-top:1.5rem}
+.line-clamp-2{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.block{display:block}
+.inline-flex{display:inline-flex}
+.flex{display:flex}
+.table{display:table}
+.grid{display:grid}
+.hidden{display:none}
+.h-10{height:2.5rem}
+.h-12{height:3rem}
+.h-14{height:3.5rem}
+.h-16{height:4rem}
+.h-18{height:4.5rem}
+.h-5{height:1.25rem}
+.h-8{height:2rem}
+.h-6{height:1.5rem}
+.max-h-96{max-height:24rem}
+.max-h-\[32rem\]{max-height:32rem}
+.max-h-\[90vh\]{max-height:90vh}
+.min-h-screen{min-height:100vh}
+.w-10{width:2.5rem}
+.w-12{width:3rem}
+.w-14{width:3.5rem}
+.w-16{width:4rem}
+.w-20{width:5rem}
+.w-2{width:0.5rem}
+.w-48{width:12rem}
+.w-5{width:1.25rem}
+.w-64{width:16rem}
+.w-72{width:18rem}
+.w-8{width:2rem}
+.w-80{width:20rem}
+.w-full{width:100%}
+.min-w-0{min-width:0px}
+.min-w-18{min-width:4.5rem}
+.max-w-md{max-width:28rem}
+.max-w-sm{max-width:24rem}
+.max-w-2xl{max-width:42rem}
+.flex-1{flex:1 1 0%}
+.flex-shrink-0{flex-shrink:0}
+.-translate-x-full{--tw-translate-x:-100%;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}
+.-translate-y-1\/2{--tw-translate-y:-50%;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}
+.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}
+@keyframes spin{to{transform:rotate(360deg)}}
+.animate-spin{animation:spin 1s linear infinite}
+@keyframes pulse{50%{opacity:.5}}
+.animate-pulse-slow{animation:pulse 2s cubic-bezier(0.4,0,0.6,1) infinite}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.animate-slide-in{animation:slideIn 0.3s ease-out}
+.cursor-pointer{cursor:pointer}
+.cursor-not-allowed{cursor:not-allowed}
+.list-inside{list-style-position:inside}
+.list-decimal{list-style-type:decimal}
+.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
+.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.flex-col{flex-direction:column}
+.flex-wrap{flex-wrap:wrap}
+.items-start{align-items:flex-start}
+.items-center{align-items:center}
+.justify-center{justify-content:center}
+.justify-between{justify-content:space-between}
+.justify-around{justify-content:space-around}
+.gap-1{gap:0.25rem}
+.gap-2{gap:0.5rem}
+.gap-3{gap:0.75rem}
+.gap-4{gap:1rem}
+.space-y-1>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}
+.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}
+.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}
+.space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}
+.space-y-6>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}
+.divide-y>:not([hidden])~:not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px * var(--tw-divide-y-reverse))}
+.overflow-hidden{overflow:hidden}
+.overflow-y-auto{overflow-y:auto}
+.overflow-x-auto{overflow-x:auto}
+.rounded{border-radius:0.25rem}
+.rounded-2xl{border-radius:1rem}
+.rounded-3xl{border-radius:1.5rem}
+.rounded-full{border-radius:9999px}
+.rounded-lg{border-radius:0.5rem}
+.rounded-xl{border-radius:0.75rem}
+.rounded-t-2xl{border-top-left-radius:1rem;border-top-right-radius:1rem}
+.border{border-width:1px}
+.border-2{border-width:2px}
+.border-b{border-bottom-width:1px}
+.border-b-2{border-bottom-width:2px}
+.border-l-4{border-left-width:4px}
+.border-r{border-right-width:1px}
+.border-t{border-top-width:1px}
+.border-blue-200{--tw-border-opacity:1;border-color:rgb(191 219 254 / var(--tw-border-opacity))}
+.border-gray-200{--tw-border-opacity:1;border-color:rgb(229 231 235 / var(--tw-border-opacity))}
+.border-gray-300{--tw-border-opacity:1;border-color:rgb(209 213 219 / var(--tw-border-opacity))}
+.border-gray-600{--tw-border-opacity:1;border-color:rgb(75 85 99 / var(--tw-border-opacity))}
+.border-gray-700{--tw-border-opacity:1;border-color:rgb(55 65 81 / var(--tw-border-opacity))}
+.border-green-500{--tw-border-opacity:1;border-color:rgb(34 197 94 / var(--tw-border-opacity))}
+.border-red-500{--tw-border-opacity:1;border-color:rgb(239 68 68 / var(--tw-border-opacity))}
+.border-transparent{border-color:transparent}
+.border-blue-800{--tw-border-opacity:1;border-color:rgb(30 64 175 / var(--tw-border-opacity))}
+.bg-black\/50{background-color:rgb(0 0 0 / 0.5)}
+.bg-blue-50{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity))}
+.bg-blue-100{--tw-bg-opacity:1;background-color:rgb(219 234 254 / var(--tw-bg-opacity))}
+.bg-blue-500{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity))}
+.bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity))}
+.bg-blue-900\/20{background-color:rgb(30 58 138 / 0.2)}
+.bg-blue-900\/30{background-color:rgb(30 58 138 / 0.3)}
+.bg-blue-900\/50{background-color:rgb(30 58 138 / 0.5)}
+.bg-gray-50{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity))}
+.bg-gray-100{--tw-bg-opacity:1;background-color:rgb(243 244 246 / var(--tw-bg-opacity))}
+.bg-gray-200{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity))}
+.bg-gray-300{--tw-bg-opacity:1;background-color:rgb(209 213 219 / var(--tw-bg-opacity))}
+.bg-gray-700{--tw-bg-opacity:1;background-color:rgb(55 65 81 / var(--tw-bg-opacity))}
+.bg-gray-800{--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity))}
+.bg-gray-800\/50{background-color:rgb(31 41 55 / 0.5)}
+.bg-gray-900{--tw-bg-opacity:1;background-color:rgb(17 24 39 / var(--tw-bg-opacity))}
+.bg-green-50{--tw-bg-opacity:1;background-color:rgb(240 253 244 / var(--tw-bg-opacity))}
+.bg-green-100{--tw-bg-opacity:1;background-color:rgb(220 252 231 / var(--tw-bg-opacity))}
+.bg-green-500{--tw-bg-opacity:1;background-color:rgb(34 197 94 / var(--tw-bg-opacity))}
+.bg-green-600{--tw-bg-opacity:1;background-color:rgb(22 163 74 / var(--tw-bg-opacity))}
+.bg-green-900\/20{background-color:rgb(20 83 45 / 0.2)}
+.bg-green-900\/30{background-color:rgb(20 83 45 / 0.3)}
+.bg-primary-50{background-color:rgb(240 249 255 / var(--tw-bg-opacity, 1))}
+.bg-primary-100{background-color:rgb(224 242 254 / var(--tw-bg-opacity, 1))}
+.bg-primary-600{--tw-bg-opacity:1;background-color:rgb(2 132 199 / var(--tw-bg-opacity))}
+.bg-primary-900\/20{background-color:rgb(14 165 233 / 0.2)}
+.bg-primary-900\/30{background-color:rgb(14 165 233 / 0.3)}
+.bg-purple-50{background-color:rgb(250 245 255 / var(--tw-bg-opacity, 1))}
+.bg-purple-100{--tw-bg-opacity:1;background-color:rgb(243 232 255 / var(--tw-bg-opacity))}
+.bg-purple-600{--tw-bg-opacity:1;background-color:rgb(147 51 234 / var(--tw-bg-opacity))}
+.bg-purple-900\/20{background-color:rgb(88 28 135 / 0.2)}
+.bg-purple-900\/30{background-color:rgb(88 28 135 / 0.3)}
+.bg-red-50{--tw-bg-opacity:1;background-color:rgb(254 242 242 / var(--tw-bg-opacity))}
+.bg-red-100{--tw-bg-opacity:1;background-color:rgb(254 226 226 / var(--tw-bg-opacity))}
+.bg-red-500{--tw-bg-opacity:1;background-color:rgb(239 68 68 / var(--tw-bg-opacity))}
+.bg-red-600{--tw-bg-opacity:1;background-color:rgb(220 38 38 / var(--tw-bg-opacity))}
+.bg-red-900\/20{background-color:rgb(127 29 29 / 0.2)}
+.bg-red-900\/30{background-color:rgb(127 29 29 / 0.3)}
+.bg-transparent{background-color:transparent}
+.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity))}
+.bg-yellow-50{--tw-bg-opacity:1;background-color:rgb(254 252 232 / var(--tw-bg-opacity))}
+.bg-yellow-100{--tw-bg-opacity:1;background-color:rgb(254 249 195 / var(--tw-bg-opacity))}
+.bg-yellow-500{--tw-bg-opacity:1;background-color:rgb(234 179 8 / var(--tw-bg-opacity))}
+.bg-yellow-600{--tw-bg-opacity:1;background-color:rgb(202 138 4 / var(--tw-bg-opacity))}
+.bg-yellow-900\/20{background-color:rgb(113 63 18 / 0.2)}
+.bg-yellow-900\/30{background-color:rgb(113 63 18 / 0.3)}
+.bg-orange-50{--tw-bg-opacity:1;background-color:rgb(255 247 237 / var(--tw-bg-opacity))}
+.bg-orange-900\/20{background-color:rgb(124 45 18 / 0.2)}
+.bg-emerald-50{--tw-bg-opacity:1;background-color:rgb(236 253 245 / var(--tw-bg-opacity))}
+.bg-emerald-900\/20{background-color:rgb(6 78 59 / 0.2)}
+.bg-gradient-to-br{position:relative;z-index:1;background-image:linear-gradient(to bottom right,var(--tw-gradient-stops))}
+.bg-gradient-to-r{position:relative;z-index:1;background-image:linear-gradient(to right,var(--tw-gradient-stops))}
+.from-primary-50{--tw-gradient-from:#f0f9ff var(--tw-gradient-from-position);--tw-gradient-to:rgb(240 249 255 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}
+.from-primary-500{--tw-gradient-from:#0ea5e9 var(--tw-gradient-from-position);--tw-gradient-to:rgb(14 165 233 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}
+.from-red-50{--tw-gradient-from:#fef2f2 var(--tw-gradient-from-position);--tw-gradient-to:rgb(254 242 242 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}
+.from-green-50{--tw-gradient-from:#f0fdf4 var(--tw-gradient-from-position);--tw-gradient-to:rgb(240 253 244 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}
+.from-gray-900{--tw-gradient-from:#111827 var(--tw-gradient-from-position);--tw-gradient-to:rgb(17 24 39 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}
+.via-white{--tw-gradient-to:rgb(255 255 255 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),#fff var(--tw-gradient-via-position),var(--tw-gradient-to)}
+.via-gray-900{--tw-gradient-to:rgb(17 24 39 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),#111827 var(--tw-gradient-via-position),var(--tw-gradient-to)}
+.to-purple-50{--tw-gradient-to:#faf5ff var(--tw-gradient-to-position)}
+.to-purple-600{--tw-gradient-to:#9333ea var(--tw-gradient-to-position)}
+.to-orange-50{--tw-gradient-to:#fff7ed var(--tw-gradient-to-position)}
+.to-emerald-50{--tw-gradient-to:#ecfdf5 var(--tw-gradient-to-position)}
+.to-orange-900\/20{--tw-gradient-to:rgb(124 45 18 / 0.2) var(--tw-gradient-to-position)}
+.to-emerald-900\/20{--tw-gradient-to:rgb(6 78 59 / 0.2) var(--tw-gradient-to-position)}
+.to-gray-800{--tw-gradient-to:#1f2937 var(--tw-gradient-to-position)}
+.bg-clip-text{-webkit-background-clip:text;background-clip:text}
+.p-1{padding:0.25rem}
+.p-12{padding:3rem}
+.p-2{padding:0.5rem}
+.p-3{padding:0.75rem}
+.p-4{padding:1rem}
+.p-6{padding:1.5rem}
+.p-8{padding:2rem}
+.px-1{padding-left:0.25rem;padding-right:0.25rem}
+.px-2{padding-left:0.5rem;padding-right:0.5rem}
+.px-3{padding-left:0.75rem;padding-right:0.75rem}
+.px-4{padding-left:1rem;padding-right:1rem}
+.px-6{padding-left:1.5rem;padding-right:1.5rem}
+.py-1{padding-top:0.25rem;padding-bottom:0.25rem}
+.py-2{padding-top:0.5rem;padding-bottom:0.5rem}
+.py-3{padding-top:0.75rem;padding-bottom:0.75rem}
+.py-4{padding-top:1rem;padding-bottom:1rem}
+.py-8{padding-top:2rem;padding-bottom:2rem}
+.pb-20{padding-bottom:5rem}
+.pl-10{padding-left:2.5rem}
+.pr-4{padding-right:1rem}
+.pt-4{padding-top:1rem}
+.text-left{text-align:left}
+.text-center{text-align:center}
+.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+.text-2xl{font-size:1.5rem;line-height:2rem}
+.text-3xl{font-size:1.875rem;line-height:2.25rem}
+.text-4xl{font-size:2.25rem;line-height:2.5rem}
+.text-5xl{font-size:3rem;line-height:1}
+.text-lg{font-size:1.125rem;line-height:1.75rem}
+.text-sm{font-size:0.875rem;line-height:1.25rem}
+.text-xl{font-size:1.25rem;line-height:1.75rem}
+.text-xs{font-size:0.75rem;line-height:1rem}
+.font-bold{font-weight:700}
+.font-medium{font-weight:500}
+.font-semibold{font-weight:600}
+.uppercase{text-transform:uppercase}
+.italic{font-style:italic}
+.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity))}
+.text-blue-500{--tw-text-opacity:1;color:rgb(59 130 246 / var(--tw-text-opacity))}
+.text-blue-600{--tw-text-opacity:1;color:rgb(37 99 235 / var(--tw-text-opacity))}
+.text-blue-700{--tw-text-opacity:1;color:rgb(29 78 216 / var(--tw-text-opacity))}
+.text-blue-800{--tw-text-opacity:1;color:rgb(30 64 175 / var(--tw-text-opacity))}
+.text-blue-900{--tw-text-opacity:1;color:rgb(30 58 138 / var(--tw-text-opacity))}
+.text-gray-100{--tw-text-opacity:1;color:rgb(243 244 246 / var(--tw-text-opacity))}
+.text-gray-400{--tw-text-opacity:1;color:rgb(156 163 175 / var(--tw-text-opacity))}
+.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity))}
+.text-gray-600{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity))}
+.text-gray-700{--tw-text-opacity:1;color:rgb(55 65 81 / var(--tw-text-opacity))}
+.text-gray-900{--tw-text-opacity:1;color:rgb(17 24 39 / var(--tw-text-opacity))}
+.text-green-400{--tw-text-opacity:1;color:rgb(74 222 128 / var(--tw-text-opacity))}
+.text-green-600{--tw-text-opacity:1;color:rgb(22 163 74 / var(--tw-text-opacity))}
+.text-green-700{--tw-text-opacity:1;color:rgb(21 128 61 / var(--tw-text-opacity))}
+.text-primary-600{--tw-text-opacity:1;color:rgb(2 132 199 / var(--tw-text-opacity))}
+.text-primary-700{--tw-text-opacity:1;color:rgb(3 105 161 / var(--tw-text-opacity))}
+.text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252 / var(--tw-text-opacity))}
+.text-purple-600{--tw-text-opacity:1;color:rgb(147 51 234 / var(--tw-text-opacity))}
+.text-red-600{--tw-text-opacity:1;color:rgb(220 38 38 / var(--tw-text-opacity))}
+.text-red-700{--tw-text-opacity:1;color:rgb(185 28 28 / var(--tw-text-opacity))}
+.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity))}
+.text-white\/80{color:rgb(255 255 255 / 0.8)}
+.text-yellow-400{--tw-text-opacity:1;color:rgb(250 204 21 / var(--tw-text-opacity))}
+.text-yellow-600{--tw-text-opacity:1;color:rgb(202 138 4 / var(--tw-text-opacity))}
+.text-yellow-700{--tw-text-opacity:1;color:rgb(161 98 7 / var(--tw-text-opacity))}
+.text-transparent{color:transparent}
+.opacity-90{opacity:0.9}
+.shadow{box-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1),0 1px 2px -1px rgb(0 0 0 / 0.1)}
+.shadow-2xl{box-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25)}
+.shadow-lg{box-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1),0 4px 6px -4px rgb(0 0 0 / 0.1)}
+.shadow-xl{box-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1),0 8px 10px -6px rgb(0 0 0 / 0.1)}
+.outline-none{outline:2px solid transparent;outline-offset:2px}
+.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}
+.backdrop-filter{--tw-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}
+.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-timing-function:cubic-bezier(0.4,0,0.2,1);transition-duration:150ms}
+.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4,0,0.2,1);transition-duration:150ms}
+.transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(0.4,0,0.2,1);transition-duration:150ms}
+.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4,0,0.2,1);transition-duration:150ms}
+.duration-300{transition-duration:300ms}
+.hover\:scale-\[1\.02\]:hover{--tw-scale-x:1.02;--tw-scale-y:1.02;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}
+.hover\:bg-blue-700:hover{--tw-bg-opacity:1;background-color:rgb(29 78 216 / var(--tw-bg-opacity))}
+.hover\:bg-gray-100:hover{--tw-bg-opacity:1;background-color:rgb(243 244 246 / var(--tw-bg-opacity))}
+.hover\:bg-gray-200:hover{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity))}
+.hover\:bg-gray-300:hover{--tw-bg-opacity:1;background-color:rgb(209 213 219 / var(--tw-bg-opacity))}
+.hover\:bg-gray-600:hover{--tw-bg-opacity:1;background-color:rgb(75 85 99 / var(--tw-bg-opacity))}
+.hover\:bg-gray-800:hover{--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity))}
+.hover\:bg-gray-900\/20:hover{background-color:rgb(17 24 39 / 0.2)}
+.hover\:bg-gray-900\/30:hover{background-color:rgb(17 24 39 / 0.3)}
+.hover\:bg-green-100:hover{--tw-bg-opacity:1;background-color:rgb(220 252 231 / var(--tw-bg-opacity))}
+.hover\:bg-green-700:hover{--tw-bg-opacity:1;background-color:rgb(21 128 61 / var(--tw-bg-opacity))}
+.hover\:bg-green-900\/20:hover{background-color:rgb(20 83 45 / 0.2)}
+.hover\:bg-green-900\/30:hover{background-color:rgb(20 83 45 / 0.3)}
+.hover\:bg-primary-50:hover{background-color:rgb(240 249 255 / var(--tw-bg-opacity, 1))}
+.hover\:bg-primary-100:hover{background-color:rgb(224 242 254 / var(--tw-bg-opacity, 1))}
+.hover\:bg-primary-700:hover{--tw-bg-opacity:1;background-color:rgb(3 105 161 / var(--tw-bg-opacity))}
+.hover\:bg-primary-900\/30:hover{background-color:rgb(14 165 233 / 0.3)}
+.hover\:bg-purple-100:hover{--tw-bg-opacity:1;background-color:rgb(243 232 255 / var(--tw-bg-opacity))}
+.hover\:bg-purple-700:hover{--tw-bg-opacity:1;background-color:rgb(126 34 206 / var(--tw-bg-opacity))}
+.hover\:bg-purple-900\/30:hover{background-color:rgb(88 28 135 / 0.3)}
+.hover\:bg-red-50:hover{--tw-bg-opacity:1;background-color:rgb(254 242 242 / var(--tw-bg-opacity))}
+.hover\:bg-red-700:hover{--tw-bg-opacity:1;background-color:rgb(185 28 28 / var(--tw-bg-opacity))}
+.hover\:bg-red-900\/20:hover{background-color:rgb(127 29 29 / 0.2)}
+.hover\:bg-yellow-700:hover{--tw-bg-opacity:1;background-color:rgb(161 98 7 / var(--tw-bg-opacity))}
+.hover\:from-primary-600:hover{--tw-gradient-from:#0284c7 var(--tw-gradient-from-position);--tw-gradient-to:rgb(2 132 199 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}
+.hover\:to-purple-700:hover{--tw-gradient-to:#7e22ce var(--tw-gradient-to-position)}
+.hover\:text-blue-700:hover{--tw-text-opacity:1;color:rgb(29 78 216 / var(--tw-text-opacity))}
+.hover\:text-green-700:hover{--tw-text-opacity:1;color:rgb(21 128 61 / var(--tw-text-opacity))}
+.hover\:text-primary-600:hover{--tw-text-opacity:1;color:rgb(2 132 199 / var(--tw-text-opacity))}
+.hover\:text-primary-700:hover{--tw-text-opacity:1;color:rgb(3 105 161 / var(--tw-text-opacity))}
+.hover\:text-red-700:hover{--tw-text-opacity:1;color:rgb(185 28 28 / var(--tw-text-opacity))}
+.hover\:underline:hover{text-decoration:underline}
+.hover\:shadow-xl:hover{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1),0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color),0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
+.focus\:border-transparent:focus{border-color:transparent}
+.focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 #0000)}
+.focus\:ring-primary-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(14 165 233 / var(--tw-ring-opacity))}
+@media (min-width:640px){
+.sm\:block{display:block}
+.sm\:flex{display:flex}
+.sm\:hidden{display:none}
+.sm\:h-20{height:5rem}
+.sm\:w-auto{width:auto}
+.sm\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sm\:flex-row{flex-direction:row}
+.sm\:flex-col{flex-direction:column}
+.sm\:items-center{align-items:center}
+.sm\:justify-between{justify-content:space-between}
+.sm\:gap-6{gap:1.5rem}
+.sm\:p-6{padding:1.5rem}
+.sm\:px-0{padding-left:0px;padding-right:0px}
+.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}
+.sm\:text-3xl{font-size:1.875rem;line-height:2.25rem}
+.sm\:text-xl{font-size:1.25rem;line-height:1.75rem}
+}
+@media (min-width:1024px){
+.lg\:ml-64{margin-left:16rem}
+.lg\:flex{display:flex}
+.lg\:hidden{display:none}
+.lg\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.lg\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.lg\:grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.lg\:p-8{padding:2rem}
+.lg\:pb-6{padding-bottom:1.5rem}
+.lg\:px-8{padding-left:2rem;padding-right:2rem}
+}
+.dark .dark\:border-blue-800{--tw-border-opacity:1;border-color:rgb(30 64 175 / var(--tw-border-opacity))}
+.dark .dark\:border-gray-600{--tw-border-opacity:1;border-color:rgb(75 85 99 / var(--tw-border-opacity))}
+.dark .dark\:border-gray-700{--tw-border-opacity:1;border-color:rgb(55 65 81 / var(--tw-border-opacity))}
+.dark .dark\:bg-blue-900\/20{background-color:rgb(30 58 138 / 0.2)}
+.dark .dark\:bg-blue-900\/30{background-color:rgb(30 58 138 / 0.3)}
+.dark .dark\:bg-blue-900\/50{background-color:rgb(30 58 138 / 0.5)}
+.dark .dark\:bg-gray-600:hover{--tw-bg-opacity:1;background-color:rgb(75 85 99 / var(--tw-bg-opacity))}
+.dark .dark\:bg-gray-700{--tw-bg-opacity:1;background-color:rgb(55 65 81 / var(--tw-bg-opacity))}
+.dark .dark\:bg-gray-800{--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity))}
+.dark .dark\:bg-gray-800\/50{background-color:rgb(31 41 55 / 0.5)}
+.dark .dark\:bg-gray-900{--tw-bg-opacity:1;background-color:rgb(17 24 39 / var(--tw-bg-opacity))}
+.dark .dark\:bg-green-900\/20{background-color:rgb(20 83 45 / 0.2)}
+.dark .dark\:bg-green-900\/30{background-color:rgb(20 83 45 / 0.3)}
+.dark .dark\:bg-primary-900\/20{background-color:rgb(14 165 233 / 0.2)}
+.dark .dark\:bg-primary-900\/30{background-color:rgb(14 165 233 / 0.3)}
+.dark .dark\:bg-purple-900\/20{background-color:rgb(88 28 135 / 0.2)}
+.dark .dark\:bg-purple-900\/30{background-color:rgb(88 28 135 / 0.3)}
+.dark .dark\:bg-red-900\/20{background-color:rgb(127 29 29 / 0.2)}
+.dark .dark\:bg-red-900\/30{background-color:rgb(127 29 29 / 0.3)}
+.dark .dark\:bg-yellow-900\/20{background-color:rgb(113 63 18 / 0.2)}
+.dark .dark\:bg-yellow-900\/30{background-color:rgb(113 63 18 / 0.3)}
+.dark .dark\:bg-orange-900\/20{background-color:rgb(124 45 18 / 0.2)}
+.dark .dark\:bg-emerald-900\/20{background-color:rgb(6 78 59 / 0.2)}
+.dark .dark\:from-gray-900{--tw-gradient-from:#111827 var(--tw-gradient-from-position);--tw-gradient-to:rgb(17 24 39 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}
+.dark .dark\:via-gray-900{--tw-gradient-to:rgb(17 24 39 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),#111827 var(--tw-gradient-via-position),var(--tw-gradient-to)}
+.dark .dark\:to-gray-800{--tw-gradient-to:#1f2937 var(--tw-gradient-to-position)}
+.dark .dark\:to-orange-900\/20{--tw-gradient-to:rgb(124 45 18 / 0.2) var(--tw-gradient-to-position)}
+.dark .dark\:to-emerald-900\/20{--tw-gradient-to:rgb(6 78 59 / 0.2) var(--tw-gradient-to-position)}
+.dark .dark\:text-blue-200{--tw-text-opacity:1;color:rgb(191 219 254 / var(--tw-text-opacity))}
+.dark .dark\:text-blue-300{--tw-text-opacity:1;color:rgb(147 197 253 / var(--tw-text-opacity))}
+.dark .dark\:text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity))}
+.dark .dark\:text-gray-100{--tw-text-opacity:1;color:rgb(243 244 246 / var(--tw-text-opacity))}
+.dark .dark\:text-gray-300{--tw-text-opacity:1;color:rgb(209 213 219 / var(--tw-text-opacity))}
+.dark .dark\:text-gray-400{--tw-text-opacity:1;color:rgb(156 163 175 / var(--tw-text-opacity))}
+.dark .dark\:text-green-400{--tw-text-opacity:1;color:rgb(74 222 128 / var(--tw-text-opacity))}
+.dark .dark\:text-primary-400{--tw-text-opacity:1;color:rgb(56 189 248 / var(--tw-text-opacity))}
+.dark .dark\:text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252 / var(--tw-text-opacity))}
+.dark .dark\:text-red-400{--tw-text-opacity:1;color:rgb(248 113 113 / var(--tw-text-opacity))}
+.dark .dark\:text-yellow-400{--tw-text-opacity:1;color:rgb(250 204 21 / var(--tw-text-opacity))}
+.dark .dark\:hover\:bg-gray-800:hover{--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity))}
+.dark .dark\:hover\:bg-gray-900\/20:hover{background-color:rgb(17 24 39 / 0.2)}
+.dark .dark\:hover\:bg-green-900\/20:hover{background-color:rgb(20 83 45 / 0.2)}
+.dark .dark\:hover\:bg-green-900\/30:hover{background-color:rgb(20 83 45 / 0.3)}
+.dark .dark\:hover\:bg-primary-900\/30:hover{background-color:rgb(14 165 233 / 0.3)}
+.dark .dark\:hover\:bg-purple-900\/30:hover{background-color:rgb(88 28 135 / 0.3)}
+.dark .dark\:hover\:bg-red-900\/20:hover{background-color:rgb(127 29 29 / 0.2)}
+.dark .dark\:hidden{display:none}
+.dark .dark\:block{display:block}
+:root{--primary:#0ea5e9;--primary-dark:#0284c7;--secondary:#8b5cf6;--success:#10b981;--warning:#f59e0b;--danger:#ef4444}
+.dark{color-scheme:dark}
+*{-webkit-tap-highlight-color:transparent}
+.glass{background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.dark .glass{background:rgba(17,24,39,0.7)}
+.custom-scrollbar::-webkit-scrollbar{width:6px;height:6px}
+.custom-scrollbar::-webkit-scrollbar-track{background:transparent}
+.custom-scrollbar::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb{background:#475569}
+.bottom-nav-safe{padding-bottom:env(safe-area-inset-bottom)}
+.loader{border:3px solid #f3f3f3;border-top:3px solid var(--primary);border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite}
+.badge-count{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;background:#ef4444;color:white;border-radius:9px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+</style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<style>
-    :root {
-        --primary: #0ea5e9;
-        --primary-dark: #0284c7;
-        --secondary: #8b5cf6;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-    }
-    .dark {
-        color-scheme: dark;
-    }
-    * {
-        -webkit-tap-highlight-color: transparent;
-    }
-    .glass {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-    }
-    .dark .glass {
-        background: rgba(17, 24, 39, 0.7);
-    }
-    @keyframes slideIn {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    .animate-slide-in {
-        animation: slideIn 0.3s ease-out;
-    }
-    @keyframes pulse-slow {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-    .animate-pulse-slow {
-        animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 3px;
-    }
-    .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #475569;
-    }
-    .bottom-nav-safe {
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-    .loader {
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid var(--primary);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .badge-count {
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        min-width: 18px;
-        height: 18px;
-        padding: 0 5px;
-        background: #ef4444;
-        color: white;
-        border-radius: 9px;
-        font-size: 11px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-</style>
-<script>
-    tailwind.config = {
-        darkMode: 'class',
-        theme: {
-            extend: {
-                colors: {
-                    primary: {
-                        50: '#f0f9ff',
-                        500: '#0ea5e9',
-                        600: '#0284c7',
-                        700: '#0369a1',
-                    }
-                }
-            }
-        }
-    }
-</script>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiT3duc0JpbGxpbmciLCJzaG9ydF9uYW1lIjoiT3duc0JpbGxpbmciLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzBlYTVlOSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUIzYVdSMGFEMGlNVEk0SWlCb1pXbG5hSFE5SWpFNU1pSWdkbWxsZDBKdmVEMGlNQ0F3SlRJd0pUZ2lJSGh0Ykc1elBTSWpNalUySWlCNVBTSXhNaUlCQm1qNE5EUXhJalQ5SWlNOVpXeHNMekV1SWlCdmNtMW1JaUJ5WVdKaVltRnVheUk5SWpZMlBpQkRiMjUwWlhoMFBTSXlNQ0lpSUhaMGJEd0NiM0prWlhKMGIydDFabUZ5YzJFdlltVTlJVGxEYVZoQklpd2lMejFqWldNaWZTd2lmVFNBWDFKU1ZXVlgwZ1JhbDNaVmtVUm1WSlZURmlVMUozVVdKVVRVVUlmUT09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwiLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn1dfQ==">
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
-<!-- Loading Screen -->
 <div id="loadingScreen" class="fixed inset-0 z-[100] bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
     <div class="text-center">
         <div class="loader mx-auto mb-4"></div>
@@ -125,10 +467,8 @@
     </div>
 </div>
 
-<!-- Toast Container -->
-<div id="toastContainer" class="fixed top-4 right-4 z-[90] space-y-2 max-w-sm w-full px-4 sm:px-0"></div>
+<div id="toastContainer" class="fixed top-4 right-4 z-90 space-y-2 max-w-sm w-full px-4 sm:px-0"></div>
 
-<!-- Auth Screen -->
 <div id="authScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 hidden">
     <div class="w-full max-w-md">
         <div class="glass rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700">
@@ -140,7 +480,6 @@
                 <p class="text-gray-600 dark:text-gray-400 text-sm mt-2">ISP Billing Management System</p>
             </div>
 
-            <!-- Login Form -->
             <form id="loginForm" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-2">Email</label>
@@ -179,9 +518,7 @@
     </div>
 </div>
 
-<!-- Main App -->
 <div id="app" class="hidden min-h-screen">
-    <!-- Top Navbar -->
     <header class="glass sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700">
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -202,7 +539,7 @@
                         <span id="notificationBadge" class="hidden absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse-slow"></span>
                     </button>
                     <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                        <i class="fas fa-moon text-lg dark:hidden"></i>
+                        <i class="fas fa-moon text-lg block dark:hidden"></i>
                         <i class="fas fa-sun text-lg hidden dark:block"></i>
                     </button>
                     <div class="relative">
@@ -215,10 +552,10 @@
                                 <p class="text-sm font-semibold" id="userName">User</p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400" id="userRole">Role</p>
                             </div>
-                            <button onclick="showProfile()" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                            <button data-action="profile" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                                 <i class="fas fa-user mr-2"></i>Profile
                             </button>
-                            <button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                            <button data-action="logout" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
                                 <i class="fas fa-sign-out-alt mr-2"></i>Logout
                             </button>
                         </div>
@@ -229,7 +566,6 @@
     </header>
 
     <div class="flex">
-        <!-- Sidebar - Desktop -->
         <aside id="sidebar" class="hidden lg:flex flex-col w-64 fixed left-0 top-16 bottom-0 glass border-r border-gray-200 dark:border-gray-700 overflow-y-auto custom-scrollbar">
             <nav class="flex-1 p-4 space-y-1" id="sidebarNav"></nav>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700">
@@ -240,7 +576,6 @@
             </div>
         </aside>
 
-        <!-- Mobile Sidebar -->
         <div id="mobileSidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
         <aside id="mobileSidebar" class="fixed left-0 top-0 bottom-0 w-72 z-50 glass transform -translate-x-full transition-transform duration-300 lg:hidden overflow-y-auto custom-scrollbar border-r border-gray-200 dark:border-gray-700">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -257,38 +592,34 @@
             <nav class="p-4 space-y-1" id="mobileSidebarNav"></nav>
         </aside>
 
-        <!-- Main Content -->
         <main id="mainContent" class="flex-1 lg:ml-64 pb-20 lg:pb-6">
             <div class="p-4 sm:p-6 lg:p-8" id="contentArea"></div>
         </main>
     </div>
 
-    <!-- Bottom Nav - Mobile -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-gray-200 dark:border-gray-700 bottom-nav-safe z-40">
         <div class="flex justify-around items-center h-16" id="bottomNav"></div>
     </nav>
 
-    <!-- Notification Panel -->
     <div id="notificationPanel" class="hidden fixed right-4 top-20 w-80 sm:w-96 max-h-[32rem] glass rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-40 overflow-hidden">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <h3 class="font-semibold">Notifications</h3>
-            <button onclick="markAllRead()" class="text-xs text-primary-600 hover:text-primary-700">Mark all read</button>
+            <button data-action="markAllRead" class="text-xs text-primary-600 hover:text-primary-700">Mark all read</button>
         </div>
         <div id="notificationList" class="overflow-y-auto custom-scrollbar max-h-96"></div>
     </div>
 </div>
 
-<!-- Modal Container -->
 <div id="modalContainer"></div>
 
 <script type="module">
-    // Firebase Imports
+    // 1. Imports
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
     import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
     import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
-    // Firebase Config
+    // 2. Firebase Config + Init
     const firebaseConfig = {
         apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
         authDomain: "owns-billing.firebaseapp.com",
@@ -303,7 +634,7 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // Global State
+    // 3. All const/let variables
     let currentUser = null;
     let userRole = null;
     let companyData = null;
@@ -317,47 +648,38 @@
         promiseDates: []
     };
 
-    // Initialize Theme
-    const theme = localStorage.getItem('theme') || 'light';
-    if (theme === 'dark') document.documentElement.classList.add('dark');
+    const navConfig = {
+        admin: [
+            { id: 'dashboard', name: 'Dashboard', icon: 'fa-home' },
+            { id: 'customers', name: 'Customers', icon: 'fa-users' },
+            { id: 'staff', name: 'Staff', icon: 'fa-user-tie' },
+            { id: 'packages', name: 'Packages', icon: 'fa-box' },
+            { id: 'bills', name: 'Bills', icon: 'fa-file-invoice' },
+            { id: 'promisedates', name: 'Promise Dates', icon: 'fa-calendar-check' },
+            { id: 'reports', name: 'Reports', icon: 'fa-chart-bar' },
+            { id: 'complaints', name: 'Complaints', icon: 'fa-headset' },
+            { id: 'logs', name: 'Activity Logs', icon: 'fa-history' },
+            { id: 'settings', name: 'Settings', icon: 'fa-cog' }
+        ],
+        staff: [
+            { id: 'dashboard', name: 'Dashboard', icon: 'fa-home' },
+            { id: 'customers', name: 'My Customers', icon: 'fa-users' },
+            { id: 'bills', name: 'Due Bills', icon: 'fa-file-invoice' },
+            { id: 'followup', name: 'Follow-up', icon: 'fa-calendar-check' },
+            { id: 'reports', name: 'Bill Reports', icon: 'fa-chart-bar' },
+            { id: 'complaints', name: 'Complaints', icon: 'fa-headset' },
+            { id: 'profile', name: 'Profile', icon: 'fa-user' }
+        ],
+        customer: [
+            { id: 'dashboard', name: 'Dashboard', icon: 'fa-home' },
+            { id: 'bills', name: 'My Bills', icon: 'fa-file-invoice' },
+            { id: 'profile', name: 'Profile', icon: 'fa-user' },
+            { id: 'complaints', name: 'Support', icon: 'fa-headset' }
+        ]
+    };
 
-    // Theme Toggle
-    document.getElementById('themeToggle').addEventListener('click', () => {
-        document.documentElement.classList.toggle('dark');
-        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-    });
-
-    // Mobile Sidebar
-    document.getElementById('sidebarToggle').addEventListener('click', () => {
-        document.getElementById('mobileSidebar').classList.remove('-translate-x-full');
-        document.getElementById('mobileSidebarOverlay').classList.remove('hidden');
-    });
-    document.getElementById('mobileSidebarClose').addEventListener('click', closeMobileSidebar);
-    document.getElementById('mobileSidebarOverlay').addEventListener('click', closeMobileSidebar);
-    
-    function closeMobileSidebar() {
-        document.getElementById('mobileSidebar').classList.add('-translate-x-full');
-        document.getElementById('mobileSidebarOverlay').classList.add('hidden');
-    }
-
-    // Profile Dropdown
-    document.getElementById('profileBtn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        document.getElementById('profileDropdown').classList.toggle('hidden');
-    });
-    document.addEventListener('click', () => {
-        document.getElementById('profileDropdown').classList.add('hidden');
-        document.getElementById('notificationPanel').classList.add('hidden');
-    });
-
-    // Notifications
-    document.getElementById('notificationBtn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        document.getElementById('notificationPanel').classList.toggle('hidden');
-    });
-
-    // Toast Notification
-    window.showToast = function(message, type = 'success') {
+    // 4. All function declarations
+    function showToast(message, type = 'success') {
         const colors = {
             success: 'bg-green-500',
             error: 'bg-red-500',
@@ -379,199 +701,98 @@
             toast.style.transform = 'translateX(100px)';
             setTimeout(() => toast.remove(), 300);
         }, 3000);
-    };
+    }
 
-    // Auth State
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            currentUser = user;
-            await loadUserData(user.uid);
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-            initializeAppUI();
-            checkTodayPromiseDates();
-        } else {
-            currentUser = null;
-            userRole = null;
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('app').classList.add('hidden');
-        }
-    });
+    function closeMobileSidebar() {
+        document.getElementById('mobileSidebar').classList.add('-translate-x-full');
+        document.getElementById('mobileSidebarOverlay').classList.add('hidden');
+    }
 
-    // Login
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
+    function showModal(title, content) {
+        const modal = document.createElement('div');
+        modal.id = 'activeModal';
+        modal.className = 'fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-slide-in';
+        modal.innerHTML = `
+            <div class="glass rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <div class="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <h3 class="text-xl font-bold">${title}</h3>
+                    <button data-action="closeModal" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-6">
+                    ${content}
+                </div>
+            </div>
+        `;
+        document.getElementById('modalContainer').appendChild(modal);
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('activeModal');
+        if (modal) modal.remove();
+    }
+
+    async function addLog(action, details) {
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            showToast('Login successful!', 'success');
+            await addDoc(collection(db, 'logs'), {
+                action,
+                details,
+                userId: currentUser.uid,
+                userName: document.getElementById('userName').textContent,
+                timestamp: serverTimestamp()
+            });
         } catch (error) {
-            showToast(error.message, 'error');
+            console.error('Error adding log:', error);
         }
-    });
+    }
 
-    // Logout
-    window.handleLogout = async function() {
-        await signOut(auth);
-        showToast('Logged out successfully', 'info');
-    };
-
-    // Load User Data
-    async function loadUserData(uid) {
-        // Check if admin
-        if (currentUser.email === 'admin@owns.com') {
-            userRole = 'admin';
+    function updateNotificationBadge() {
+        const badge = document.getElementById('notificationBadge');
+        const unreadComplaints = allData.complaints.filter(c => 
+            (userRole === 'admin' && c.status === 'Pending') ||
+            (userRole === 'staff' && c.assignedStaff === currentUser.uid && c.status === 'Pending')
+        );
+        if (unreadComplaints.length > 0) {
+            badge.classList.remove('hidden');
         } else {
-            // Check staff collection
-            const staffDoc = await getDoc(doc(db, 'staff', uid));
-            if (staffDoc.exists()) {
-                userRole = 'staff';
-            } else {
-                // Check customers collection
-                const customerDoc = await getDoc(doc(db, 'customers', uid));
-                if (customerDoc.exists()) {
-                    userRole = 'customer';
-                }
-            }
+            badge.classList.add('hidden');
         }
-
-        const userDoc = userRole === 'admin' ? {data: () => ({name: 'Admin', email: currentUser.email})} :
-                       await getDoc(doc(db, userRole === 'staff' ? 'staff' : 'customers', uid));
-        
-        const userData = userDoc.data();
-        document.getElementById('userName').textContent = userData.name || 'User';
-        document.getElementById('userRole').textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
-        document.getElementById('userAvatar').src = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=0ea5e9&color=fff`;
-
-        // Load company data
-        const companySnapshot = await getDocs(collection(db, 'company'));
-        if (!companySnapshot.empty) {
-            companyData = companySnapshot.docs[0].data();
-            document.getElementById('companyNameSidebar').textContent = companyData.name || 'Owns ISP';
-        }
-
-        // Setup real-time listeners
-        setupRealtimeListeners();
+        renderNotifications();
     }
 
-    // Realtime Listeners
-    function setupRealtimeListeners() {
-        // Customers
-        onSnapshot(collection(db, 'customers'), (snapshot) => {
-            allData.customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            if (window.currentPage) refreshCurrentPage();
-        });
+    function renderNotifications() {
+        const list = document.getElementById('notificationList');
+        const relevant = allData.complaints.filter(c => 
+            (userRole === 'admin') ||
+            (userRole === 'staff' && c.assignedStaff === currentUser.uid) ||
+            (userRole === 'customer' && c.customerId === currentUser.uid)
+        ).slice(0, 10);
 
-        // Staff
-        onSnapshot(collection(db, 'staff'), (snapshot) => {
-            allData.staff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        });
-
-        // Packages
-        onSnapshot(collection(db, 'packages'), (snapshot) => {
-            allData.packages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        });
-
-        // Bills
-        onSnapshot(collection(db, 'bills'), (snapshot) => {
-            allData.bills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            if (window.currentPage) refreshCurrentPage();
-        });
-
-        // Complaints
-        onSnapshot(collection(db, 'complaints'), (snapshot) => {
-            allData.complaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            updateNotificationBadge();
-        });
-
-        // Logs
-        onSnapshot(query(collection(db, 'logs'), orderBy('timestamp', 'desc')), (snapshot) => {
-            allData.logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        });
-
-        // Promise Dates
-        onSnapshot(collection(db, 'promiseDates'), (snapshot) => {
-            allData.promiseDates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            updateFollowUpBadges();
-            if (window.currentPage === 'followup' || window.currentPage === 'promisedates') refreshCurrentPage();
-        });
-    }
-
-    // Navigation Config
-    const navConfig = {
-        admin: [
-            { id: 'dashboard', name: 'Dashboard', icon: 'fa-home', page: showAdminDashboard },
-            { id: 'customers', name: 'Customers', icon: 'fa-users', page: showCustomers },
-            { id: 'staff', name: 'Staff', icon: 'fa-user-tie', page: showStaff },
-            { id: 'packages', name: 'Packages', icon: 'fa-box', page: showPackages },
-            { id: 'bills', name: 'Bills', icon: 'fa-file-invoice', page: showBills },
-            { id: 'promisedates', name: 'Promise Dates', icon: 'fa-calendar-check', page: showPromiseDates },
-            { id: 'reports', name: 'Reports', icon: 'fa-chart-bar', page: showReports },
-            { id: 'complaints', name: 'Complaints', icon: 'fa-headset', page: showComplaints },
-            { id: 'logs', name: 'Activity Logs', icon: 'fa-history', page: showLogs },
-            { id: 'settings', name: 'Settings', icon: 'fa-cog', page: showSettings }
-        ],
-        staff: [
-            { id: 'dashboard', name: 'Dashboard', icon: 'fa-home', page: showStaffDashboard },
-            { id: 'customers', name: 'My Customers', icon: 'fa-users', page: showStaffCustomers },
-            { id: 'bills', name: 'Due Bills', icon: 'fa-file-invoice', page: showStaffBills },
-            { id: 'followup', name: 'Follow-up', icon: 'fa-calendar-check', page: showFollowUp },
-            { id: 'reports', name: 'Bill Reports', icon: 'fa-chart-bar', page: showStaffReports },
-            { id: 'complaints', name: 'Complaints', icon: 'fa-headset', page: showStaffComplaints },
-            { id: 'profile', name: 'Profile', icon: 'fa-user', page: showProfile }
-        ],
-        customer: [
-            { id: 'dashboard', name: 'Dashboard', icon: 'fa-home', page: showCustomerDashboard },
-            { id: 'bills', name: 'My Bills', icon: 'fa-file-invoice', page: showCustomerBills },
-            { id: 'profile', name: 'Profile', icon: 'fa-user', page: showCustomerProfile },
-            { id: 'complaints', name: 'Support', icon: 'fa-headset', page: showCustomerComplaints }
-        ]
-    };
-
-    // Initialize App UI
-    function initializeAppUI() {
-        renderNavigation();
-        showDashboard();
-    }
-
-    // Render Navigation
-    function renderNavigation() {
-        const nav = navConfig[userRole];
-        const sidebarNav = document.getElementById('sidebarNav');
-        const mobileSidebarNav = document.getElementById('mobileSidebarNav');
-        const bottomNav = document.getElementById('bottomNav');
-
-        const navHTML = nav.map(item => {
-            const badgeId = item.id === 'followup' ? 'followup-badge' : item.id === 'promisedates' ? 'promisedates-badge' : '';
+        list.innerHTML = relevant.map(complaint => {
+            const customer = allData.customers.find(c => c.id === complaint.customerId);
             return `
-            <button onclick="navigateTo('${item.id}')" class="nav-item-${item.id} w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-800 transition-colors text-left relative">
-                <i class="fas ${item.icon} w-5"></i>
-                <span class="font-medium">${item.name}</span>
-                ${badgeId ? `<span id="${badgeId}" class="badge-count hidden">0</span>` : ''}
-            </button>
-        `}).join('');
-
-        sidebarNav.innerHTML = navHTML;
-        mobileSidebarNav.innerHTML = navHTML;
-
-        // Bottom nav - show first 5 items
-        bottomNav.innerHTML = nav.slice(0, 5).map(item => {
-            const badgeId = item.id === 'followup' ? 'bottom-followup-badge' : '';
-            return `
-            <button onclick="navigateTo('${item.id}')" class="nav-item-${item.id} flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors relative">
-                <i class="fas ${item.icon} text-lg"></i>
-                <span class="text-xs font-medium">${item.name}</span>
-                ${badgeId ? `<span id="${badgeId}" class="badge-count hidden">0</span>` : ''}
-            </button>
-        `}).join('');
-        
-        updateFollowUpBadges();
+                <div class="p-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-100 dark:bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-${complaint.status === 'Solved' ? 'check' : 'exclamation'}-circle text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-600 dark:text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-400"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-sm">${complaint.subject}</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">${complaint.message}</p>
+                            <p class="text-xs text-gray-500 mt-1">${customer?.name || 'Unknown'} • ${complaint.createdAt ? new Date(complaint.createdAt.toDate()).toLocaleDateString() : ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('') || '<div class="p-8 text-center text-gray-500 text-sm">No notifications</div>';
     }
 
-    // Update Follow-up Badges
+    function markAllRead() {
+        showToast('All notifications marked as read', 'success');
+        document.getElementById('notificationPanel').classList.add('hidden');
+    }
+
     function updateFollowUpBadges() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -599,7 +820,6 @@
         });
     }
 
-    // Check Today's Promise Dates
     function checkTodayPromiseDates() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -618,14 +838,62 @@
         }
     }
 
-    // Navigate
-    window.navigateTo = function(pageId) {
+    function renderNavigation() {
+        const nav = navConfig[userRole];
+        const sidebarNav = document.getElementById('sidebarNav');
+        const mobileSidebarNav = document.getElementById('mobileSidebarNav');
+        const bottomNav = document.getElementById('bottomNav');
+
+        const navHTML = nav.map(item => {
+            const badgeId = item.id === 'followup' ? 'followup-badge' : item.id === 'promisedates' ? 'promisedates-badge' : '';
+            return `
+            <button data-action="navigate" data-page="${item.id}" class="nav-item-${item.id} w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-800 transition-colors text-left relative">
+                <i class="fas ${item.icon} w-5"></i>
+                <span class="font-medium">${item.name}</span>
+                ${badgeId ? `<span id="${badgeId}" class="badge-count hidden">0</span>` : ''}
+            </button>
+        `}).join('');
+
+        sidebarNav.innerHTML = navHTML;
+        mobileSidebarNav.innerHTML = navHTML;
+
+        bottomNav.innerHTML = nav.slice(0, 5).map(item => {
+            const badgeId = item.id === 'followup' ? 'bottom-followup-badge' : '';
+            return `
+            <button data-action="navigate" data-page="${item.id}" class="nav-item-${item.id} flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors relative">
+                <i class="fas ${item.icon} text-lg"></i>
+                <span class="text-xs font-medium">${item.name}</span>
+                ${badgeId ? `<span id="${badgeId}" class="badge-count hidden">0</span>` : ''}
+            </button>
+        `}).join('');
+        
+        updateFollowUpBadges();
+    }
+
+    function navigateTo(pageId) {
         window.currentPage = pageId;
         const nav = navConfig[userRole];
         const page = nav.find(item => item.id === pageId);
         if (page) {
-            page.page();
-            // Update active state
+            const pageFunctions = {
+                dashboard: userRole === 'admin' ? showAdminDashboard : userRole === 'staff' ? showStaffDashboard : showCustomerDashboard,
+                customers: userRole === 'admin' ? showCustomers : showStaffCustomers,
+                staff: showStaff,
+                packages: showPackages,
+                bills: userRole === 'admin' ? showInvoiceGenerator : userRole === 'staff' ? showStaffDueBills : showCustomerBillsPage,
+                promisedates: showPromiseDatesPage,
+                followup: showFollowUpPage,
+                reports: userRole === 'admin' ? showReportPage : showStaffBillReports,
+                complaints: showComplaintsPage,
+                logs: showLogsPage,
+                settings: showSettingsPage,
+                profile: showProfilePage
+            };
+            
+            if (pageFunctions[pageId]) {
+                pageFunctions[pageId]();
+            }
+            
             document.querySelectorAll('[class*="nav-item-"]').forEach(el => {
                 el.classList.remove('bg-primary-100', 'dark:bg-gray-800', 'text-primary-600');
             });
@@ -634,20 +902,13 @@
             });
             closeMobileSidebar();
         }
-    };
+    }
 
     function refreshCurrentPage() {
         if (window.currentPage) navigateTo(window.currentPage);
     }
 
-    function showDashboard() {
-        if (userRole === 'admin') navigateTo('dashboard');
-        else if (userRole === 'staff') navigateTo('dashboard');
-        else navigateTo('dashboard');
-    }
-
-    // Admin Dashboard
-    window.showAdminDashboard = function() {
+    function showAdminDashboard() {
         const totalCustomers = allData.customers.length;
         const dueBills = allData.bills.filter(b => b.status === 'Due' || b.status === 'Partial');
         const paidBills = allData.bills.filter(b => b.status === 'Paid');
@@ -670,7 +931,6 @@
                     <p class="text-gray-600 dark:text-gray-400">Welcome back! Here's your ISP overview</p>
                 </div>
 
-                <!-- Stats Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow">
                         <div class="flex items-center justify-between mb-4">
@@ -705,7 +965,7 @@
                         <p class="text-3xl font-bold">${dueBills.length}</p>
                     </div>
 
-                    <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow cursor-pointer" onclick="navigateTo('promisedates')">
+                    <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow cursor-pointer" data-action="navigate" data-page="promisedates">
                         <div class="flex items-center justify-between mb-4">
                             <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
                                 <i class="fas fa-calendar-check text-purple-600 dark:text-purple-400 text-xl"></i>
@@ -717,7 +977,6 @@
                     </div>
                 </div>
 
-                <!-- Charts -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                         <h3 class="font-semibold mb-4">Monthly Collection</h3>
@@ -729,7 +988,6 @@
                     </div>
                 </div>
 
-                <!-- Recent Activity -->
                 <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                     <h3 class="font-semibold mb-4">Recent Activity</h3>
                     <div class="space-y-3">
@@ -750,10 +1008,9 @@
         `;
 
         setTimeout(renderAdminCharts, 100);
-    };
+    }
 
     function renderAdminCharts() {
-        // Collection Chart
         const ctx1 = document.getElementById('collectionChart');
         if (ctx1) {
             new Chart(ctx1, {
@@ -777,7 +1034,6 @@
             });
         }
 
-        // Status Chart
         const ctx2 = document.getElementById('statusChart');
         if (ctx2) {
             const paid = allData.bills.filter(b => b.status === 'Paid').length;
@@ -800,8 +1056,7 @@
         }
     }
 
-    // Staff Dashboard
-    window.showStaffDashboard = function() {
+    function showStaffDashboard() {
         const myCustomers = allData.customers.filter(c => c.assignedStaff === currentUser.uid);
         const myBills = allData.bills.filter(b => b.createdBy === currentUser.uid);
         const dueBills = myBills.filter(b => b.status === 'Due' || b.status === 'Partial');
@@ -845,7 +1100,7 @@
                         <p class="text-gray-600 dark:text-gray-400 text-sm mb-1">Collection</p>
                         <p class="text-3xl font-bold">৳${collection.toLocaleString()}</p>
                     </div>
-                    <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700 cursor-pointer" onclick="navigateTo('followup')">
+                    <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700 cursor-pointer" data-action="navigate" data-page="followup">
                         <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-4 relative">
                             <i class="fas fa-calendar-check text-purple-600 dark:text-purple-400 text-xl"></i>
                             ${todayPromises > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">${todayPromises}</span>` : ''}
@@ -858,11 +1113,11 @@
                 <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                     <h3 class="font-semibold mb-4">Quick Actions</h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <button onclick="navigateTo('bills')" class="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition text-left">
+                        <button data-action="navigate" data-page="bills" class="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition text-left">
                             <i class="fas fa-file-invoice text-primary-600 text-xl mb-2"></i>
                             <p class="font-semibold text-sm">Due Bills</p>
                         </button>
-                        <button onclick="navigateTo('followup')" class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/30 transition text-left">
+                        <button data-action="navigate" data-page="followup" class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/30 transition text-left">
                             <i class="fas fa-calendar-check text-purple-600 text-xl mb-2"></i>
                             <p class="font-semibold text-sm">Follow-ups</p>
                         </button>
@@ -870,10 +1125,9 @@
                 </div>
             </div>
         `;
-    };
+    }
 
-    // Customer Dashboard
-    window.showCustomerDashboard = function() {
+    function showCustomerDashboard() {
         const myBills = allData.bills.filter(b => b.customerId === currentUser.uid);
         const dueBill = myBills.find(b => b.status === 'Due' || b.status === 'Partial');
         const customerData = allData.customers.find(c => c.id === currentUser.uid);
@@ -886,7 +1140,6 @@
                     <p class="text-gray-600 dark:text-gray-400">Manage your internet connection</p>
                 </div>
 
-                <!-- Due Amount Card -->
                 <div class="glass rounded-2xl p-6 border-2 border-${dueBill ? 'red' : 'green'}-500 bg-gradient-to-br from-${dueBill ? 'red' : 'green'}-50 to-${dueBill ? 'orange' : 'emerald'}-50 dark:from-${dueBill ? 'red' : 'green'}-900/20 dark:to-${dueBill ? 'orange' : 'emerald'}-900/20">
                     <div class="flex items-start justify-between mb-4">
                         <div>
@@ -899,10 +1152,9 @@
                             <i class="fas fa-${dueBill ? 'exclamation' : 'check'}-circle text-white text-2xl"></i>
                         </div>
                     </div>
-                    ${dueBill ? `<button onclick="showPaymentInfo()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl transition">Pay Now</button>` : ''}
+                    ${dueBill ? `<button data-action="showPaymentInfo" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl transition">Pay Now</button>` : ''}
                 </div>
 
-                <!-- Package Info -->
                 <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                     <h3 class="font-semibold mb-4 flex items-center gap-2">
                         <i class="fas fa-wifi text-primary-600"></i>
@@ -932,7 +1184,6 @@
                     ` : '<p class="text-gray-500 text-sm">No package assigned</p>'}
                 </div>
 
-                <!-- PPPoE Details -->
                 <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                     <h3 class="font-semibold mb-4 flex items-center gap-2">
                         <i class="fas fa-server text-purple-600"></i>
@@ -943,7 +1194,7 @@
                             <span class="text-gray-600 dark:text-gray-400">Username</span>
                             <div class="flex items-center gap-2">
                                 <span class="font-mono font-semibold">${customerData?.pppoeUsername || 'N/A'}</span>
-                                <button onclick="copyToClipboard('${customerData?.pppoeUsername}')" class="text-primary-600 hover:text-primary-700">
+                                <button data-action="copyToClipboard" data-text="${customerData?.pppoeUsername}" class="text-primary-600 hover:text-primary-700">
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
@@ -952,29 +1203,29 @@
                             <span class="text-gray-600 dark:text-gray-400">Password</span>
                             <div class="flex items-center gap-2">
                                 <span class="font-mono font-semibold">${customerData?.pppoePassword || 'N/A'}</span>
-                                <button onclick="copyToClipboard('${customerData?.pppoePassword}')" class="text-primary-600 hover:text-primary-700">
+                                <button data-action="copyToClipboard" data-text="${customerData?.pppoePassword}" class="text-primary-600 hover:text-primary-700">
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
-                        </div>
-                    <button onclick="checkPPPoEStatus()" class="w-full mt-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-xl transition">
-                        <i class="fas fa-satellite-dish mr-2"></i>Check Connection Status
-                    </button>
+                        <button data-action="checkPPPoEStatus" class="w-full mt-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-xl transition">
+                            <i class="fas fa-satellite-dish mr-2"></i>Check Connection Status
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
-    };
+    }
 
-    window.checkPPPoEStatus = function() {
+    function checkPPPoEStatus() {
         showToast('MikroTik API: Connection is Online', 'success');
-    };
+    }
 
-    window.copyToClipboard = function(text) {
+    function copyToClipboard(text) {
         navigator.clipboard.writeText(text);
         showToast('Copied to clipboard!', 'success');
-    };
+    }
 
-    window.showPaymentInfo = function() {
+    function showPaymentInfo() {
         showModal('Payment Options', `
             <div class="space-y-4">
                 <p class="text-gray-600 dark:text-gray-400">Contact your assigned staff or admin for payment</p>
@@ -996,384 +1247,11 @@
                 </div>
             </div>
         `);
-    };
-
-    // Placeholder functions for other pages
-    window.showCustomers = function() { showDataTable('customers', 'Customers', allData.customers); };
-    window.showStaff = function() { showDataTable('staff', 'Staff', allData.staff); };
-    window.showPackages = function() { showDataTable('packages', 'Packages', allData.packages); };
-    window.showBills = function() { 
-        if (userRole === 'admin') showInvoiceGenerator();
-        else showToast('Create bills from dedicated page', 'info');
-    };
-    window.showReports = function() { showReportPage(); };
-    window.showComplaints = function() { showComplaintsPage(); };
-    window.showLogs = function() { showLogsPage(); };
-    window.showSettings = function() { showSettingsPage(); };
-    window.showStaffCustomers = function() { 
-        const myCustomers = allData.customers.filter(c => c.assignedStaff === currentUser.uid);
-        showDataTable('customers', 'My Customers', myCustomers, true);
-    };
-    window.showStaffBills = function() { showStaffDueBills(); };
-    window.showStaffReports = function() { showStaffBillReports(); };
-    window.showStaffComplaints = function() { showComplaintsPage(); };
-    window.showCustomerBills = function() { showCustomerBillsPage(); };
-    window.showCustomerProfile = function() { showProfile(); };
-    window.showCustomerComplaints = function() { showComplaintsPage(); };
-    window.showProfile = function() { showProfilePage(); };
-    window.showFollowUp = function() { showFollowUpPage(); };
-    window.showPromiseDates = function() { showPromiseDatesPage(); };
-
-    // Generic Data Table
-    function showDataTable(type, title, data, readOnly = false) {
-        document.getElementById('contentArea').innerHTML = `
-            <div class="space-y-6 animate-slide-in">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl sm:text-3xl font-bold">${title}</h2>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Total: ${data.length}</p>
-                    </div>
-                    ${!readOnly && userRole === 'admin' ? `
-                        <button onclick="showAdd${type.charAt(0).toUpperCase() + type.slice(1)}Modal()" class="bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
-                            <i class="fas fa-plus"></i>
-                            Add ${title.slice(0, -1)}
-                        </button>
-                    ` : ''}
-                </div>
-
-                <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <div class="relative">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" id="searchInput" onkeyup="filterTable('${type}')" placeholder="Search..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-800/50">
-                                <tr id="tableHeader"></tr>
-                            </thead>
-                            <tbody id="tableBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderTable(type, data, readOnly);
     }
 
-    function renderTable(type, data, readOnly) {
-        const headerRow = document.getElementById('tableHeader');
-        const body = document.getElementById('tableBody');
-        
-        let headers = [];
-        if (type === 'customers') headers = ['Name', 'Mobile', 'Area', 'Zone', 'Package', 'Status', 'Actions'];
-        else if (type === 'staff') headers = ['Name', 'Mobile', 'WhatsApp', 'Email', 'Actions'];
-        else if (type === 'packages') headers = ['Name', 'Speed', 'Price', 'Actions'];
-        
-        headerRow.innerHTML = headers.map(h => `<th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">${h}</th>`).join('');
-        
-        body.innerHTML = data.map(item => {
-            if (type === 'customers') {
-                const pkg = allData.packages.find(p => p.id === item.packageId);
-                return `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-3">
-                                <img src="${item.photoURL || `https://ui-avatars.com/api/?name=${item.name}&background=0ea5e9&color=fff`}" class="w-10 h-10 rounded-lg" alt="${item.name}">
-                                <div>
-                                    <p class="font-medium">${item.name}</p>
-                                    <p class="text-xs text-gray-500">${item.pppoeUsername || ''}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3">${item.mobile}</td>
-                        <td class="px-4 py-3">${item.area || '-'}</td>
-                        <td class="px-4 py-3">${item.zone || '-'}</td>
-                        <td class="px-4 py-3">${pkg?.name || '-'}</td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-xs font-semibold">Active</span>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex gap-2">
-                                ${!readOnly ? `
-                                    <button onclick="editItem('${type}', '${item.id}')" class="text-blue-600 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                    <button onclick="deleteItem('${type}', '${item.id}')" class="text-red-600 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                                ` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            } else if (type === 'staff') {
-                return `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-3">
-                                <img src="${item.photoURL || `https://ui-avatars.com/api/?name=${item.name}&background=8b5cf6&color=fff`}" class="w-10 h-10 rounded-lg" alt="${item.name}">
-                                <div>
-                                    <p class="font-medium">${item.name}</p>
-                                    <p class="text-xs text-gray-500">${item.address || ''}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3">${item.mobile}</td>
-                        <td class="px-4 py-3">
-                            <a href="https://wa.me/${item.whatsapp}" target="_blank" class="text-green-600 hover:text-green-700">
-                                <i class="fab fa-whatsapp mr-1"></i>${item.whatsapp}
-                            </a>
-                        </td>
-                        <td class="px-4 py-3">${item.email}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex gap-2">
-                                ${!readOnly ? `
-                                    <button onclick="editItem('${type}', '${item.id}')" class="text-blue-600 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                    <button onclick="deleteItem('${type}', '${item.id}')" class="text-red-600 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                                ` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            } else if (type === 'packages') {
-                return `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                        <td class="px-4 py-3 font-medium">${item.name}</td>
-                        <td class="px-4 py-3">${item.speed} Mbps</td>
-                        <td class="px-4 py-3 font-semibold">৳${item.price}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex gap-2">
-                                ${!readOnly ? `
-                                    <button onclick="editItem('${type}', '${item.id}')" class="text-blue-600 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                    <button onclick="deleteItem('${type}', '${item.id}')" class="text-red-600 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                                ` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }
-        }).join('') || `<tr><td colspan="${headers.length}" class="px-4 py-8 text-center text-gray-500">No data found</td></tr>`;
-    }
-
-    window.filterTable = function(type) {
-        const input = document.getElementById('searchInput').value.toLowerCase();
-        const rows = document.querySelectorAll('#tableBody tr');
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(input) ? '' : 'none';
-        });
-    };
-
-    // Add Modals
-    window.showAddCustomersModal = function() { showCustomerModal(); };
-    window.showAddStaffModal = function() { showStaffModal(); };
-    window.showAddPackagesModal = function() { showPackageModal(); };
-
-    function showCustomerModal(customerId = null) {
-        const customer = customerId ? allData.customers.find(c => c.id === customerId) : null;
-        showModal(customer ? 'Edit Customer' : 'Add Customer', `
-            <form id="customerForm" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Name *</label>
-                        <input type="text" name="name" value="${customer?.name || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Mobile *</label>
-                        <input type="tel" name="mobile" value="${customer?.mobile || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Area</label>
-                        <input type="text" name="area" value="${customer?.area || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Zone</label>
-                        <input type="text" name="zone" value="${customer?.zone || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Package</label>
-                        <select name="packageId" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                            <option value="">Select Package</option>
-                            ${allData.packages.map(p => `<option value="${p.id}" ${customer?.packageId === p.id ? 'selected' : ''}>${p.name} - ${p.speed}Mbps - ৳${p.price}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Assigned Staff</label>
-                        <select name="assignedStaff" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                            <option value="">Select Staff</option>
-                            ${allData.staff.map(s => `<option value="${s.id}" ${customer?.assignedStaff === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">PPPoE Username</label>
-                        <input type="text" name="pppoeUsername" value="${customer?.pppoeUsername || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">PPPoE Password</label>
-                        <input type="text" name="pppoePassword" value="${customer?.pppoePassword || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">NID Number</label>
-                        <input type="text" name="nid" value="${customer?.nid || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Email</label>
-                        <input type="email" name="email" value="${customer?.email || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
-                        ${customer ? 'Update' : 'Add'} Customer
-                    </button>
-                    <button type="button" onclick="closeModal()" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
-                </div>
-            </form>
-        `);
-
-        document.getElementById('customerForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            
-            try {
-                if (customerId) {
-                    await updateDoc(doc(db, 'customers', customerId), { ...data, updatedAt: serverTimestamp() });
-                    await addLog('Customer updated', `${data.name} details updated`);
-                    showToast('Customer updated successfully!', 'success');
-                } else {
-                    await addDoc(collection(db, 'customers'), { ...data, createdAt: serverTimestamp(), status: 'Active' });
-                    await addLog('Customer added', `${data.name} added to system`);
-                    showToast('Customer added successfully!', 'success');
-                }
-                closeModal();
-            } catch (error) {
-                showToast(error.message, 'error');
-            }
-        };
-    }
-
-    function showStaffModal(staffId = null) {
-        const staff = staffId ? allData.staff.find(s => s.id === staffId) : null;
-        showModal(staff ? 'Edit Staff' : 'Add Staff', `
-            <form id="staffForm" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Name *</label>
-                        <input type="text" name="name" value="${staff?.name || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Mobile *</label>
-                        <input type="tel" name="mobile" value="${staff?.mobile || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">WhatsApp</label>
-                        <input type="tel" name="whatsapp" value="${staff?.whatsapp || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Email</label>
-                        <input type="email" name="email" value="${staff?.email || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-sm font-medium mb-2">Address</label>
-                        <input type="text" name="address" value="${staff?.address || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
-                        ${staff ? 'Update' : 'Add'} Staff
-                    </button>
-                    <button type="button" onclick="closeModal()" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
-                </div>
-            </form>
-        `);
-
-        document.getElementById('staffForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            
-            try {
-                if (staffId) {
-                    await updateDoc(doc(db, 'staff', staffId), { ...data, updatedAt: serverTimestamp() });
-                    await addLog('Staff updated', `${data.name} details updated`);
-                    showToast('Staff updated successfully!', 'success');
-                } else {
-                    await addDoc(collection(db, 'staff'), { ...data, createdAt: serverTimestamp() });
-                    await addLog('Staff added', `${data.name} added to system`);
-                    showToast('Staff added successfully!', 'success');
-                }
-                closeModal();
-            } catch (error) {
-                showToast(error.message, 'error');
-            }
-        };
-    }
-
-    function showPackageModal(packageId = null) {
-        const pkg = packageId ? allData.packages.find(p => p.id === packageId) : null;
-        showModal(pkg ? 'Edit Package' : 'Add Package', `
-            <form id="packageForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-2">Package Name *</label>
-                    <input type="text" name="name" value="${pkg?.name || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="e.g., Premium 20Mbps">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Speed (Mbps) *</label>
-                    <input type="number" name="speed" value="${pkg?.speed || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="20">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Price (৳) *</label>
-                    <input type="number" name="price" value="${pkg?.price || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="1000">
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
-                        ${pkg ? 'Update' : 'Add'} Package
-                    </button>
-                    <button type="button" onclick="closeModal()" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
-                </div>
-            </form>
-        `);
-
-        document.getElementById('packageForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            data.speed = Number(data.speed);
-            data.price = Number(data.price);
-            
-            try {
-                if (packageId) {
-                    await updateDoc(doc(db, 'packages', packageId), { ...data, updatedAt: serverTimestamp() });
-                    await addLog('Package updated', `${data.name} updated`);
-                    showToast('Package updated successfully!', 'success');
-                } else {
-                    await addDoc(collection(db, 'packages'), { ...data, createdAt: serverTimestamp() });
-                    await addLog('Package added', `${data.name} created`);
-                    showToast('Package added successfully!', 'success');
-                }
-                closeModal();
-            } catch (error) {
-                showToast(error.message, 'error');
-            }
-        };
-    }
-
-    window.editItem = function(type, id) {
-        if (type === 'customers') showCustomerModal(id);
-        else if (type === 'staff') showStaffModal(id);
-        else if (type === 'packages') showPackageModal(id);
-    };
-
-    window.deleteItem = async function(type, id) {
-        if (!confirm('Are you sure you want to delete this item?')) return;
-        try {
-            await deleteDoc(doc(db, type, id));
-            await addLog(`${type} deleted`, `Item ${id} removed`);
-            showToast('Deleted successfully!', 'success');
-        } catch (error) {
-            showToast(error.message, 'error');
-        }
-    };
-
-    // Invoice Generator
+    function showCustomers() { showDataTable('customers', 'Customers', allData.customers); }
+    function showStaff() { showDataTable('staff', 'Staff', allData.staff); }
+    function showPackages() { showDataTable('packages', 'Packages', allData.packages); }
     function showInvoiceGenerator() {
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
@@ -1382,7 +1260,7 @@
                         <h2 class="text-2xl sm:text-3xl font-bold">Invoice Generator</h2>
                         <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Create and send bills to customers</p>
                     </div>
-                    <button onclick="showBulkBillModal()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
+                    <button data-action="showBulkBillModal" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
                         <i class="fas fa-calendar-alt"></i>
                         Auto Generate (1st)
                     </button>
@@ -1442,14 +1320,13 @@
                             <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
                                 <i class="fas fa-file-invoice mr-2"></i>Create Invoice
                             </button>
-                            <button type="button" onclick="sendWhatsAppPrompt()" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition">
+                            <button type="button" data-action="sendWhatsAppPrompt" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition">
                                 <i class="fab fa-whatsapp"></i>
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <!-- Recent Bills -->
                 <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                     <h3 class="font-semibold mb-4">Recent Bills</h3>
                     <div class="space-y-3">
@@ -1505,7 +1382,6 @@
                 await addLog('Bill created', `Bill for month ${data.month} created`);
                 showToast('Invoice created successfully!', 'success');
                 
-                // Auto send to WhatsApp
                 const customer = allData.customers.find(c => c.id === data.customerId);
                 if (customer?.mobile) {
                     sendToWhatsApp(customer.mobile, customer.name, data.amount, data.month);
@@ -1524,22 +1400,23 @@
         window.open(`https://wa.me/${mobile}?text=${message}`, '_blank');
     }
 
-    window.sendWhatsAppPrompt = function() {
+    function sendWhatsAppPrompt() {
         showToast('WhatsApp API Integration - Placeholder', 'info');
-    };
+    }
 
-    window.showBulkBillModal = function() {
+    function showBulkBillModal() {
         showToast('Auto bill generation for 1st of month - Cron job placeholder', 'info');
-    };
+    }
 
-    // Staff Due Bills with Promise Date Feature
+    function showStaffCustomers() {
+        const myCustomers = allData.customers.filter(c => c.assignedStaff === currentUser.uid);
+        showDataTable('customers', 'My Customers', myCustomers, true);
+    }
+
     function showStaffDueBills() {
         const myCustomers = allData.customers.filter(c => c.assignedStaff === currentUser.uid);
         const myCustomerIds = myCustomers.map(c => c.id);
-        const dueBills = allData.bills.filter(b => 
-            myCustomerIds.includes(b.customerId) && 
-            (b.status === 'Due' || b.status === 'Partial')
-        );
+        const dueBills = allData.bills.filter(b => myCustomerIds.includes(b.customerId) && (b.status === 'Due' || b.status === 'Partial'));
 
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
@@ -1597,7 +1474,7 @@
                                             <td class="px-4 py-3 text-sm ${dateColor}">${dateText}</td>
                                             <td class="px-4 py-3">
                                                 <div class="flex gap-2">
-                                                    <button onclick="showPromiseDateModal('${bill.id}', '${customer?.id}')" class="text-primary-600 hover:text-primary-700" title="Set Promise Date">
+                                                    <button data-action="showPromiseDateModal" data-bill="${bill.id}" data-customer="${customer?.id}" class="text-primary-600 hover:text-primary-700" title="Set Promise Date">
                                                         <i class="fas fa-calendar-plus"></i>
                                                     </button>
                                                     <a href="https://wa.me/${customer?.mobile}" target="_blank" class="text-green-600 hover:text-green-700" title="WhatsApp">
@@ -1619,8 +1496,7 @@
         `;
     }
 
-    // Promise Date Modal
-    window.showPromiseDateModal = function(billId, customerId) {
+    function showPromiseDateModal(billId, customerId) {
         const bill = allData.bills.find(b => b.id === billId);
         const customer = allData.customers.find(c => c.id === customerId);
         const existing = allData.promiseDates.find(p => p.billId === billId && p.status === 'pending');
@@ -1645,7 +1521,7 @@
                     <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
                         <i class="fas fa-save mr-2"></i>Save Promise Date
                     </button>
-                    <button type="button" onclick="closeModal()" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
+                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
                 </div>
             </form>
         `);
@@ -1682,9 +1558,8 @@
                 showToast(error.message, 'error');
             }
         };
-    };
+    }
 
-    // Follow-up Page (Staff)
     function showFollowUpPage() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -1727,9 +1602,9 @@
                         <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Customers with promise dates</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="filterFollowUp('all')" class="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-semibold">All</button>
-                        <button onclick="filterFollowUp('today')" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-xl text-sm font-semibold">Today</button>
-                        <button onclick="filterFollowUp('overdue')" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-xl text-sm font-semibold">Overdue</button>
+                        <button data-action="filterFollowUp" data-filter="all" class="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-semibold">All</button>
+                        <button data-action="filterFollowUp" data-filter="today" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-xl text-sm font-semibold">Today</button>
+                        <button data-action="filterFollowUp" data-filter="overdue" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-xl text-sm font-semibold">Overdue</button>
                     </div>
                 </div>
 
@@ -1752,10 +1627,10 @@
                                     ${p.note ? `<p class="text-sm italic text-gray-500 dark:text-gray-400"><i class="fas fa-sticky-note mr-1"></i>${p.note}</p>` : ''}
                                 </div>
                                 <div class="flex sm:flex-col gap-2">
-                                    <button onclick="markPromiseCollected('${p.id}')" class="flex-1 sm:flex-none px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition">
+                                    <button data-action="markPromiseCollected" data-id="${p.id}" class="flex-1 sm:flex-none px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition">
                                         <i class="fas fa-check mr-1"></i>Collected
                                     </button>
-                                    <button onclick="reschedulePromise('${p.id}')" class="flex-1 sm:flex-none px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl text-sm font-semibold transition">
+                                    <button data-action="reschedulePromise" data-id="${p.id}" class="flex-1 sm:flex-none px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl text-sm font-semibold transition">
                                         <i class="fas fa-calendar-alt mr-1"></i>Reschedule
                                     </button>
                                     <a href="https://wa.me/${p.customer?.mobile}?text=Reminder: Your payment is due today. Amount: ৳${((p.bill?.amount || 0) - (p.bill?.paidAmount || 0)).toLocaleString()}" target="_blank" class="flex-1 sm:flex-none px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition text-center">
@@ -1775,11 +1650,11 @@
         `;
     }
 
-    window.filterFollowUp = function(filter) {
+    function filterFollowUp(filter) {
         showToast(`Filter: ${filter}`, 'info');
-    };
+    }
 
-    window.markPromiseCollected = async function(promiseId) {
+    async function markPromiseCollected(promiseId) {
         if (!confirm('Mark this as collected?')) return;
         try {
             await updateDoc(doc(db, 'promiseDates', promiseId), {
@@ -1792,16 +1667,15 @@
         } catch (error) {
             showToast(error.message, 'error');
         }
-    };
+    }
 
-    window.reschedulePromise = function(promiseId) {
+    function reschedulePromise(promiseId) {
         const promise = allData.promiseDates.find(p => p.id === promiseId);
         if (promise) {
             showPromiseDateModal(promise.billId, promise.customerId);
         }
-    };
+    }
 
-    // Promise Dates Page (Admin)
     function showPromiseDatesPage() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -1842,7 +1716,6 @@
                     </div>
                 </div>
 
-                <!-- Filters -->
                 <div class="glass rounded-2xl p-4 border border-gray-200 dark:border-gray-700">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <select id="filterStaff" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
@@ -1856,7 +1729,7 @@
                             <option value="month">This Month</option>
                             <option value="overdue">Overdue</option>
                         </select>
-                        <button onclick="applyPromiseFilter()" class="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-4 py-2 rounded-lg transition">
+                        <button data-action="applyPromiseFilter" class="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-4 py-2 rounded-lg transition">
                             <i class="fas fa-filter mr-2"></i>Apply Filter
                         </button>
                     </div>
@@ -1882,7 +1755,7 @@
                                     ${p.note ? `<p class="text-sm italic text-gray-500 dark:text-gray-400"><i class="fas fa-sticky-note mr-1"></i>${p.note}</p>` : ''}
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick="adminEditPromise('${p.id}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition">
+                                    <button data-action="adminEditPromise" data-id="${p.id}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition">
                                         <i class="fas fa-edit mr-1"></i>Edit
                                     </button>
                                     <a href="https://wa.me/${p.customer?.mobile}?text=Reminder: Your payment is scheduled for ${new Date(p.promiseDate).toLocaleDateString()}. Amount: ৳${((p.bill?.amount || 0) - (p.bill?.paidAmount || 0)).toLocaleString()}" target="_blank" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition">
@@ -1902,18 +1775,17 @@
         `;
     }
 
-    window.adminEditPromise = function(promiseId) {
+    function adminEditPromise(promiseId) {
         const promise = allData.promiseDates.find(p => p.id === promiseId);
         if (promise) {
             showPromiseDateModal(promise.billId, promise.customerId);
         }
-    };
+    }
 
-    window.applyPromiseFilter = function() {
+    function applyPromiseFilter() {
         showToast('Filter applied', 'info');
-    };
+    }
 
-    // Staff Bill Reports
     function showStaffBillReports() {
         const myBills = allData.bills.filter(b => b.createdBy === currentUser.uid);
         document.getElementById('contentArea').innerHTML = `
@@ -1965,7 +1837,6 @@
         `;
     }
 
-    // Reports Page
     function showReportPage() {
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
@@ -1975,16 +1846,15 @@
                         <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Filter and analyze bills</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="exportToPDF()" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
+                        <button data-action="exportToPDF" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
                             <i class="fas fa-file-pdf"></i>PDF
                         </button>
-                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
+                        <button data-action="exportToExcel" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
                             <i class="fas fa-file-excel"></i>Excel
                         </button>
                     </div>
                 </div>
 
-                <!-- Filters -->
                 <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                         <input type="text" id="filterName" placeholder="Customer Name" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
@@ -1996,13 +1866,12 @@
                             <option value="Due">Due</option>
                             <option value="Partial">Partial</option>
                         </select>
-                        <button onclick="applyFilters()" class="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-lg transition">
+                        <button data-action="applyFilters" class="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-lg transition">
                             <i class="fas fa-filter mr-2"></i>Apply
                         </button>
                     </div>
                 </div>
 
-                <!-- Results -->
                 <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full" id="reportTable">
@@ -2024,7 +1893,7 @@
         applyFilters();
     }
 
-    window.applyFilters = function() {
+    function applyFilters() {
         const nameFilter = document.getElementById('filterName')?.value.toLowerCase() || '';
         const mobileFilter = document.getElementById('filterMobile')?.value || '';
         const areaFilter = document.getElementById('filterArea')?.value.toLowerCase() || '';
@@ -2068,9 +1937,9 @@
                 </tr>
             `;
         }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No records found</td></tr>';
-    };
+    }
 
-    window.exportToPDF = function() {
+    function exportToPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
@@ -2083,21 +1952,14 @@
         
         doc.save('bills-report.pdf');
         showToast('PDF exported successfully!', 'success');
-    };
+    }
 
-    window.exportToExcel = function() {
+    function exportToExcel() {
         const table = document.getElementById('reportTable');
         const wb = XLSX.utils.table_to_book(table);
         XLSX.writeFile(wb, 'bills-report.xlsx');
         showToast('Excel exported successfully!', 'success');
-    };
-
-    // Complaints
-    window.showComplaintsPage = function() {
-        if (userRole === 'admin') showAdminComplaints();
-        else if (userRole === 'staff') showStaffComplaints();
-        else showCustomerComplaints();
-    };
+    }
 
     function showAdminComplaints() {
         document.getElementById('contentArea').innerHTML = `
@@ -2119,7 +1981,7 @@
                                     </div>
                                     <p class="text-sm mb-3">${complaint.message}</p>
                                     ${complaint.status !== 'Solved' ? `
-                                        <button onclick="forwardComplaint('${complaint.id}')" class="text-sm bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition">
+                                        <button data-action="forwardComplaint" data-id="${complaint.id}" class="text-sm bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition">
                                             <i class="fas fa-share mr-1"></i>Forward to Staff
                                         </button>
                                     ` : ''}
@@ -2132,9 +1994,9 @@
         `;
     }
 
-    window.forwardComplaint = async function(complaintId) {
+    function forwardComplaint(complaintId) {
         showToast('Feature: Select staff to forward complaint', 'info');
-    };
+    }
 
     function showStaffComplaints() {
         const myComplaints = allData.complaints.filter(c => c.assignedStaff === currentUser.uid);
@@ -2157,7 +2019,7 @@
                                     </div>
                                     <p class="text-sm mb-3">${complaint.message}</p>
                                     ${complaint.status !== 'Solved' ? `
-                                        <button onclick="markComplaintSolved('${complaint.id}')" class="text-sm bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                                        <button data-action="markComplaintSolved" data-id="${complaint.id}" class="text-sm bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
                                             <i class="fas fa-check mr-1"></i>Mark Solved
                                         </button>
                                     ` : ''}
@@ -2170,7 +2032,7 @@
         `;
     }
 
-    window.markComplaintSolved = async function(complaintId) {
+    async function markComplaintSolved(complaintId) {
         try {
             await updateDoc(doc(db, 'complaints', complaintId), { 
                 status: 'Solved', 
@@ -2182,7 +2044,7 @@
         } catch (error) {
             showToast(error.message, 'error');
         }
-    };
+    }
 
     function showCustomerComplaints() {
         document.getElementById('contentArea').innerHTML = `
@@ -2242,7 +2104,12 @@
         };
     }
 
-    // Logs Page
+    function showComplaintsPage() {
+        if (userRole === 'admin') showAdminComplaints();
+        else if (userRole === 'staff') showStaffComplaints();
+        else showCustomerComplaints();
+    }
+
     function showLogsPage() {
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
@@ -2276,7 +2143,6 @@
         `;
     }
 
-    // Settings Page
     function showSettingsPage() {
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
@@ -2369,7 +2235,7 @@
                                             </td>
                                             <td class="px-4 py-3">
                                                 ${bill.status !== 'Paid' ? `
-                                                    <button onclick="showPaymentInfo()" class="text-primary-600 hover:text-primary-700 text-sm font-semibold">
+                                                    <button data-action="showPaymentInfo" class="text-primary-600 hover:text-primary-700 text-sm font-semibold">
                                                         Pay Now
                                                     </button>
                                                 ` : '<span class="text-gray-400 text-sm">Paid</span>'}
@@ -2441,93 +2307,618 @@
         `;
     }
 
-    // Modal System
-    window.showModal = function(title, content) {
-        const modal = document.createElement('div');
-        modal.id = 'activeModal';
-        modal.className = 'fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-slide-in';
-        modal.innerHTML = `
-            <div class="glass rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <div class="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-                    <h3 class="text-xl font-bold">${title}</h3>
-                    <button onclick="closeModal()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition">
-                        <i class="fas fa-times"></i>
-                    </button>
+    function showDataTable(type, title, data, readOnly = false) {
+        document.getElementById('contentArea').innerHTML = `
+            <div class="space-y-6 animate-slide-in">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold">${title}</h2>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Total: ${data.length}</p>
+                    </div>
+                    ${!readOnly && userRole === 'admin' ? `
+                        <button data-action="showAdd${type.charAt(0).toUpperCase() + type.slice(1)}Modal" class="bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-plus"></i>
+                            Add ${title.slice(0, -1)}
+                        </button>
+                    ` : ''}
                 </div>
-                <div class="p-6">
-                    ${content}
+
+                <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="searchInput" placeholder="Search..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-800/50">
+                                <tr id="tableHeader"></tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         `;
-        document.getElementById('modalContainer').appendChild(modal);
-    };
-
-    window.closeModal = function() {
-        const modal = document.getElementById('activeModal');
-        if (modal) modal.remove();
-    };
-
-    // Add Log
-    async function addLog(action, details) {
-        try {
-            await addDoc(collection(db, 'logs'), {
-                action,
-                details,
-                userId: currentUser.uid,
-                userName: document.getElementById('userName').textContent,
-                timestamp: serverTimestamp()
-            });
-        } catch (error) {
-            console.error('Error adding log:', error);
-        }
+        renderTable(type, data, readOnly);
+        
+        document.getElementById('searchInput').addEventListener('keyup', () => filterTable(type));
     }
 
-    // Update Notification Badge
-    function updateNotificationBadge() {
-        const badge = document.getElementById('notificationBadge');
-        const unreadComplaints = allData.complaints.filter(c => 
-            (userRole === 'admin' && c.status === 'Pending') ||
-            (userRole === 'staff' && c.assignedStaff === currentUser.uid && c.status === 'Pending')
-        );
-        if (unreadComplaints.length > 0) {
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-        }
-        renderNotifications();
+    function renderTable(type, data, readOnly) {
+        const headerRow = document.getElementById('tableHeader');
+        const body = document.getElementById('tableBody');
+        
+        let headers = [];
+        if (type === 'customers') headers = ['Name', 'Mobile', 'Area', 'Zone', 'Package', 'Status', 'Actions'];
+        else if (type === 'staff') headers = ['Name', 'Mobile', 'WhatsApp', 'Email', 'Actions'];
+        else if (type === 'packages') headers = ['Name', 'Speed', 'Price', 'Actions'];
+        
+        headerRow.innerHTML = headers.map(h => `<th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">${h}</th>`).join('');
+        
+        body.innerHTML = data.map(item => {
+            if (type === 'customers') {
+                const pkg = allData.packages.find(p => p.id === item.packageId);
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <img src="${item.photoURL || `https://ui-avatars.com/api/?name=${item.name}&background=0ea5e9&color=fff`}" class="w-10 h-10 rounded-lg" alt="${item.name}">
+                                <div>
+                                    <p class="font-medium">${item.name}</p>
+                                    <p class="text-xs text-gray-500">${item.pppoeUsername || ''}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">${item.mobile}</td>
+                        <td class="px-4 py-3">${item.area || '-'}</td>
+                        <td class="px-4 py-3">${item.zone || '-'}</td>
+                        <td class="px-4 py-3">${pkg?.name || '-'}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-xs font-semibold">Active</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex gap-2">
+                                ${!readOnly ? `
+                                    <button data-action="editItem" data-type="${type}" data-id="${item.id}" class="text-blue-600 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                                    <button data-action="deleteItem" data-type="${type}" data-id="${item.id}" class="text-red-600 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else if (type === 'staff') {
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <img src="${item.photoURL || `https://ui-avatars.com/api/?name=${item.name}&background=8b5cf6&color=fff`}" class="w-10 h-10 rounded-lg" alt="${item.name}">
+                                <div>
+                                    <p class="font-medium">${item.name}</p>
+                                    <p class="text-xs text-gray-500">${item.address || ''}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">${item.mobile}</td>
+                        <td class="px-4 py-3">
+                            <a href="https://wa.me/${item.whatsapp}" target="_blank" class="text-green-600 hover:text-green-700">
+                                <i class="fab fa-whatsapp mr-1"></i>${item.whatsapp}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3">${item.email}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex gap-2">
+                                ${!readOnly ? `
+                                    <button data-action="editItem" data-type="${type}" data-id="${item.id}" class="text-blue-600 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                                    <button data-action="deleteItem" data-type="${type}" data-id="${item.id}" class="text-red-600 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else if (type === 'packages') {
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                        <td class="px-4 py-3 font-medium">${item.name}</td>
+                        <td class="px-4 py-3">${item.speed} Mbps</td>
+                        <td class="px-4 py-3 font-semibold">৳${item.price}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex gap-2">
+                                ${!readOnly ? `
+                                    <button data-action="editItem" data-type="${type}" data-id="${item.id}" class="text-blue-600 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                                    <button data-action="deleteItem" data-type="${type}" data-id="${item.id}" class="text-red-600 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }).join('') || `<tr><td colspan="${headers.length}" class="px-4 py-8 text-center text-gray-500">No data found</td></tr>`;
     }
 
-    function renderNotifications() {
-        const list = document.getElementById('notificationList');
-        const relevant = allData.complaints.filter(c => 
-            (userRole === 'admin') ||
-            (userRole === 'staff' && c.assignedStaff === currentUser.uid) ||
-            (userRole === 'customer' && c.customerId === currentUser.uid)
-        ).slice(0, 10);
+    function filterTable(type) {
+        const input = document.getElementById('searchInput').value.toLowerCase();
+        const rows = document.querySelectorAll('#tableBody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(input) ? '' : 'none';
+        });
+    }
 
-        list.innerHTML = relevant.map(complaint => {
-            const customer = allData.customers.find(c => c.id === complaint.customerId);
-            return `
-                <div class="p-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-100 dark:bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-${complaint.status === 'Solved' ? 'check' : 'exclamation'}-circle text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-600 dark:text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-400"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="font-semibold text-sm">${complaint.subject}</p>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">${complaint.message}</p>
-                            <p class="text-xs text-gray-500 mt-1">${customer?.name || 'Unknown'} • ${complaint.createdAt ? new Date(complaint.createdAt.toDate()).toLocaleDateString() : ''}</p>
-                        </div>
+    function showAddCustomersModal() { showCustomerModal(); }
+    function showAddStaffModal() { showStaffModal(); }
+    function showAddPackagesModal() { showPackageModal(); }
+
+    function showCustomerModal(customerId = null) {
+        const customer = customerId ? allData.customers.find(c => c.id === customerId) : null;
+        showModal(customer ? 'Edit Customer' : 'Add Customer', `
+            <form id="customerForm" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Name *</label>
+                        <input type="text" name="name" value="${customer?.name || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Mobile *</label>
+                        <input type="tel" name="mobile" value="${customer?.mobile || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Area</label>
+                        <input type="text" name="area" value="${customer?.area || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Zone</label>
+                        <input type="text" name="zone" value="${customer?.zone || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Package</label>
+                        <select name="packageId" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            <option value="">Select Package</option>
+                            ${allData.packages.map(p => `<option value="${p.id}" ${customer?.packageId === p.id ? 'selected' : ''}>${p.name} - ${p.speed}Mbps - ৳${p.price}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Assigned Staff</label>
+                        <select name="assignedStaff" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            <option value="">Select Staff</option>
+                            ${allData.staff.map(s => `<option value="${s.id}" ${customer?.assignedStaff === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">PPPoE Username</label>
+                        <input type="text" name="pppoeUsername" value="${customer?.pppoeUsername || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">PPPoE Password</label>
+                        <input type="text" name="pppoePassword" value="${customer?.pppoePassword || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">NID Number</label>
+                        <input type="text" name="nid" value="${customer?.nid || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" name="email" value="${customer?.email || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
                     </div>
                 </div>
-            `;
-        }).join('') || '<div class="p-8 text-center text-gray-500 text-sm">No notifications</div>';
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
+                        ${customer ? 'Update' : 'Add'} Customer
+                    </button>
+                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('customerForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                if (customerId) {
+                    await updateDoc(doc(db, 'customers', customerId), { ...data, updatedAt: serverTimestamp() });
+                    await addLog('Customer updated', `${data.name} details updated`);
+                    showToast('Customer updated successfully!', 'success');
+                } else {
+                    await addDoc(collection(db, 'customers'), { ...data, createdAt: serverTimestamp(), status: 'Active' });
+                    await addLog('Customer added', `${data.name} added to system`);
+                    showToast('Customer added successfully!', 'success');
+                }
+                closeModal();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
     }
 
-    window.markAllRead = function() {
-        showToast('All notifications marked as read', 'success');
-        document.getElementById('notificationPanel').classList.add('hidden');
-    };
+    function showStaffModal(staffId = null) {
+        const staff = staffId ? allData.staff.find(s => s.id === staffId) : null;
+        showModal(staff ? 'Edit Staff' : 'Add Staff', `
+            <form id="staffForm" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Name *</label>
+                        <input type="text" name="name" value="${staff?.name || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Mobile *</label>
+                        <input type="tel" name="mobile" value="${staff?.mobile || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">WhatsApp</label>
+                        <input type="tel" name="whatsapp" value="${staff?.whatsapp || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" name="email" value="${staff?.email || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium mb-2">Address</label>
+                        <input type="text" name="address" value="${staff?.address || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
+                        ${staff ? 'Update' : 'Add'} Staff
+                    </button>
+                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('staffForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                if (staffId) {
+                    await updateDoc(doc(db, 'staff', staffId), { ...data, updatedAt: serverTimestamp() });
+                    await addLog('Staff updated', `${data.name} details updated`);
+                    showToast('Staff updated successfully!', 'success');
+                } else {
+                    await addDoc(collection(db, 'staff'), { ...data, createdAt: serverTimestamp() });
+                    await addLog('Staff added', `${data.name} added to system`);
+                    showToast('Staff added successfully!', 'success');
+                }
+                closeModal();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    }
+
+    function showPackageModal(packageId = null) {
+        const pkg = packageId ? allData.packages.find(p => p.id === packageId) : null;
+        showModal(pkg ? 'Edit Package' : 'Add Package', `
+            <form id="packageForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Package Name *</label>
+                    <input type="text" name="name" value="${pkg?.name || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="e.g., Premium 20Mbps">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Speed (Mbps) *</label>
+                    <input type="number" name="speed" value="${pkg?.speed || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="20">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Price (৳) *</label>
+                    <input type="number" name="price" value="${pkg?.price || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="1000">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
+                        ${pkg ? 'Update' : 'Add'} Package
+                    </button>
+                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('packageForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.speed = Number(data.speed);
+            data.price = Number(data.price);
+            
+            try {
+                if (packageId) {
+                    await updateDoc(doc(db, 'packages', packageId), { ...data, updatedAt: serverTimestamp() });
+                    await addLog('Package updated', `${data.name} updated`);
+                    showToast('Package updated successfully!', 'success');
+                } else {
+                    await addDoc(collection(db, 'packages'), { ...data, createdAt: serverTimestamp() });
+                    await addLog('Package added', `${data.name} created`);
+                    showToast('Package added successfully!', 'success');
+                }
+                closeModal();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    }
+
+    function editItem(type, id) {
+        if (type === 'customers') showCustomerModal(id);
+        else if (type === 'staff') showStaffModal(id);
+        else if (type === 'packages') showPackageModal(id);
+    }
+
+    async function deleteItem(type, id) {
+        if (!confirm('Are you sure you want to delete this item?')) return;
+        try {
+            await deleteDoc(doc(db, type, id));
+            await addLog(`${type} deleted`, `Item ${id} removed`);
+            showToast('Deleted successfully!', 'success');
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    }
+
+    async function handleLogout() {
+        await signOut(auth);
+        showToast('Logged out successfully', 'info');
+    }
+
+    function initializeAppUI() {
+        renderNavigation();
+        navigateTo('dashboard');
+    }
+
+    // Setup all event listeners via delegation
+    function setupEventListeners() {
+        document.addEventListener('click', async (e) => {
+            const target = e.target.closest('[data-action]');
+            if (!target) return;
+
+            const action = target.dataset.action;
+            const page = target.dataset.page;
+            const id = target.dataset.id;
+            const type = target.dataset.type;
+            const bill = target.dataset.bill;
+            const customer = target.dataset.customer;
+            const text = target.dataset.text;
+
+            switch(action) {
+                case 'navigate':
+                    navigateTo(page);
+                    break;
+                case 'profile':
+                    showProfilePage();
+                    break;
+                case 'logout':
+                    await handleLogout();
+                    break;
+                case 'markAllRead':
+                    markAllRead();
+                    break;
+                case 'closeModal':
+                    closeModal();
+                    break;
+                case 'showPaymentInfo':
+                    showPaymentInfo();
+                    break;
+                case 'copyToClipboard':
+                    copyToClipboard(text);
+                    break;
+                case 'checkPPPoEStatus':
+                    checkPPPoEStatus();
+                    break;
+                case 'showBulkBillModal':
+                    showBulkBillModal();
+                    break;
+                case 'sendWhatsAppPrompt':
+                    sendWhatsAppPrompt();
+                    break;
+                case 'showPromiseDateModal':
+                    showPromiseDateModal(bill, customer);
+                    break;
+                case 'markPromiseCollected':
+                    await markPromiseCollected(id);
+                    break;
+                case 'reschedulePromise':
+                    reschedulePromise(id);
+                    break;
+                case 'filterFollowUp':
+                    filterFollowUp(target.dataset.filter);
+                    break;
+                case 'adminEditPromise':
+                    adminEditPromise(id);
+                    break;
+                case 'applyPromiseFilter':
+                    applyPromiseFilter();
+                    break;
+                case 'applyFilters':
+                    applyFilters();
+                    break;
+                case 'exportToPDF':
+                    exportToPDF();
+                    break;
+                case 'exportToExcel':
+                    exportToExcel();
+                    break;
+                case 'forwardComplaint':
+                    forwardComplaint(id);
+                    break;
+                case 'markComplaintSolved':
+                    await markComplaintSolved(id);
+                    break;
+                case 'showAddCustomersModal':
+                    showAddCustomersModal();
+                    break;
+                case 'showAddStaffModal':
+                    showAddStaffModal();
+                    break;
+                case 'showAddPackagesModal':
+                    showAddPackagesModal();
+                    break;
+                case 'editItem':
+                    editItem(type, id);
+                    break;
+                case 'deleteItem':
+                    await deleteItem(type, id);
+                    break;
+            }
+        });
+    }
+
+    // 5. onAuthStateChanged listener
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            await loadUserData(user.uid);
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            initializeAppUI();
+            checkTodayPromiseDates();
+        } else {
+            currentUser = null;
+            userRole = null;
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('app').classList.add('hidden');
+        }
+    });
+
+    async function loadUserData(uid) {
+        if (currentUser.email === 'admin@owns.com') {
+            userRole = 'admin';
+        } else {
+            const staffDoc = await getDoc(doc(db, 'staff', uid));
+            if (staffDoc.exists()) {
+                userRole = 'staff';
+            } else {
+                const customerDoc = await getDoc(doc(db, 'customers', uid));
+                if (customerDoc.exists()) {
+                    userRole = 'customer';
+                }
+            }
+        }
+
+        const userDoc = userRole === 'admin' ? {data: () => ({name: 'Admin', email: currentUser.email})} :
+                       await getDoc(doc(db, userRole === 'staff' ? 'staff' : 'customers', uid));
+        
+        const userData = userDoc.data();
+        document.getElementById('userName').textContent = userData.name || 'User';
+        document.getElementById('userRole').textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+        document.getElementById('userAvatar').src = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=0ea5e9&color=fff`;
+
+        const companySnapshot = await getDocs(collection(db, 'company'));
+        if (!companySnapshot.empty) {
+            companyData = companySnapshot.docs[0].data();
+            document.getElementById('companyNameSidebar').textContent = companyData.name || 'Owns ISP';
+        }
+
+        setupRealtimeListeners();
+    }
+
+    function setupRealtimeListeners() {
+        onSnapshot(collection(db, 'customers'), (snapshot) => {
+            allData.customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            if (window.currentPage) refreshCurrentPage();
+        });
+
+        onSnapshot(collection(db, 'staff'), (snapshot) => {
+            allData.staff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        });
+
+        onSnapshot(collection(db, 'packages'), (snapshot) => {
+            allData.packages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        });
+
+        onSnapshot(collection(db, 'bills'), (snapshot) => {
+            allData.bills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            if (window.currentPage) refreshCurrentPage();
+        });
+
+        onSnapshot(collection(db, 'complaints'), (snapshot) => {
+            allData.complaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            updateNotificationBadge();
+        });
+
+        onSnapshot(query(collection(db, 'logs'), orderBy('timestamp', 'desc')), (snapshot) => {
+            allData.logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        });
+
+        onSnapshot(collection(db, 'promiseDates'), (snapshot) => {
+            allData.promiseDates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            updateFollowUpBadges();
+            if (window.currentPage === 'followup' || window.currentPage === 'promisedates') refreshCurrentPage();
+        });
+    }
+
+    // 6. DOMContentLoaded init
+    document.addEventListener('DOMContentLoaded', () => {
+        const theme = localStorage.getItem('theme') || 'light';
+        if (theme === 'dark') document.documentElement.classList.add('dark');
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('mobileSidebar').classList.remove('-translate-x-full');
+            document.getElementById('mobileSidebarOverlay').classList.remove('hidden');
+        });
+        document.getElementById('mobileSidebarClose').addEventListener('click', closeMobileSidebar);
+        document.getElementById('mobileSidebarOverlay').addEventListener('click', closeMobileSidebar);
+
+        document.getElementById('profileBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('profileDropdown').classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => {
+            document.getElementById('profileDropdown').classList.add('hidden');
+            document.getElementById('notificationPanel').classList.add('hidden');
+        });
+
+        document.getElementById('notificationBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('notificationPanel').classList.toggle('hidden');
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showToast('Login successful!', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+
+        setupEventListeners();
+    });
+
+    // Make functions available globally for onclick in generated HTML
+    window.showToast = showToast;
+    window.copyToClipboard = copyToClipboard;
+    window.checkPPPoEStatus = checkPPPoEStatus;
+    window.showPaymentInfo = showPaymentInfo;
+    window.editItem = editItem;
+    window.deleteItem = deleteItem;
+    window.showAddCustomersModal = showAddCustomersModal;
+    window.showAddStaffModal = showAddStaffModal;
+    window.showAddPackagesModal = showAddPackagesModal;
+    window.showBulkBillModal = showBulkBillModal;
+    window.sendWhatsAppPrompt = sendWhatsAppPrompt;
+    window.showPromiseDateModal = showPromiseDateModal;
+    window.reschedulePromise = reschedulePromise;
+    window.markPromiseCollected = markPromiseCollected;
+    window.filterFollowUp = filterFollowUp;
+    window.adminEditPromise = adminEditPromise;
+    window.applyPromiseFilter = applyPromiseFilter;
+    window.applyFilters = applyFilters;
+    window.exportToPDF = exportToPDF;
+    window.exportToExcel = exportToExcel;
+    window.forwardComplaint = forwardComplaint;
+    window.markComplaintSolved = markComplaintSolved;
+    window.closeModal = closeModal;
+    window.navigateTo = navigateTo;
 
     // PWA Registration
     if ('serviceWorker' in navigator) {
@@ -2542,18 +2933,8 @@
             navigator.serviceWorker.register(swUrl).catch(() => {});
         });
     }
-
-    // Global shortcuts
-    window.markAllRead = markAllRead;
-    window.sendWhatsAppPrompt = sendWhatsAppPrompt;
-    window.showBulkBillModal = showBulkBillModal;
-    window.copyToClipboard = copyToClipboard;
-    window.checkPPPoEStatus = checkPPPoEStatus;
-    window.showAddCustomersModal = showAddCustomersModal;
-    window.showAddStaffModal = showAddStaffModal;
-    window.showAddPackagesModal = showAddPackagesModal;
-
 </script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
