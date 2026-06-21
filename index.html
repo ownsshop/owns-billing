@@ -704,6 +704,27 @@ window.toggleTheme = function() {
 
 <div id="modalContainer"></div>
 
+<!-- ERROR MODAL -->
+<div id="errorModal" class="hidden fixed inset-0 bg-black/50 z-[90] flex items-center justify-center p-4">
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-full max-w-md border border-red-500">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
+        <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl"></i>
+      </div>
+      <h3 class="text-xl font-bold text-red-600 dark:text-red-400">Error</h3>
+    </div>
+    <p id="errorMessage" class="mb-6 text-gray-700 dark:text-gray-300"></p>
+    <div class="flex gap-2">
+      <button onclick="location.reload()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition">
+        <i class="fas fa-redo mr-2"></i>Retry
+      </button>
+      <button onclick="signOut(auth)" class="flex-1 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-semibold px-4 py-2 rounded-xl transition">
+        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD STAFF MODAL -->
 <div id="addStaffModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
   <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700">
@@ -822,9 +843,13 @@ window.toggleTheme = function() {
         hideLoaderWithError('Failed to initialize app. Please refresh.');
     }
 
+    // Make auth globally available for error modal
+    window.auth = auth;
+
     let currentUser = null;
     let userRole = null;
     let companyData = null;
+    let currentUserData = null;
     let unsubscribeFunctions = [];
     let allData = {
         customers: [],
@@ -878,6 +903,33 @@ window.toggleTheme = function() {
         if (loaderError) loaderError.classList.remove('hidden');
     }
 
+    function showLoadingScreen(message = 'Loading...') {
+        const loader = document.getElementById('appLoader');
+        const loaderText = document.getElementById('loaderText');
+        if (loader) loader.classList.remove('hidden');
+        if (loaderText) loaderText.textContent = message;
+    }
+
+    function hideLoadingScreen() {
+        const loader = document.getElementById('appLoader');
+        if (loader) loader.classList.add('hidden');
+    }
+
+    function showError(message) {
+        console.error('Showing error:', message);
+        const errorModal = document.getElementById('errorModal');
+        const errorMessage = document.getElementById('errorMessage');
+        if (errorMessage) errorMessage.textContent = message;
+        if (errorModal) errorModal.classList.remove('hidden');
+    }
+
+    function showLoginPage() {
+        document.getElementById('authScreen').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
+    }
+
+    window.showError = showError;
+
     function showToast(message, type = 'success') {
         const colors = {
             success: 'bg-green-500',
@@ -926,6 +978,8 @@ window.toggleTheme = function() {
         const modal = document.getElementById('activeModal');
         if (modal) modal.remove();
     }
+
+    window.closeModal = closeModal;
 
     async function addLog(action, details) {
         try {
@@ -1373,7 +1427,7 @@ window.toggleTheme = function() {
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">Welcome, ${customerData?.name || 'Customer'}!</h2>
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">Welcome, ${currentUserData?.name || 'Customer'}!</h2>
                     <p class="text-gray-600 dark:text-gray-400">Manage your internet connection</p>
                 </div>
 
@@ -1444,7 +1498,6 @@ window.toggleTheme = function() {
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
-                        </div>
                         <button data-action="checkPPPoEStatus" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition">
                             <i class="fas fa-satellite-dish mr-2"></i>Check Connection Status
                         </button>
@@ -2517,7 +2570,7 @@ window.toggleTheme = function() {
             <div class="space-y-6 animate-slide-in">
                 <h2 class="text-2xl sm:text-3xl font-bold">My Profile</h2>
                 
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <div class="glass rounded-2xl p-6 border-gray-200 dark:border-gray-700">
                     <div class="flex items-center gap-4 mb-6">
                         <img src="${userData?.photoURL || `https://ui-avatars.com/api/?name=${userData?.name}&background=0ea5e9&color=fff`}" class="w-20 h-20 rounded-2xl shadow-lg" alt="Profile">
                         <div>
@@ -2762,7 +2815,6 @@ window.toggleTheme = function() {
                         <label class="block text-sm font-medium mb-2">Email</label>
                         <input type="email" name="email" value="${customer?.email || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
                     </div>
-                </div>
                 <div class="flex gap-3 pt-4">
                     <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
                         ${customer ? 'Update' : 'Add'} Customer
@@ -3210,40 +3262,99 @@ window.toggleTheme = function() {
         });
     }
 
-    onAuthStateChanged(auth, (user) => {
+    // FIXED: loadUserData with proper null checks and error handling
+    async function loadUserData(user) {
         try {
-            if (authTimeoutId) {
-                clearTimeout(authTimeoutId);
-                authTimeoutId = null;
+            console.log('Loading user data for UID:', user.uid);
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            
+            if (!userDocSnap.exists()) {
+                console.error('User document not found in Firestore for UID:', user.uid);
+                showError('User profile not found in database. Contact admin to create your profile with role assignment.');
+                await signOut(auth);
+                return null;
             }
-
-            if (user) {
-                currentUser = user;
-                authInitialized = true;
-                loadUserData(user.uid).then(() => {
-                    hideLoader();
-                    document.getElementById('authScreen').classList.add('hidden');
-                    document.getElementById('app').classList.remove('hidden');
-                    initializeAppUI();
-                    checkTodayPromiseDates();
-                }).catch((error) => {
-                    console.error('Error loading user data:', error);
-                    hideLoaderWithError('Failed to load user data');
-                });
-            } else {
-                currentUser = null;
-                userRole = null;
-                authInitialized = true;
-                hideLoader();
-                document.getElementById('authScreen').classList.remove('hidden');
-                document.getElementById('app').classList.add('hidden');
-                // Unsubscribe from all listeners
-                unsubscribeFunctions.forEach(unsub => unsub());
-                unsubscribeFunctions = [];
+            
+            const userData = userDocSnap.data();
+            console.log('User data loaded:', userData);
+            
+            if (!userData.role) {
+                console.error('Role field missing in user document');
+                showError('Role not assigned to your account. Contact admin to set your role (admin/staff/customer).');
+                await signOut(auth);
+                return null;
             }
+            
+            // Validate role
+            if (!['admin', 'staff', 'customer'].includes(userData.role)) {
+                console.error('Invalid role:', userData.role);
+                showError(`Invalid role "${userData.role}". Contact admin to correct it.`);
+                await signOut(auth);
+                return null;
+            }
+            
+            // Now safe to access userData properties
+            currentUserData = userData;
+            userRole = userData.role;
+            
+            document.getElementById('userName').textContent = userData.name || user.email || 'User';
+            document.getElementById('userRole').textContent = userData.role.charAt(0).toUpperCase() + userData.role.slice(1);
+            document.getElementById('userAvatar').src = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || user.email)}&background=0ea5e9&color=fff`;
+            
+            return userData;
+            
         } catch (error) {
-            console.error('Auth state change error:', error);
-            hideLoaderWithError('Authentication error occurred');
+            console.error('Error loading user data:', error);
+            if (error.code === 'permission-denied') {
+                showError('Permission denied by Firestore Rules. Admin must update rules to allow users to read their own document in users collection.');
+            } else if (error.code === 'unavailable') {
+                showError('Connection timeout. Please check your internet connection.');
+            } else {
+                showError('Error loading user data: ' + error.message);
+            }
+            await signOut(auth);
+            return null;
+        }
+    }
+
+    // FIXED: onAuthStateChanged with proper error handling
+    onAuthStateChanged(auth, async (user) => {
+        console.log('Auth state changed:', user ? user.email : 'No user');
+        
+        if (authTimeoutId) {
+            clearTimeout(authTimeoutId);
+            authTimeoutId = null;
+        }
+
+        if (user) {
+            currentUser = user;
+            authInitialized = true;
+            showLoadingScreen('Loading user profile...');
+            
+            const userData = await loadUserData(user);
+            
+            if (!userData) {
+                hideLoadingScreen();
+                showLoginPage();
+                return;
+            }
+            
+            hideLoadingScreen();
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            initializeAppUI();
+            checkTodayPromiseDates();
+        } else {
+            currentUser = null;
+            userRole = null;
+            currentUserData = null;
+            authInitialized = true;
+            hideLoadingScreen();
+            showLoginPage();
+            // Unsubscribe from all listeners
+            unsubscribeFunctions.forEach(unsub => unsub());
+            unsubscribeFunctions = [];
         }
     });
 
@@ -3258,62 +3369,50 @@ window.toggleTheme = function() {
         console.error('Persistence error:', error);
     });
 
-    async function loadUserData(uid) {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        console.log('Attempting login for:', email);
+        showLoadingScreen('Signing in...');
+        
         try {
-            if (currentUser.email === 'admin@owns.com') {
-                userRole = 'admin';
-            } else {
-                const staffDoc = await getDoc(doc(db, 'staff', uid));
-                if (staffDoc.exists()) {
-                    userRole = 'staff';
-                } else {
-                    const customerDoc = await getDoc(doc(db, 'customers', uid));
-                    if (customerDoc.exists()) {
-                        userRole = 'customer';
-                    } else {
-                        const userDoc = await getDoc(doc(db, 'users', uid));
-                        if (userDoc.exists()) {
-                            userRole = userDoc.data().role;
-                        } else {
-                            throw new Error('User not found in system');
-                        }
-                    }
-                }
-            }
-
-            const userDoc = userRole === 'admin' ? {data: () => ({name: 'Admin', email: currentUser.email})} :
-                           await getDoc(doc(db, userRole === 'staff' ? 'staff' : 'customers', uid));
-            
-            const userData = userDoc.data();
-            document.getElementById('userName').textContent = userData.name || 'User';
-            document.getElementById('userRole').textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
-            document.getElementById('userAvatar').src = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=0ea5e9&color=fff`;
-
-            const companySnapshot = await getDocs(collection(db, 'company'));
-            if (!companySnapshot.empty) {
-                companyData = companySnapshot.docs[0].data();
-                document.getElementById('companyNameSidebar').textContent = companyData.name || 'Owns ISP';
-                const mobileEl = document.getElementById('companyNameSidebarMobile');
-                if (mobileEl) mobileEl.textContent = companyData.name || 'Owns ISP';
-            } else {
-                // Initialize company doc if not exists
-                await setDoc(doc(db, 'company', 'main'), {
-                    name: 'Owns ISP',
-                    mobile: '',
-                    whatsapp: '',
-                    email: '',
-                    address: '',
-                    createdAt: serverTimestamp()
-                });
-                companyData = { name: 'Owns ISP' };
-            }
-
-            setupRealtimeListeners();
+            await signInWithEmailAndPassword(auth, email, password);
+            console.log('Login successful');
         } catch (error) {
-            console.error('Error loading user data:', error);
-            throw error;
+            console.error('Login error:', error);
+            hideLoadingScreen();
+            if (error.code === 'auth/user-not-found') {
+                showError('No account found with this email. Please register first.');
+            } else if (error.code === 'auth/wrong-password') {
+                showError('Incorrect password. Please try again.');
+            } else if (error.code === 'auth/invalid-email') {
+                showError('Invalid email format.');
+            } else if (error.code === 'auth/too-many-requests') {
+                showError('Too many failed attempts. Please try again later.');
+            } else {
+                showError('Login failed: ' + error.message);
+            }
         }
-    }
+    });
+
+    document.getElementById('profileBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('profileDropdown').classList.toggle('hidden');
+    });
+
+    document.getElementById('notificationBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('notificationPanel').classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', () => {
+        document.getElementById('profileDropdown').classList.add('hidden');
+        document.getElementById('notificationPanel').classList.add('hidden');
+    });
+
+    setupEventListeners();
 
     function setupRealtimeListeners() {
         try {
@@ -3341,7 +3440,7 @@ window.toggleTheme = function() {
 
             const billsUnsub = onSnapshot(collection(db, 'bills'), (snapshot) => {
                 allData.bills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (window.currentPage) refreshCurrentPage();
+                if (window.currentPage && ['bills', 'dashboard', 'reports'].includes(window.currentPage)) refreshCurrentPage();
             }, (error) => console.error('Bills listener error:', error));
             unsubscribeFunctions.push(billsUnsub);
 
@@ -3352,78 +3451,39 @@ window.toggleTheme = function() {
             }, (error) => console.error('Complaints listener error:', error));
             unsubscribeFunctions.push(complaintsUnsub);
 
-            const logsUnsub = onSnapshot(query(collection(db, 'logs'), orderBy('timestamp', 'desc'), limit(100)), (snapshot) => {
+            const logsUnsub = onSnapshot(query(collection(db, 'logs'), orderBy('timestamp', 'desc'), limit(50)), (snapshot) => {
                 allData.logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (window.currentPage === 'logs') refreshCurrentPage();
+                if (window.currentPage === 'logs' || window.currentPage === 'dashboard') refreshCurrentPage();
             }, (error) => console.error('Logs listener error:', error));
             unsubscribeFunctions.push(logsUnsub);
 
-            const promiseDatesUnsub = onSnapshot(collection(db, 'promiseDates'), (snapshot) => {
+            const promisesUnsub = onSnapshot(collection(db, 'promiseDates'), (snapshot) => {
                 allData.promiseDates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateFollowUpBadges();
-                if (window.currentPage === 'followup' || window.currentPage === 'promisedates') refreshCurrentPage();
-            }, (error) => console.error('PromiseDates listener error:', error));
-            unsubscribeFunctions.push(promiseDatesUnsub);
+                if (window.currentPage && ['followup', 'promisedates', 'dashboard', 'bills'].includes(window.currentPage)) refreshCurrentPage();
+            }, (error) => console.error('Promises listener error:', error));
+            unsubscribeFunctions.push(promisesUnsub);
         } catch (error) {
             console.error('Error setting up listeners:', error);
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('profileBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            document.getElementById('profileDropdown').classList.toggle('hidden');
-        });
-        document.addEventListener('click', () => {
-            document.getElementById('profileDropdown').classList.add('hidden');
-            document.getElementById('notificationPanel').classList.add('hidden');
-        });
-
-        document.getElementById('notificationBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            document.getElementById('notificationPanel').classList.toggle('hidden');
-        });
-
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                showToast('Login successful!', 'success');
-            } catch (error) {
-                showToast(error.message, 'error');
-            }
-        });
-
-        setupEventListeners();
-    });
-
+    // PWA Support
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            const swCode = `
-                self.addEventListener('install', e => self.skipWaiting());
-                self.addEventListener('activate', e => e.waitUntil(clients.claim()));
-                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-            `;
-            const blob = new Blob([swCode], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl).catch(() => {});
-        });
+        const swCode = `
+            const CACHE_NAME = 'ownsbilling-v1';
+            self.addEventListener('install', e => self.skipWaiting());
+            self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+            self.addEventListener('fetch', e => {
+                e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+            });
+        `;
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).catch(err => console.log('SW registration failed'));
     }
-
-    // Make functions global for onclick handlers
-    window.showCustomerModal = showCustomerModal;
-    window.showStaffModal = showStaffModal;
-    window.showPackageModal = showPackageModal;
-    window.showPromiseDateModal = showPromiseDateModal;
-    window.openCustomerModal = openCustomerModal;
-    window.closeCustomerModal = closeCustomerModal;
-    window.editItem = editItem;
-    window.deleteItem = deleteItem;
-    window.loadStaffList = loadStaffList;
-    window.loadCustomersList = loadCustomersList;
 </script>
+
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
