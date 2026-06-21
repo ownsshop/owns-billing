@@ -485,8 +485,14 @@ img,video{max-width:100%;height:auto}
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
 <script>
+// THEME INITIALIZATION - Check localStorage and system preference
+if(localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  document.documentElement.classList.add('dark');
+}
+
 // BULLETPROOF SIDEBAR FUNCTIONS - Global scope for inline onclick
 window.closeMobileSidebar = function() {
+    console.log('Closing sidebar');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     if(sidebar) {
@@ -499,6 +505,7 @@ window.closeMobileSidebar = function() {
 }
 
 window.openMobileSidebar = function() {
+    console.log('Hamburger clicked - Opening sidebar');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     if(sidebar) {
@@ -508,6 +515,18 @@ window.openMobileSidebar = function() {
         overlay.classList.remove('hidden');
     }
     document.body.style.overflow = 'hidden';
+}
+
+// THEME TOGGLE FUNCTION
+window.toggleTheme = function() {
+  const html = document.documentElement;
+  if(html.classList.contains('dark')) {
+    html.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  } else {
+    html.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  }
 }
 </script>
 
@@ -577,13 +596,13 @@ window.openMobileSidebar = function() {
 </div>
 
 <div id="app" class="hidden min-h-screen flex">
-    <aside id="sidebar" class="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-64 md:bg-white md:dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto custom-scrollbar transform -translate-x-full md:translate-x-0 transition-transform duration-300 fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 overflow-y-auto custom-scrollbar transform -translate-x-full md:translate-x-0 transition-transform duration-300">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between md:hidden">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
                     <i class="fas fa-wifi text-white text-sm"></i>
                 </div>
-                <h2 class="font-bold">OwnsBilling</h2>
+                <h2 class="font-bold text-gray-900 dark:text-gray-100">OwnsBilling</h2>
             </div>
             <button id="closeSidebarBtn" onclick="window.closeMobileSidebar()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
                 <i class="fas fa-times text-xl"></i>
@@ -620,7 +639,7 @@ window.openMobileSidebar = function() {
                             <i class="fas fa-bell text-lg"></i>
                             <span id="notificationBadge" class="hidden absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse-slow"></span>
                         </button>
-                        <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                        <button id="themeToggle" onclick="window.toggleTheme()" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                             <i class="fas fa-moon text-lg block dark:hidden"></i>
                             <i class="fas fa-sun text-lg hidden dark:block"></i>
                         </button>
@@ -1308,7 +1327,7 @@ window.openMobileSidebar = function() {
                                 </button>
                             </div>
                         </div>
-                        <button data-action="checkPPPoEStatus" class="w-full mt-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-xl transition">
+                        <button data-action="checkPPPoEStatus" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition">
                             <i class="fas fa-satellite-dish mr-2"></i>Check Connection Status
                         </button>
                     </div>
@@ -1710,7 +1729,7 @@ window.openMobileSidebar = function() {
                         <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Customers with promise dates</p>
                     </div>
                     <div class="flex gap-2">
-                        <button data-action="filterFollowUp" data-filter="all" class="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-semibold">All</button>
+                        <button data-action="filterFollowUp" data-filter="all" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold">All</button>
                         <button data-action="filterFollowUp" data-filter="today" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-xl text-sm font-semibold">Today</button>
                         <button data-action="filterFollowUp" data-filter="overdue" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-xl text-sm font-semibold">Overdue</button>
                     </div>
@@ -1837,7 +1856,7 @@ window.openMobileSidebar = function() {
                             <option value="month">This Month</option>
                             <option value="overdue">Overdue</option>
                         </select>
-                        <button data-action="applyPromiseFilter" class="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-4 py-2 rounded-lg transition">
+                        <button data-action="applyPromiseFilter" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition">
                             <i class="fas fa-filter mr-2"></i>Apply Filter
                         </button>
                     </div>
@@ -1974,7 +1993,7 @@ window.openMobileSidebar = function() {
                             <option value="Due">Due</option>
                             <option value="Partial">Partial</option>
                         </select>
-                        <button data-action="applyFilters" class="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-lg transition">
+                        <button data-action="applyFilters" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
                             <i class="fas fa-filter mr-2"></i>Apply
                         </button>
                     </div>
@@ -2097,7 +2116,7 @@ window.openMobileSidebar = function() {
                                     </div>
                                     <p class="text-sm mb-3">${complaint.message}</p>
                                     ${complaint.status !== 'Solved' ? `
-                                        <button data-action="forwardComplaint" data-id="${complaint.id}" class="text-sm bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition">
+                                        <button data-action="forwardComplaint" data-id="${complaint.id}" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
                                             <i class="fas fa-share mr-1"></i>Forward to Staff
                                         </button>
                                     ` : ''}
@@ -2351,7 +2370,7 @@ window.openMobileSidebar = function() {
                                             </td>
                                             <td class="px-4 py-3">
                                                 ${bill.status !== 'Paid' ? `
-                                                    <button data-action="showPaymentInfo" class="text-primary-600 hover:text-primary-700 text-sm font-semibold">
+                                                    <button data-action="showPaymentInfo" class="text-blue-600 hover:text-blue-700 text-sm font-semibold">
                                                         Pay Now
                                                     </button>
                                                 ` : '<span class="text-gray-400 text-sm">Paid</span>'}
@@ -2432,7 +2451,7 @@ window.openMobileSidebar = function() {
                         <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Total: ${data.length}</p>
                     </div>
                     ${!readOnly && userRole === 'admin' ? `
-                        <button data-action="showAdd${type.charAt(0).toUpperCase() + type.slice(1)}Modal" class="bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                        <button data-action="showAdd${type.charAt(0).toUpperCase() + type.slice(1)}Modal" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
                             <i class="fas fa-plus"></i>
                             Add ${title.slice(0, -1)}
                         </button>
@@ -2616,7 +2635,6 @@ window.openMobileSidebar = function() {
                         <label class="block text-sm font-medium mb-2">Email</label>
                         <input type="email" name="email" value="${customer?.email || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
                     </div>
-                </div>
                 <div class="flex gap-3 pt-4">
                     <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
                         ${customer ? 'Update' : 'Add'} Customer
@@ -3004,13 +3022,7 @@ window.openMobileSidebar = function() {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const theme = localStorage.getItem('theme') || 'light';
-        if (theme === 'dark') document.documentElement.classList.add('dark');
-
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-        });
+        document.getElementById('themeToggle').addEventListener('click', window.toggleTheme);
 
         document.getElementById('profileBtn').addEventListener('click', (e) => {
             e.stopPropagation();
@@ -3055,6 +3067,7 @@ window.openMobileSidebar = function() {
     }
 </script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
