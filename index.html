@@ -357,7 +357,7 @@ img,video{max-width:100%;height:auto}
 .hover\:text-green-700:hover{--tw-text-opacity:1;color:rgb(21 128 61 / var(--tw-text-opacity))}
 .hover\:text-primary-600:hover{--tw-text-opacity:1;color:rgb(2 132 199 / var(--tw-text-opacity))}
 .hover\:text-primary-700:hover{--tw-text-opacity:1;color:rgb(3 105 161 / var(--tw-text-opacity))}
-.hover\:text-red-700:hover{--tw-text-opacity:1;color:rgb(185 28 28 / var(--tw-text-opacity))}
+.hover\:text-red-700:hover{--tw-text-opacity:1;color:rgb(185 28 / var(--tw-text-opacity))}
 .hover\:underline:hover{text-decoration:underline}
 .hover\:shadow-xl:hover{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1),0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color),0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
 .focus\:border-transparent:focus{border-color:transparent}
@@ -393,7 +393,7 @@ img,video{max-width:100%;height:auto}
 .md\:ml-64{margin-left:16rem}
 .md\:w-64{width:16rem}
 .md\:flex-col{flex-direction:column}
-.md\:bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity))}
+.md\:bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 / var(--tw-bg-opacity))}
 .md\:dark\:bg-gray-800{--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity))}
 .md\:translate-x-0{--tw-translate-x:0px;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}
 }
@@ -445,7 +445,7 @@ img,video{max-width:100%;height:auto}
 .dark .dark\:text-green-400{--tw-text-opacity:1;color:rgb(74 222 128 / var(--tw-text-opacity))}
 .dark .dark\:text-primary-400{--tw-text-opacity:1;color:rgb(56 189 248 / var(--tw-text-opacity))}
 .dark .dark\:text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252 / var(--tw-text-opacity))}
-.dark .dark\:text-red-400{--tw-text-opacity:1;color:rgb(248 113 / var(--tw-text-opacity))}
+.dark .dark\:text-red-400{--tw-text-opacity:1;color:rgb(248 113 113 / var(--tw-text-opacity))}
 .dark .dark\:text-yellow-400{--tw-text-opacity:1;color:rgb(250 204 21 / var(--tw-text-opacity))}
 .dark .dark\:hover\:bg-gray-800:hover{--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity))}
 .dark .dark\:hover\:bg-gray-900\/20:hover{background-color:rgb(17 24 39 / 0.2)}
@@ -476,6 +476,7 @@ img,video{max-width:100%;height:auto}
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
@@ -492,6 +493,7 @@ if(localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') &
 
 // NUCLEAR MOBILE SIDEBAR FIX - Inline Style Manipulation
 window.openMobileSidebar = function() {
+  console.log('Opening sidebar - mobile');
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
   if(sidebar) {
@@ -503,6 +505,7 @@ window.openMobileSidebar = function() {
 }
 
 window.closeMobileSidebar = function() {
+  console.log('Closing sidebar - mobile');
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
   if(sidebar) {
@@ -531,7 +534,7 @@ window.toggleTheme = function() {
         <h2 class="text-white text-2xl font-bold">OwnsBilling</h2>
         <p id="loaderText" class="text-white/80 text-sm mt-2">Loading ISP Management...</p>
         <div id="loaderError" class="hidden mt-4">
-            <p class="text-white/90 text-sm mb-4">Connection timeout. Please check your internet.</p>
+            <p class="text-white/90 text-sm mb-4" id="loaderErrorMsg">Connection timeout. Please check your internet.</p>
             <button onclick="window.location.reload()" class="bg-white text-primary-600 font-semibold px-6 py-2 rounded-xl">
                 <i class="fas fa-redo mr-2"></i>Retry
             </button>
@@ -559,7 +562,6 @@ window.toggleTheme = function() {
                         <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                         <input type="email" id="loginEmail" required class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition" placeholder="admin@owns.com">
                     </div>
-                </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">Password</label>
                     <div class="relative">
@@ -572,34 +574,18 @@ window.toggleTheme = function() {
                 </button>
             </form>
 
-            <div class="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                <p class="text-sm mb-3 font-semibold flex items-center gap-2">
-                    <i class="fas fa-users text-primary-600"></i>Demo Accounts - Quick Access
-                </p>
-                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Test different roles instantly. Create these accounts in Firebase Auth first.</p>
-                <button onclick="loginAsDemo('admin')" class="w-full mb-2 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium text-sm">
-                    <i class="fas fa-user-shield mr-2"></i>Login as Admin
-                </button>
-                <button onclick="loginAsDemo('staff')" class="w-full mb-2 p-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition font-medium text-sm">
-                    <i class="fas fa-user-tie mr-2"></i>Login as Staff
-                </button>
-                <button onclick="loginAsDemo('customer')" class="w-full p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition font-medium text-sm">
-                    <i class="fas fa-user mr-2"></i>Login as Customer
-                </button>
-            </div>
-
             <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                 <p class="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2 flex items-center gap-2">
-                    <i class="fas fa-info-circle"></i>First Time Setup Instructions
+                    <i class="fas fa-info-circle"></i>Setup Note
                 </p>
                 <p class="text-xs text-blue-800 dark:text-blue-300 mb-2">
-                    Create demo accounts in Firebase Console:
+                    After creating user in Firebase Console > Authentication, add document in Firestore:
                 </p>
                 <ol class="text-xs text-blue-700 dark:text-blue-400 space-y-1 list-decimal list-inside">
-                    <li>Admin: <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">admin@owns.com</code> / <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">Admin@123</code></li>
-                    <li>Staff: <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">staff@owns.com</code> / <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">Staff@123</code></li>
-                    <li>Customer: <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">customer@owns.com</code> / <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">Customer@123</code></li>
-                    <li>Then login as Admin and set roles in Settings > User Management</li>
+                    <li>Collection: <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">users</code></li>
+                    <li>Doc ID: User UID from Authentication</li>
+                    <li>Field: <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">role</code> = "admin", "staff", or "customer"</li>
+                    <li>Authorized domains: Add <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">ownsshop.github.io</code></li>
                 </ol>
             </div>
         </div>
@@ -663,8 +649,11 @@ window.toggleTheme = function() {
                             </div>
                             <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">OwnsBilling</h1>
                         </div>
-                    </div>
                     <div class="flex items-center gap-2 sm:gap-3">
+                        <div id="connectionStatus" class="hidden md:flex items-center gap-1 text-xs">
+                            <i class="fas fa-circle text-green-500" id="connectionDot"></i>
+                            <span id="connectionText" class="text-gray-600 dark:text-gray-400">Online</span>
+                        </div>
                         <button id="notificationBtn" class="relative p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                             <i class="fas fa-bell text-lg"></i>
                             <span id="notificationBadge" class="hidden absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse-slow"></span>
@@ -717,25 +706,40 @@ window.toggleTheme = function() {
 <div id="modalContainer"></div>
 
 <script>
+    // Firebase Config - Verify authDomain is correct: owns-billing.firebaseapp.com
+    // In Firebase Console > Authentication > Settings > Authorized domains: add ownsshop.github.io
     const firebaseConfig = {
         apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
         authDomain: "owns-billing.firebaseapp.com",
+        databaseURL: "https://owns-billing-default-rtdb.firebaseio.com",
         projectId: "owns-billing",
         storageBucket: "owns-billing.firebasestorage.app",
         messagingSenderId: "1036958677443",
         appId: "1:1036958677443:web:5541baa54edc6e5f582576"
     };
 
-    let app, auth, db, storage;
+    let app, auth, db, storage, rtdb;
     let authInitialized = false;
     let authTimeoutId = null;
     let chartLoaded = false;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
 
     try {
         app = firebase.initializeApp(firebaseConfig);
         auth = firebase.auth();
         db = firebase.firestore();
         storage = firebase.storage();
+        rtdb = firebase.database();
+        
+        // Enable offline persistence for Firestore
+        db.enablePersistence({synchronizeTabs: true}).catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.log('Persistence failed: Multiple tabs open');
+            } else if (err.code == 'unimplemented') {
+                console.log('Persistence not available in this browser');
+            }
+        });
     } catch (error) {
         console.error('Firebase initialization error:', error);
         hideLoaderWithError('Failed to initialize app. Please refresh.');
@@ -745,6 +749,7 @@ window.toggleTheme = function() {
     let userRole = null;
     let userData = null;
     let companyData = null;
+    let isOnline = navigator.onLine;
     let allData = {
         customers: [],
         staff: [],
@@ -752,8 +757,7 @@ window.toggleTheme = function() {
         bills: [],
         complaints: [],
         logs: [],
-        promiseDates: [],
-        users: []
+        promiseDates: []
     };
 
     const navConfig = {
@@ -767,8 +771,7 @@ window.toggleTheme = function() {
             { id: 'reports', name: 'Reports', icon: 'fa-chart-bar' },
             { id: 'complaints', name: 'Complaints', icon: 'fa-headset' },
             { id: 'logs', name: 'Activity Logs', icon: 'fa-history' },
-            { id: 'settings', name: 'Settings', icon: 'fa-cog' },
-            { id: 'users', name: 'User Management', icon: 'fa-users-cog' }
+            { id: 'settings', name: 'Settings', icon: 'fa-cog' }
         ],
         staff: [
             { id: 'dashboard', name: 'Dashboard', icon: 'fa-home' },
@@ -787,37 +790,41 @@ window.toggleTheme = function() {
         ]
     };
 
-    // DEMO LOGIN FUNCTION
-    window.loginAsDemo = async function(role) {
-        const demoCredentials = {
-            admin: { email: 'admin@owns.com', password: 'Admin@123' },
-            staff: { email: 'staff@owns.com', password: 'Staff@123' },
-            customer: { email: 'customer@owns.com', password: 'Customer@123' }
-        };
-        const cred = demoCredentials[role];
-        
-        try {
-            document.getElementById('loginEmail').value = cred.email;
-            document.getElementById('loginPassword').value = cred.password;
-            await auth.signInWithEmailAndPassword(cred.email, cred.password);
-        } catch(e) {
-            showToast(`Demo ${role} account not found! Create it in Firebase Console first.`, 'error');
-            setTimeout(() => {
-                showToast(`Email: ${cred.email} | Password: ${cred.password}`, 'info');
-            }, 1000);
+    // Monitor connection status
+    if (rtdb) {
+        rtdb.ref('.info/connected').on('value', (snap) => {
+            isOnline = snap.val() === true;
+            updateConnectionStatus();
+        });
+    }
+
+    window.addEventListener('online', () => { isOnline = true; updateConnectionStatus(); });
+    window.addEventListener('offline', () => { isOnline = false; updateConnectionStatus(); });
+
+    function updateConnectionStatus() {
+        const dot = document.getElementById('connectionDot');
+        const text = document.getElementById('connectionText');
+        if (dot && text) {
+            dot.className = isOnline ? 'fas fa-circle text-green-500' : 'fas fa-circle text-red-500';
+            text.textContent = isOnline ? 'Online' : 'Offline';
         }
-    };
+        if (!isOnline) {
+            showToast('You are offline. Using cached data.', 'warning');
+        }
+    }
 
     function hideLoader() {
         const loader = document.getElementById('appLoader');
         if (loader) loader.classList.add('hidden');
     }
 
-    function hideLoaderWithError(message) {
+    function hideLoaderWithError(message, showRetry = true) {
         const loaderText = document.getElementById('loaderText');
         const loaderError = document.getElementById('loaderError');
+        const loaderErrorMsg = document.getElementById('loaderErrorMsg');
         if (loaderText) loaderText.textContent = message;
-        if (loaderError) loaderError.classList.remove('hidden');
+        if (loaderErrorMsg) loaderErrorMsg.textContent = message;
+        if (loaderError && showRetry) loaderError.classList.remove('hidden');
     }
 
     function showToast(message, type = 'success') {
@@ -875,7 +882,7 @@ window.toggleTheme = function() {
                 action,
                 details,
                 userId: currentUser.uid,
-                userName: userData?.name || document.getElementById('userName').textContent,
+                userName: document.getElementById('userName').textContent,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         } catch (error) {
@@ -996,6 +1003,10 @@ window.toggleTheme = function() {
 
     function renderNavigation() {
         const nav = navConfig[userRole];
+        if (!nav) {
+            console.error('No navigation config for role:', userRole);
+            return;
+        }
         const sidebarNavMobile = document.getElementById('sidebarNavMobile');
         const sidebarNavDesktop = document.getElementById('sidebarNavDesktop');
         const bottomNav = document.getElementById('bottomNav');
@@ -1031,6 +1042,7 @@ window.toggleTheme = function() {
     function navigateTo(pageId) {
         window.currentPage = pageId;
         const nav = navConfig[userRole];
+        if (!nav) return;
         const page = nav.find(item => item.id === pageId);
         if (page) {
             const pageFunctions = {
@@ -1045,8 +1057,7 @@ window.toggleTheme = function() {
                 complaints: showComplaintsPage,
                 logs: showLogsPage,
                 settings: showSettingsPage,
-                profile: showProfilePage,
-                users: showUserManagementPage
+                profile: showProfilePage
             };
             
             if (pageFunctions[pageId]) {
@@ -1067,230 +1078,6 @@ window.toggleTheme = function() {
 
     function refreshCurrentPage() {
         if (window.currentPage) navigateTo(window.currentPage);
-    }
-
-    // USER MANAGEMENT PAGE
-    function showUserManagementPage() {
-        if (userRole !== 'admin') {
-            showToast('Access denied', 'error');
-            return;
-        }
-
-        document.getElementById('contentArea').innerHTML = `
-            <div class="space-y-6 animate-slide-in">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl sm:text-3xl font-bold">User Management</h2>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Create and manage staff/customer accounts</p>
-                    </div>
-                    <button data-action="showAddUserModal" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
-                        <i class="fas fa-user-plus"></i>
-                        Create User
-                    </button>
-                </div>
-
-                <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-800/50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">User</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Email</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Role</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Created</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                ${allData.users.map(user => `
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                                        <td class="px-4 py-3">
-                                            <div class="flex items-center gap-3">
-                                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0ea5e9&color=fff" class="w-10 h-10 rounded-lg" alt="${user.name}">
-                                                <p class="font-medium">${user.name}</p>
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-3">${user.email}</td>
-                                        <td class="px-4 py-3">
-                                            <span class="px-3 py-1 bg-${user.role === 'admin' ? 'blue' : user.role === 'staff' ? 'green' : 'purple'}-100 dark:bg-${user.role === 'admin' ? 'blue' : user.role === 'staff' ? 'green' : 'purple'}-900/30 text-${user.role === 'admin' ? 'blue' : user.role === 'staff' ? 'green' : 'purple'}-700 dark:text-${user.role === 'admin' ? 'blue' : user.role === 'staff' ? 'green' : 'purple'}-400 rounded-lg text-xs font-semibold capitalize">${user.role}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm">${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString() : '-'}</td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex gap-2">
-                                                <button data-action="editUserRole" data-id="${user.uid}" class="text-blue-600 hover:text-blue-700" title="Edit Role">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                ${user.uid !== currentUser.uid ? `
-                                                    <button data-action="deleteUser" data-id="${user.uid}" class="text-red-600 hover:text-red-700" title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                ` : ''}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No users found</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function showAddUserModal() {
-        showModal('Create New User', `
-            <form id="createUserForm" class="space-y-4">
-                <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800 mb-4">
-                    <p class="text-sm text-yellow-800 dark:text-yellow-300">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        Important: You must first create the user in Firebase Authentication Console, then set their role here.
-                    </p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Email *</label>
-                    <input type="email" name="email" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="user@owns.com">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Password *</label>
-                    <input type="password" name="password" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="Min 6 characters">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Full Name *</label>
-                    <input type="text" name="name" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="John Doe">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Role *</label>
-                    <select name="role" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                        <option value="">Select Role</option>
-                        <option value="staff">Staff</option>
-                        <option value="customer">Customer</option>
-                    </select>
-                </div>
-                <div id="customerFields" class="hidden space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Customer ID</label>
-                        <input type="text" name="customerId" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="CUST001">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Mobile</label>
-                        <input type="tel" name="mobile" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                    </div>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
-                        <i class="fas fa-user-plus mr-2"></i>Create User
-                    </button>
-                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
-                </div>
-            </form>
-        `);
-
-        document.querySelector('[name="role"]').addEventListener('change', (e) => {
-            const customerFields = document.getElementById('customerFields');
-            if (e.target.value === 'customer') {
-                customerFields.classList.remove('hidden');
-            } else {
-                customerFields.classList.add('hidden');
-            }
-        });
-
-        document.getElementById('createUserForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            
-            try {
-                // Create Firebase Auth user
-                const userCredential = await auth.createUserWithEmailAndPassword(data.email, data.password);
-                const uid = userCredential.user.uid;
-
-                // Create Firestore user doc
-                await db.collection('users').doc(uid).set({
-                    uid: uid,
-                    email: data.email,
-                    name: data.name,
-                    role: data.role,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdBy: currentUser.uid,
-                    ...(data.role === 'customer' ? {
-                        customerId: data.customerId,
-                        mobile: data.mobile
-                    } : {})
-                });
-
-                await addLog('User created', `${data.name} (${data.role}) created`);
-                showToast(`${data.role.charAt(0).toUpperCase() + data.role.slice(1)} account created successfully!`, 'success');
-                closeModal();
-            } catch (error) {
-                if (error.code === 'auth/email-already-in-use') {
-                    showToast('Email already exists in Firebase Auth. Please set role for existing user.', 'error');
-                } else {
-                    showToast(error.message, 'error');
-                }
-            }
-        };
-    }
-
-    async function editUserRole(uid) {
-        const user = allData.users.find(u => u.uid === uid);
-        if (!user) return;
-
-        showModal('Edit User Role', `
-            <form id="editUserRoleForm" class="space-y-4">
-                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                    <p class="font-semibold">${user.name}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">${user.email}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Role *</label>
-                    <select name="role" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
-                        <option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option>
-                        <option value="customer" ${user.role === 'customer' ? 'selected' : ''}>Customer</option>
-                    </select>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
-                        Update Role
-                    </button>
-                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
-                </div>
-            </form>
-        `);
-
-        document.getElementById('editUserRoleForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-
-            try {
-                await db.collection('users').doc(uid).update({
-                    role: data.role,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedBy: currentUser.uid
-                });
-                await addLog('User role updated', `${user.name} role changed to ${data.role}`);
-                showToast('User role updated!', 'success');
-                closeModal();
-            } catch (error) {
-                showToast(error.message, 'error');
-            }
-        };
-    }
-
-    async function deleteUser(uid) {
-        if (uid === currentUser.uid) {
-            showToast('Cannot delete your own account!', 'error');
-            return;
-        }
-        if (!confirm('Are you sure you want to delete this user? This will also delete their Firebase Auth account.')) return;
-
-        try {
-            await db.collection('users').doc(uid).delete();
-            await addLog('User deleted', `User ${uid} removed from system`);
-            showToast('User deleted successfully! Note: Auth account must be deleted from Firebase Console.', 'success');
-        } catch (error) {
-            showToast(error.message, 'error');
-        }
     }
 
     function showAdminDashboard() {
@@ -1462,7 +1249,7 @@ window.toggleTheme = function() {
 
     function showStaffDashboard() {
         const myCustomers = allData.customers.filter(c => c.assignedStaff === currentUser.uid);
-        const myBills = allData.bills.filter(b => b.createdBy === currentUser.uid);
+        const myBills = allData.bills.filter(b => b.createdBy === currentUser.uid || myCustomers.some(c => c.id === b.customerId));
         const dueBills = myBills.filter(b => b.status === 'Due' || b.status === 'Partial');
         const collection = myBills.filter(b => b.status === 'Paid').reduce((sum, b) => sum + (b.paidAmount || 0), 0);
         
@@ -1602,7 +1389,6 @@ window.toggleTheme = function() {
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
-                        </div>
                         <div class="flex justify-between items-center py-2">
                             <span class="text-gray-600 dark:text-gray-400">Password</span>
                             <div class="flex items-center gap-2">
@@ -1661,74 +1447,6 @@ window.toggleTheme = function() {
         `);
     }
 
-    // Setup demo users in Firestore on first admin login
-    async function setupDemoUsers() {
-        if (userRole !== 'admin') return;
-        
-        try {
-            // Check if demo users already exist
-            const usersSnapshot = await db.collection('users').get();
-            const existingEmails = usersSnapshot.docs.map(doc => doc.data().email);
-            
-            const demoUsers = [
-                {
-                    email: 'staff@owns.com',
-                    hint: 'Create this user in Firebase Auth with password: Staff@123',
-                    instructions: 'After creating in Auth, note the UID and add role via Settings > User Management'
-                },
-                {
-                    email: 'customer@owns.com',
-                    hint: 'Create this user in Firebase Auth with password: Customer@123',
-                    instructions: 'After creating in Auth, note the UID and add role via Settings > User Management'
-                }
-            ];
-            
-            const missingUsers = demoUsers.filter(u => !existingEmails.includes(u.email));
-            
-            if (missingUsers.length > 0) {
-                showModal('Demo Accounts Setup Required', `
-                    <div class="space-y-4">
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            To test Staff/Customer panels, you need to create demo users. Follow these steps:
-                        </p>
-                        <div class="space-y-3">
-                            ${missingUsers.map(user => `
-                                <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
-                                    <p class="font-semibold text-yellow-900 dark:text-yellow-200">${user.email}</p>
-                                    <p class="text-xs text-yellow-800 dark:text-yellow-300 mt-1">${user.hint}</p>
-                                    <p class="text-xs text-yellow-700 dark:text-yellow-400 mt-2 italic">${user.instructions}</p>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                            <p class="text-xs text-blue-800 dark:text-blue-300">
-                                <strong>Steps:</strong><br>
-                                1. Go to Firebase Console > Authentication > Users<br>
-                                2. Click "Add User" and create the accounts above<br>
-                                3. Return here and use Settings > User Management to assign roles
-                            </p>
-                        </div>
-                    </div>
-                `);
-            }
-        } catch (error) {
-            console.error('Error setting up demo users:', error);
-        }
-    }
-
-    function copyToClipboard(text) {
-        if (!text || text === 'N/A') {
-            showToast('Nothing to copy', 'warning');
-            return;
-        }
-        navigator.clipboard.writeText(text).then(() => {
-            showToast('Copied to clipboard!', 'success');
-        }).catch(() => {
-            showToast('Copy failed', 'error');
-        });
-    }
-
-    // Simplified versions of other functions for brevity
     function showCustomers() { showDataTable('customers', 'Customers', allData.customers); }
     function showStaff() { showDataTable('staff', 'Staff', allData.staff); }
     function showPackages() { showDataTable('packages', 'Packages', allData.packages); }
@@ -1736,6 +1454,7 @@ window.toggleTheme = function() {
         const myCustomers = allData.customers.filter(c => c.assignedStaff === currentUser.uid);
         showDataTable('customers', 'My Customers', myCustomers, true);
     }
+
     function showInvoiceGenerator() {
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
@@ -1744,48 +1463,971 @@ window.toggleTheme = function() {
                         <h2 class="text-2xl sm:text-3xl font-bold">Invoice Generator</h2>
                         <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Create and send bills to customers</p>
                     </div>
+                    <button data-action="showBulkBillModal" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
+                        <i class="fas fa-calendar-alt"></i>
+                        Auto Generate (1st)
+                    </button>
                 </div>
+
                 <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-400">Invoice generation functionality here...</p>
+                    <form id="invoiceForm" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Select Customer *</label>
+                                <select id="customerSelect" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                                    <option value="">Choose customer...</option>
+                                    ${allData.customers.map(c => `<option value="${c.id}">${c.name} - ${c.mobile}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Month</label>
+                                <input type="month" name="month" value="${new Date().toISOString().slice(0, 7)}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div id="customerDetails" class="hidden bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+                            <h4 class="font-semibold mb-3">Customer Details</h4>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div><span class="text-gray-600 dark:text-gray-400">Name:</span> <span id="cdName" class="font-medium"></span></div>
+                                <div><span class="text-gray-600 dark:text-gray-400">Mobile:</span> <span id="cdMobile" class="font-medium"></span></div>
+                                <div><span class="text-gray-600 dark:text-gray-400">Package:</span> <span id="cdPackage" class="font-medium"></span></div>
+                                <div><span class="text-gray-600 dark:text-gray-400">Amount:</span> <span id="cdAmount" class="font-medium text-primary-600"></span></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Bill Amount (৳) *</label>
+                                <input type="number" name="amount" id="billAmount" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Due Date</label>
+                                <input type="date" name="dueDate" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Status</label>
+                                <select name="status" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                                    <option value="Due">Due</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Partial">Partial</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Notes</label>
+                            <textarea name="notes" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="Additional notes..."></textarea>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
+                                <i class="fas fa-file-invoice mr-2"></i>Create Invoice
+                            </button>
+                            <button type="button" data-action="sendWhatsAppPrompt" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <h3 class="font-semibold mb-4">Recent Bills</h3>
+                    <div class="space-y-3">
+                        ${allData.bills.slice(0, 10).map(bill => {
+                            const customer = allData.customers.find(c => c.id === bill.customerId);
+                            const statusColors = {
+                                Paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                                Due: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+                                Partial: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                            };
+                            return `
+                                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                                    <div class="flex-1">
+                                        <p class="font-semibold">${customer?.name || 'Unknown'}</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">${bill.month} • ৳${bill.amount}</p>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-lg text-xs font-semibold ${statusColors[bill.status]}">${bill.status}</span>
+                                </div>
+                            `;
+                        }).join('') || '<p class="text-gray-500 text-sm">No bills yet</p>'}
+                    </div>
                 </div>
             </div>
         `;
+
+        document.getElementById('customerSelect').addEventListener('change', (e) => {
+            const customer = allData.customers.find(c => c.id === e.target.value);
+            if (customer) {
+                const pkg = allData.packages.find(p => p.id === customer.packageId);
+                document.getElementById('customerDetails').classList.remove('hidden');
+                document.getElementById('cdName').textContent = customer.name;
+                document.getElementById('cdMobile').textContent = customer.mobile;
+                document.getElementById('cdPackage').textContent = pkg?.name || 'N/A';
+                document.getElementById('cdAmount').textContent = `৳${pkg?.price || 0}`;
+                document.getElementById('billAmount').value = pkg?.price || '';
+            } else {
+                document.getElementById('customerDetails').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('invoiceForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.customerId = document.getElementById('customerSelect').value;
+            data.amount = Number(data.amount);
+            data.paidAmount = data.status === 'Paid' ? data.amount : 0;
+            data.createdBy = currentUser.uid;
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+
+            try {
+                await db.collection('bills').add(data);
+                await addLog('Bill created', `Bill for month ${data.month} created`);
+                showToast('Invoice created successfully!', 'success');
+                
+                const customer = allData.customers.find(c => c.id === data.customerId);
+                if (customer?.mobile) {
+                    sendToWhatsApp(customer.mobile, customer.name, data.amount, data.month);
+                }
+                
+                e.target.reset();
+                document.getElementById('customerDetails').classList.add('hidden');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
     }
+
+    function sendToWhatsApp(mobile, name, amount, month) {
+        const message = `Dear ${name},%0A%0AYour internet bill for ${month} is ৳${amount}%0A%0APlease pay at your earliest convenience.%0A%0AThank you,%0A${companyData?.name || 'OwnsBilling'}`;
+        window.open(`https://wa.me/${mobile}?text=${message}`, '_blank');
+    }
+
+    function sendWhatsAppPrompt() {
+        showToast('WhatsApp API Integration - Placeholder', 'info');
+    }
+
+    function showBulkBillModal() {
+        showToast('Auto bill generation for 1st of month - Cron job placeholder', 'info');
+    }
+
     function showStaffDueBills() {
+        const myCustomers = allData.customers.filter(c => c.assignedStaff === currentUser.uid);
+        const myCustomerIds = myCustomers.map(c => c.id);
+        const dueBills = allData.bills.filter(b => myCustomerIds.includes(b.customerId) && (b.status === 'Due' || b.status === 'Partial'));
+
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
                 <h2 class="text-2xl sm:text-3xl font-bold">Due Bills - My Customers</h2>
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-400">Due bills listing with promise date feature...</p>
+                
+                <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-800/50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Customer</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Month</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Due Amount</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Promise Date</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                ${dueBills.map(bill => {
+                                    const customer = allData.customers.find(c => c.id === bill.customerId);
+                                    const dueAmount = (bill.amount || 0) - (bill.paidAmount || 0);
+                                    const promise = allData.promiseDates.find(p => p.billId === bill.id && p.status === 'pending');
+                                    const promiseDate = promise ? new Date(promise.promiseDate) : null;
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    
+                                    let dateColor = '';
+                                    let dateText = '-';
+                                    if (promiseDate) {
+                                        const pDate = new Date(promiseDate);
+                                        pDate.setHours(0, 0, 0, 0);
+                                        if (pDate < today) {
+                                            dateColor = 'text-gray-500';
+                                            dateText = promiseDate.toLocaleDateString() + ' (Overdue)';
+                                        } else if (pDate.getTime() === today.getTime()) {
+                                            dateColor = 'text-red-600 font-semibold';
+                                            dateText = 'Today';
+                                        } else if (pDate.getTime() - today.getTime() === 86400000) {
+                                            dateColor = 'text-yellow-600 font-semibold';
+                                            dateText = 'Tomorrow';
+                                        } else {
+                                            dateColor = 'text-blue-600';
+                                            dateText = promiseDate.toLocaleDateString();
+                                        }
+                                    }
+
+                                    return `
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                                            <td class="px-4 py-3">
+                                                <p class="font-medium">${customer?.name || 'Unknown'}</p>
+                                                <p class="text-xs text-gray-500">${customer?.mobile || ''}</p>
+                                            </td>
+                                            <td class="px-4 py-3">${bill.month}</td>
+                                            <td class="px-4 py-3 font-semibold text-red-600">৳${dueAmount.toLocaleString()}</td>
+                                            <td class="px-4 py-3 text-sm ${dateColor}">${dateText}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex gap-2">
+                                                    <button data-action="showPromiseDateModal" data-bill="${bill.id}" data-customer="${customer?.id}" class="text-primary-600 hover:text-primary-700" title="Set Promise Date">
+                                                        <i class="fas fa-calendar-plus"></i>
+                                                    </button>
+                                                    <a href="https://wa.me/${customer?.mobile}" target="_blank" class="text-green-600 hover:text-green-700" title="WhatsApp">
+                                                        <i class="fab fa-whatsapp"></i>
+                                                    </a>
+                                                    <a href="tel:${customer?.mobile}" class="text-blue-600 hover:text-blue-700" title="Call">
+                                                        <i class="fas fa-phone"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No due bills</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         `;
     }
-    function showPromiseDatesPage() {
-        document.getElementById('contentArea').innerHTML = `
-            <div class="space-y-6 animate-slide-in">
-                <h2 class="text-2xl sm:text-3xl font-bold">Promise Dates</h2>
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-400">All staff promise dates overview...</p>
+
+    function showPromiseDateModal(billId, customerId) {
+        const bill = allData.bills.find(b => b.id === billId);
+        const customer = allData.customers.find(c => c.id === customerId);
+        const existing = allData.promiseDates.find(p => p.billId === billId && p.status === 'pending');
+
+        showModal('Set Promise to Pay Date', `
+            <form id="promiseDateForm" class="space-y-4">
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Customer</p>
+                    <p class="font-semibold">${customer?.name} - ${customer?.mobile}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 mb-1">Due Amount</p>
+                    <p class="font-semibold text-red-600">৳${((bill.amount || 0) - (bill.paidAmount || 0)).toLocaleString()}</p>
                 </div>
-            </div>
-        `;
+                <div>
+                    <label class="block text-sm font-medium mb-2">Promise Date *</label>
+                    <input type="date" name="promiseDate" value="${existing ? new Date(existing.promiseDate).toISOString().split('T')[0] : ''}" required min="${new Date().toISOString().split('T')[0]}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Note</label>
+                    <textarea name="note" rows="3" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="Customer said will pay on this date...">${existing?.note || ''}</textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
+                        <i class="fas fa-save mr-2"></i>Save Promise Date
+                    </button>
+                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('promiseDateForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                if (existing) {
+                    await db.collection('promiseDates').doc(existing.id).update({
+                        promiseDate: data.promiseDate,
+                        note: data.note,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    await addLog('Promise date updated', `Updated promise date for ${customer?.name}`);
+                    showToast('Promise date updated!', 'success');
+                } else {
+                    await db.collection('promiseDates').add({
+                        billId,
+                        customerId,
+                        promiseDate: data.promiseDate,
+                        note: data.note,
+                        createdBy: currentUser.uid,
+                        status: 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    await addLog('Promise date set', `Set promise date for ${customer?.name} - ${data.promiseDate}`);
+                    showToast('Promise date saved!', 'success');
+                }
+                closeModal();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
     }
+
     function showFollowUpPage() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const myPromises = allData.promiseDates
+            .filter(p => p.createdBy === currentUser.uid && p.status === 'pending')
+            .map(p => {
+                const customer = allData.customers.find(c => c.id === p.customerId);
+                const bill = allData.bills.find(b => b.id === p.billId);
+                const pDate = new Date(p.promiseDate);
+                pDate.setHours(0, 0, 0, 0);
+                
+                let status = 'upcoming';
+                let statusText = pDate.toLocaleDateString();
+                let statusColor = 'blue';
+                
+                if (pDate < today) {
+                    status = 'overdue';
+                    statusText = 'Overdue';
+                    statusColor = 'gray';
+                } else if (pDate.getTime() === today.getTime()) {
+                    status = 'today';
+                    statusText = 'Today';
+                    statusColor = 'red';
+                } else if (pDate.getTime() - today.getTime() === 86400000) {
+                    status = 'tomorrow';
+                    statusText = 'Tomorrow';
+                    statusColor = 'yellow';
+                }
+                
+                return { ...p, customer, bill, status, statusText, statusColor, pDate };
+            })
+            .sort((a, b) => a.pDate - b.pDate);
+
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
-                <h2 class="text-2xl sm:text-3xl font-bold">Follow-up List</h2>
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-400">Follow-up list with reminders...</p>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold">Follow-up List</h2>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Customers with promise dates</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button data-action="filterFollowUp" data-filter="all" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold">All</button>
+                        <button data-action="filterFollowUp" data-filter="today" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-xl text-sm font-semibold">Today</button>
+                        <button data-action="filterFollowUp" data-filter="overdue" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-xl text-sm font-semibold">Overdue</button>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    ${myPromises.map(p => `
+                        <div class="glass rounded-2xl p-4 border-l-4 border-${p.statusColor}-500 border border-gray-200 dark:border-gray-700">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="px-3 py-1 bg-${p.statusColor}-100 dark:bg-${p.statusColor}-900/30 text-${p.statusColor}-700 dark:text-${p.statusColor}-400 rounded-lg text-xs font-semibold">${p.statusText}</span>
+                                        <span class="text-xs text-gray-500">${new Date(p.promiseDate).toLocaleDateString()}</span>
+                                    </div>
+                                    <p class="font-semibold text-lg mb-1">${p.customer?.name || 'Unknown'}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                        <i class="fas fa-phone mr-1"></i>${p.customer?.mobile || 'N/A'}
+                                    </p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                        <i class="fas fa-file-invoice mr-1"></i>Due: ৳${((p.bill?.amount || 0) - (p.bill?.paidAmount || 0)).toLocaleString()} • ${p.bill?.month}
+                                    </p>
+                                    ${p.note ? `<p class="text-sm italic text-gray-500 dark:text-gray-400"><i class="fas fa-sticky-note mr-1"></i>${p.note}</p>` : ''}
+                                </div>
+                                <div class="flex sm:flex-col gap-2">
+                                    <button data-action="markPromiseCollected" data-id="${p.id}" class="flex-1 sm:flex-none px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition">
+                                        <i class="fas fa-check mr-1"></i>Collected
+                                    </button>
+                                    <button data-action="reschedulePromise" data-id="${p.id}" class="flex-1 sm:flex-none px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl text-sm font-semibold transition">
+                                        <i class="fas fa-calendar-alt mr-1"></i>Reschedule
+                                    </button>
+                                    <a href="https://wa.me/${p.customer?.mobile}?text=Reminder: Your payment is due today. Amount: ৳${((p.bill?.amount || 0) - (p.bill?.paidAmount || 0)).toLocaleString()}" target="_blank" class="flex-1 sm:flex-none px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition text-center">
+                                        <i class="fab fa-whatsapp mr-1"></i>Remind
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') || `
+                        <div class="glass rounded-2xl p-12 border-gray-200 dark:border-gray-700 text-center">
+                            <i class="fas fa-calendar-check text-gray-400 text-5xl mb-4"></i>
+                            <p class="text-gray-500">No pending follow-ups</p>
+                        </div>
+                    `}
                 </div>
             </div>
         `;
     }
+
+    function filterFollowUp(filter) {
+        showToast(`Filter: ${filter}`, 'info');
+    }
+
+    async function markPromiseCollected(promiseId) {
+        if (!confirm('Mark this as collected?')) return;
+        try {
+            await db.collection('promiseDates').doc(promiseId).update({
+                status: 'done',
+                collectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                collectedBy: currentUser.uid
+            });
+            await addLog('Promise collected', 'Bill collected on promise date');
+            showToast('Marked as collected!', 'success');
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    }
+
+    function reschedulePromise(promiseId) {
+        const promise = allData.promiseDates.find(p => p.id === promiseId);
+        if (promise) {
+            showPromiseDateModal(promise.billId, promise.customerId);
+        }
+    }
+
+    function showPromiseDatesPage() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const enrichedPromises = allData.promiseDates
+            .filter(p => p.status === 'pending')
+            .map(p => {
+                const customer = allData.customers.find(c => c.id === p.customerId);
+                const bill = allData.bills.find(b => b.id === p.billId);
+                const staff = allData.staff.find(s => s.id === p.createdBy);
+                const pDate = new Date(p.promiseDate);
+                pDate.setHours(0, 0, 0, 0);
+                
+                let status = 'upcoming';
+                let statusColor = 'blue';
+                
+                if (pDate < today) {
+                    status = 'overdue';
+                    statusColor = 'gray';
+                } else if (pDate.getTime() === today.getTime()) {
+                    status = 'today';
+                    statusColor = 'red';
+                } else if (pDate.getTime() - today.getTime() === 86400000) {
+                    status = 'tomorrow';
+                    statusColor = 'yellow';
+                }
+                
+                return { ...p, customer, bill, staff, status, statusColor, pDate };
+            })
+            .sort((a, b) => a.pDate - b.pDate);
+
+        document.getElementById('contentArea').innerHTML = `
+            <div class="space-y-6 animate-slide-in">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold">Promise Dates</h2>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">All staff promise date commitments</p>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl p-4 border border-gray-200 dark:border-gray-700">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <select id="filterStaff" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            <option value="">All Staff</option>
+                            ${allData.staff.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                        </select>
+                        <select id="filterDateRange" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            <option value="">All Dates</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="overdue">Overdue</option>
+                        </select>
+                        <button data-action="applyPromiseFilter" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-filter mr-2"></i>Apply Filter
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    ${enrichedPromises.map(p => `
+                        <div class="glass rounded-2xl p-4 border-l-4 border-${p.statusColor}-500 border border-gray-200 dark:border-gray-700">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="px-3 py-1 bg-${p.statusColor}-100 dark:bg-${p.statusColor}-900/30 text-${p.statusColor}-700 dark:text-${p.statusColor}-400 rounded-lg text-xs font-semibold">
+                                            ${p.status === 'today' ? 'Today' : p.status === 'tomorrow' ? 'Tomorrow' : p.status === 'overdue' ? 'Overdue' : 'Upcoming'}
+                                        </span>
+                                        <span class="text-xs text-gray-500">${new Date(p.promiseDate).toLocaleDateString()}</span>
+                                        <span class="text-xs text-gray-500">• By ${p.staff?.name || 'Unknown'}</span>
+                                    </div>
+                                    <p class="font-semibold text-lg mb-1">${p.customer?.name || 'Unknown'}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                        <i class="fas fa-phone mr-1"></i>${p.customer?.mobile || 'N/A'} 
+                                        • <i class="fas fa-file-invoice ml-2 mr-1"></i>৳${((p.bill?.amount || 0) - (p.bill?.paidAmount || 0)).toLocaleString()}
+                                    </p>
+                                    ${p.note ? `<p class="text-sm italic text-gray-500 dark:text-gray-400"><i class="fas fa-sticky-note mr-1"></i>${p.note}</p>` : ''}
+                                </div>
+                                <div class="flex gap-2">
+                                    <button data-action="adminEditPromise" data-id="${p.id}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </button>
+                                    <a href="https://wa.me/${p.customer?.mobile}?text=Reminder: Your payment is scheduled for ${new Date(p.promiseDate).toLocaleDateString()}. Amount: ৳${((p.bill?.amount || 0) - (p.bill?.paidAmount || 0)).toLocaleString()}" target="_blank" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition">
+                                        <i class="fab fa-whatsapp mr-1"></i>Remind
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') || `
+                        <div class="glass rounded-2xl p-12 border border-gray-200 dark:border-gray-700 text-center">
+                            <i class="fas fa-calendar-check text-gray-400 text-5xl mb-4"></i>
+                            <p class="text-gray-500">No pending promise dates</p>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
+    function adminEditPromise(promiseId) {
+        const promise = allData.promiseDates.find(p => p.id === promiseId);
+        if (promise) {
+            showPromiseDateModal(promise.billId, promise.customerId);
+        }
+    }
+
+    function applyPromiseFilter() {
+        showToast('Filter applied', 'info');
+    }
+
+    function showStaffBillReports() {
+        const myBills = allData.bills.filter(b => b.createdBy === currentUser.uid);
+        document.getElementById('contentArea').innerHTML = `
+            <div class="space-y-6 animate-slide-in">
+                <h2 class="text-2xl sm:text-3xl font-bold">Bill Reports</h2>
+                
+                <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-800/50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Customer</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Month</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Amount</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Collection</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                ${myBills.map(bill => {
+                                    const customer = allData.customers.find(c => c.id === bill.customerId);
+                                    const statusColors = {
+                                        Paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                                        Due: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+                                        Partial: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                                    };
+                                    return `
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                                            <td class="px-4 py-3">
+                                                <p class="font-medium">${customer?.name || 'Unknown'}</p>
+                                                <p class="text-xs text-gray-500">${customer?.mobile || ''}</p>
+                                            </td>
+                                            <td class="px-4 py-3">${bill.month}</td>
+                                            <td class="px-4 py-3 font-semibold">৳${bill.amount}</td>
+                                            <td class="px-4 py-3">
+                                                <span class="px-2 py-1 rounded-lg text-xs font-semibold ${statusColors[bill.status]}">${bill.status}</span>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm">
+                                                ${bill.status === 'Paid' ? '<i class="fas fa-check-circle text-green-600"></i> Submitted' : '<i class="fas fa-clock text-yellow-600"></i> Pending'}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No bills created</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function showReportPage() {
+        document.getElementById('contentArea').innerHTML = `
+            <div class="space-y-6 animate-slide-in">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold">Reports</h2>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Filter and analyze bills</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button data-action="exportToPDF" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
+                            <i class="fas fa-file-pdf"></i>PDF
+                        </button>
+                        <button data-action="exportToExcel" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
+                            <i class="fas fa-file-excel"></i>Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <input type="text" id="filterName" placeholder="Customer Name" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                        <input type="text" id="filterMobile" placeholder="Mobile" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                        <input type="text" id="filterArea" placeholder="Area" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                        <select id="filterStatus" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            <option value="">All Status</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Due">Due</option>
+                            <option value="Partial">Partial</option>
+                        </select>
+                        <button data-action="applyFilters" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
+                            <i class="fas fa-filter mr-2"></i>Apply
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full" id="reportTable">
+                            <thead class="bg-gray-50 dark:bg-gray-800/50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Customer</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Month</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Amount</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Staff</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const nameFilter = document.getElementById('filterName')?.value.toLowerCase() || '';
+        const mobileFilter = document.getElementById('filterMobile')?.value || '';
+        const areaFilter = document.getElementById('filterArea')?.value.toLowerCase() || '';
+        const statusFilter = document.getElementById('filterStatus')?.value || '';
+
+        const filtered = allData.bills.filter(bill => {
+            const customer = allData.customers.find(c => c.id === bill.customerId);
+            if (!customer) return false;
+            
+            const matchName = !nameFilter || customer.name.toLowerCase().includes(nameFilter);
+            const matchMobile = !mobileFilter || customer.mobile.includes(mobileFilter);
+            const matchArea = !areaFilter || customer.area?.toLowerCase().includes(areaFilter);
+            const matchStatus = !statusFilter || bill.status === statusFilter;
+            
+            return matchName && matchMobile && matchArea && matchStatus;
+        });
+
+        const body = document.getElementById('reportBody');
+        if (!body) return;
+        
+        body.innerHTML = filtered.map(bill => {
+            const customer = allData.customers.find(c => c.id === bill.customerId);
+            const staff = allData.staff.find(s => s.id === customer?.assignedStaff);
+            const statusColors = {
+                Paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                Due: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+                Partial: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+            };
+            return `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                    <td class="px-4 py-3">
+                        <p class="font-medium">${customer?.name || 'Unknown'}</p>
+                        <p class="text-xs text-gray-500">${customer?.mobile || ''}</p>
+                    </td>
+                    <td class="px-4 py-3">${bill.month}</td>
+                    <td class="px-4 py-3 font-semibold">৳${bill.amount}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-lg text-xs font-semibold ${statusColors[bill.status]}">${bill.status}</span>
+                    </td>
+                    <td class="px-4 py-3">${staff?.name || '-'}</td>
+                </tr>
+            `;
+        }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No records found</td></tr>';
+    }
+
+    function exportToPDF() {
+        if (!window.jspdf) {
+            showToast('PDF library not loaded', 'error');
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.text('Bills Report', 14, 15);
+        doc.autoTable({
+            html: '#reportTable',
+            startY: 20,
+            styles: { fontSize: 8 }
+        });
+        
+        doc.save('bills-report.pdf');
+        showToast('PDF exported successfully!', 'success');
+    }
+
+    function exportToExcel() {
+        if (!window.XLSX) {
+            showToast('Excel library not loaded', 'error');
+            return;
+        }
+        const table = document.getElementById('reportTable');
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, 'bills-report.xlsx');
+        showToast('Excel exported successfully!', 'success');
+    }
+
+    function showAdminComplaints() {
+        document.getElementById('contentArea').innerHTML = `
+            <div class="space-y-6 animate-slide-in">
+                <h2 class="text-2xl sm:text-3xl font-bold">Complaint Management</h2>
+                
+                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="space-y-4">
+                        ${allData.complaints.map(complaint => {
+                            const customer = allData.customers.find(c => c.id === complaint.customerId);
+                            return `
+                                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <p class="font-semibold">${customer?.name || 'Unknown'}</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">${complaint.subject}</p>
+                                        </div>
+                                        <span class="px-3 py-1 bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-100 dark:bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-900/30 text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-700 dark:text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-400 rounded-lg text-xs font-semibold">${complaint.status}</span>
+                                    </div>
+                                    <p class="text-sm mb-3">${complaint.message}</p>
+                                    ${complaint.status !== 'Solved' ? `
+                                        <button data-action="forwardComplaint" data-id="${complaint.id}" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                                            <i class="fas fa-share mr-1"></i>Forward to Staff
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('') || '<p class="text-gray-500 text-sm">No complaints</p>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function forwardComplaint(complaintId) {
+        showToast('Feature: Select staff to forward complaint', 'info');
+    }
+
+    function showStaffComplaints() {
+        const myComplaints = allData.complaints.filter(c => c.assignedStaff === currentUser.uid);
+        document.getElementById('contentArea').innerHTML = `
+            <div class="space-y-6 animate-slide-in">
+                <h2 class="text-2xl sm:text-3xl font-bold">Assigned Complaints</h2>
+                
+                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="space-y-4">
+                        ${myComplaints.map(complaint => {
+                            const customer = allData.customers.find(c => c.id === complaint.customerId);
+                            return `
+                                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <p class="font-semibold">${customer?.name || 'Unknown'}</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">${complaint.subject}</p>
+                                        </div>
+                                        <span class="px-3 py-1 bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-100 dark:bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-900/30 text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-700 dark:text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-400 rounded-lg text-xs font-semibold">${complaint.status}</span>
+                                    </div>
+                                    <p class="text-sm mb-3">${complaint.message}</p>
+                                    ${complaint.status !== 'Solved' ? `
+                                        <button data-action="markComplaintSolved" data-id="${complaint.id}" class="text-sm bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                                            <i class="fas fa-check mr-1"></i>Mark Solved
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('') || '<p class="text-gray-500 text-sm">No complaints assigned</p>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function markComplaintSolved(complaintId) {
+        try {
+            await db.collection('complaints').doc(complaintId).update({ 
+                status: 'Solved', 
+                solvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                solvedBy: currentUser.uid
+            });
+            await addLog('Complaint solved', 'Complaint marked as solved by staff');
+            showToast('Complaint marked as solved!', 'success');
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    }
+
+    function showCustomerComplaints() {
+        document.getElementById('contentArea').innerHTML = `
+            <div class="space-y-6 animate-slide-in">
+                <h2 class="text-2xl sm:text-3xl font-bold">Support Center</h2>
+                
+                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <h3 class="font-semibold mb-4">Submit New Complaint</h3>
+                    <form id="complaintForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Subject *</label>
+                            <input type="text" name="subject" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="Issue with internet connection">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Message *</label>
+                            <textarea name="message" rows="4" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="Describe your issue in detail..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
+                            Submit Complaint
+                        </button>
+                    </form>
+                </div>
+
+                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <h3 class="font-semibold mb-4">My Complaints</h3>
+                    <div class="space-y-3">
+                        ${allData.complaints.filter(c => c.customerId === currentUser.uid).map(complaint => `
+                            <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                                <div class="flex items-start justify-between mb-2">
+                                    <p class="font-semibold">${complaint.subject}</p>
+                                    <span class="px-3 py-1 bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-100 dark:bg-${complaint.status === 'Solved' ? 'green' : 'yellow'}-900/30 text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-700 dark:text-${complaint.status === 'Solved' ? 'green' : 'yellow'}-400 rounded-lg text-xs font-semibold">${complaint.status}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">${complaint.message}</p>
+                            </div>
+                        `).join('') || '<p class="text-gray-500 text-sm">No complaints submitted</p>'}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('complaintForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.customerId = currentUser.uid;
+            data.status = 'Pending';
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+
+            try {
+                await db.collection('complaints').add(data);
+                await addLog('Complaint submitted', 'New complaint submitted by customer');
+                showToast('Complaint submitted successfully!', 'success');
+                e.target.reset();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    }
+
+    function showComplaintsPage() {
+        if (userRole === 'admin') showAdminComplaints();
+        else if (userRole === 'staff') showStaffComplaints();
+        else showCustomerComplaints();
+    }
+
+    function showLogsPage() {
+        document.getElementById('contentArea').innerHTML = `
+            <div class="space-y-6 animate-slide-in">
+                <h2 class="text-2xl sm:text-3xl font-bold">Activity Logs</h2>
+                
+                <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-800/50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Action</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Details</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">User</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                ${allData.logs.map(log => `
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                                        <td class="px-4 py-3 font-medium">${log.action}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">${log.details}</td>
+                                        <td class="px-4 py-3 text-sm">${log.userName || 'System'}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">${log.timestamp ? new Date(log.timestamp.toDate()).toLocaleString() : '-'}</td>
+                                    </tr>
+                                `).join('') || '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">No logs found</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function showSettingsPage() {
+        document.getElementById('contentArea').innerHTML = `
+            <div class="space-y-6 animate-slide-in">
+                <h2 class="text-2xl sm:text-3xl font-bold">Settings</h2>
+                
+                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <h3 class="font-semibold mb-4 flex items-center gap-2">
+                        <i class="fas fa-building text-primary-600"></i>
+                        Company Information
+                    </h3>
+                    <form id="companyForm" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Company Name</label>
+                                <input type="text" name="name" value="${companyData?.name || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Mobile</label>
+                                <input type="tel" name="mobile" value="${companyData?.mobile || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">WhatsApp</label>
+                                <input type="tel" name="whatsapp" value="${companyData?.whatsapp || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Email</label>
+                                <input type="email" name="email" value="${companyData?.email || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium mb-2">Address</label>
+                                <input type="text" name="address" value="${companyData?.address || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            </div>
+                        </div>
+                        <button type="submit" class="bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition">
+                            Save Company Info
+                        </button>
+                    </form>
+                </div>
+
+                <div class="glass rounded-2xl p-6 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+                    <h3 class="font-semibold mb-3 flex items-center gap-2 text-blue-900 dark:text-blue-200">
+                        <i class="fas fa-info-circle"></i>
+                        Staff Creation Guide
+                    </h3>
+                    <ol class="text-sm text-blue-800 dark:text-blue-300 space-y-2 list-decimal list-inside">
+                        <li>Go to Firebase Console > Authentication > Users</li>
+                        <li>Click "Add User" with staff email and password</li>
+                        <li>Copy the User UID from Authentication</li>
+                        <li>Go to Firestore > users collection</li>
+                        <li>Create document with ID = User UID</li>
+                        <li>Add field: <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">role</code> = <code class="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">"staff"</code></li>
+                        <li>Add fields: name, mobile, whatsapp, email, address</li>
+                    </ol>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('companyForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const companyRef = db.collection('company').doc('main');
+                await companyRef.set({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+                await addLog('Company info updated', 'Company information updated');
+                showToast('Company info saved successfully!', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    }
+
     function showCustomerBillsPage() {
         const myBills = allData.bills.filter(b => b.customerId === currentUser.uid);
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
                 <h2 class="text-2xl sm:text-3xl font-bold">My Bills</h2>
+                
                 <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full">
@@ -1795,19 +2437,34 @@ window.toggleTheme = function() {
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Amount</th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Due Date</th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                ${myBills.map(bill => `
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                                        <td class="px-4 py-3 font-medium">${bill.month}</td>
-                                        <td class="px-4 py-3 font-semibold">৳${bill.amount}</td>
-                                        <td class="px-4 py-3 text-sm">${bill.dueDate}</td>
-                                        <td class="px-4 py-3">
-                                            <span class="px-2 py-1 rounded-lg text-xs font-semibold bg-${bill.status === 'Paid' ? 'green' : 'red'}-100 dark:bg-${bill.status === 'Paid' ? 'green' : 'red'}-900/30 text-${bill.status === 'Paid' ? 'green' : 'red'}-700 dark:text-${bill.status === 'Paid' ? 'green' : 'red'}-400">${bill.status}</span>
-                                        </td>
-                                    </tr>
-                                `).join('') || '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">No bills found</td></tr>'}
+                                ${myBills.map(bill => {
+                                    const statusColors = {
+                                        Paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                                        Due: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+                                        Partial: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                                    };
+                                    return `
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                                            <td class="px-4 py-3 font-medium">${bill.month}</td>
+                                            <td class="px-4 py-3 font-semibold">৳${bill.amount}</td>
+                                            <td class="px-4 py-3 text-sm">${bill.dueDate}</td>
+                                            <td class="px-4 py-3">
+                                                <span class="px-2 py-1 rounded-lg text-xs font-semibold ${statusColors[bill.status]}">${bill.status}</span>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                ${bill.status !== 'Paid' ? `
+                                                    <button data-action="showPaymentInfo" class="text-blue-600 hover:text-blue-700 text-sm font-semibold">
+                                                        Pay Now
+                                                    </button>
+                                                ` : '<span class="text-gray-400 text-sm">Paid</span>'}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No bills found</td></tr>'}
                             </tbody>
                         </table>
                     </div>
@@ -1815,64 +2472,58 @@ window.toggleTheme = function() {
             </div>
         `;
     }
+
     function showProfilePage() {
+        const userData = userRole === 'staff' ? allData.staff.find(s => s.id === currentUser.uid) : 
+                        allData.customers.find(c => c.id === currentUser.uid);
+        const pkg = userData?.packageId ? allData.packages.find(p => p.id === userData.packageId) : null;
+
         document.getElementById('contentArea').innerHTML = `
             <div class="space-y-6 animate-slide-in">
                 <h2 class="text-2xl sm:text-3xl font-bold">My Profile</h2>
+                
                 <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-400">Profile information...</p>
-                </div>
-            </div>
-        `;
-    }
-    function showReportPage() {
-        document.getElementById('contentArea').innerHTML = `
-            <div class="space-y-6 animate-slide-in">
-                <h2 class="text-2xl sm:text-3xl font-bold">Reports</h2>
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-400">Filter and analyze bills...</p>
-                </div>
-            </div>
-        `;
-    }
-    function showStaffBillReports() {
-        document.getElementById('contentArea').innerHTML = `
-            <div class="space-y-6 animate-slide-in">
-                <h2 class="text-2xl sm:text-3xl font-bold">Bill Reports</h2>
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-400">Bill reports...</p>
-                </div>
-            </div>
-        `;
-    }
-    function showComplaintsPage() {
-        const myRole = userRole;
-        document.getElementById('contentArea').innerHTML = `
-            <div class="space-y-6 animate-slide-in">
-                <h2 class="text-2xl sm:text-3xl font-bold">${myRole === 'admin' ? 'Complaint Management' : myRole === 'staff' ? 'Assigned Complaints' : 'Support Center'}</h2>
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-400">Complaints functionality...</p>
-                </div>
-            </div>
-        `;
-    }
-    function showLogsPage() {
-        document.getElementById('contentArea').innerHTML = `
-            <div class="space-y-6 animate-slide-in">
-                <h2 class="text-2xl sm:text-3xl font-bold">Activity Logs</h2>
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-400">Activity logs...</p>
-                </div>
-            </div>
-        `;
-    }
-    function showSettingsPage() {
-        document.getElementById('contentArea').innerHTML = `
-            <div class="space-y-6 animate-slide-in">
-                <h2 class="text-2xl sm:text-3xl font-bold">Settings</h2>
-                <div class="glass rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <h3 class="font-semibold mb-4">Company Information</h3>
-                    <p class="text-gray-600 dark:text-gray-400">Settings form...</p>
+                    <div class="flex items-center gap-4 mb-6">
+                        <img src="${userData?.photoURL || `https://ui-avatars.com/api/?name=${userData?.name}&background=0ea5e9&color=fff`}" class="w-20 h-20 rounded-2xl shadow-lg" alt="Profile">
+                        <div>
+                            <h3 class="text-2xl font-bold">${userData?.name || 'User'}</h3>
+                            <p class="text-gray-600 dark:text-gray-400">${userRole.charAt(0).toUpperCase() + userRole.slice(1)}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                            <span class="text-gray-600 dark:text-gray-400">Mobile</span>
+                            <span class="font-semibold">${userData?.mobile || '-'}</span>
+                        </div>
+                        ${userRole !== 'staff' ? `
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                                <span class="text-gray-600 dark:text-gray-400">Area</span>
+                                <span class="font-semibold">${userData?.area || '-'}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                                <span class="text-gray-600 dark:text-gray-400">Zone</span>
+                                <span class="font-semibold">${userData?.zone || '-'}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                                <span class="text-gray-600 dark:text-gray-400">Package</span>
+                                <span class="font-semibold">${pkg?.name || '-'}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-3">
+                                <span class="text-gray-600 dark:text-gray-400">PPPoE Username</span>
+                                <span class="font-mono font-semibold">${userData?.pppoeUsername || '-'}</span>
+                            </div>
+                        ` : `
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                                <span class="text-gray-600 dark:text-gray-400">Email</span>
+                                <span class="font-semibold">${userData?.email || '-'}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-3">
+                                <span class="text-gray-600 dark:text-gray-400">Address</span>
+                                <span class="font-semibold">${userData?.address || '-'}</span>
+                            </div>
+                        `}
+                    </div>
                 </div>
             </div>
         `;
@@ -1893,7 +2544,13 @@ window.toggleTheme = function() {
                         </button>
                     ` : ''}
                 </div>
+
                 <div class="glass rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="searchInput" placeholder="Search..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                        </div>
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full">
                             <thead class="bg-gray-50 dark:bg-gray-800/50">
@@ -1906,6 +2563,8 @@ window.toggleTheme = function() {
             </div>
         `;
         renderTable(type, data, readOnly);
+        
+        document.getElementById('searchInput').addEventListener('keyup', () => filterTable(type));
     }
 
     function renderTable(type, data, readOnly) {
@@ -1913,7 +2572,7 @@ window.toggleTheme = function() {
         const body = document.getElementById('tableBody');
         
         let headers = [];
-        if (type === 'customers') headers = ['Name', 'Mobile', 'Area', 'Zone', 'Package', 'Actions'];
+        if (type === 'customers') headers = ['Name', 'Mobile', 'Area', 'Zone', 'Package', 'Status', 'Actions'];
         else if (type === 'staff') headers = ['Name', 'Mobile', 'WhatsApp', 'Email', 'Actions'];
         else if (type === 'packages') headers = ['Name', 'Speed', 'Price', 'Actions'];
         
@@ -1927,13 +2586,64 @@ window.toggleTheme = function() {
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-3">
                                 <img src="${item.photoURL || `https://ui-avatars.com/api/?name=${item.name}&background=0ea5e9&color=fff`}" class="w-10 h-10 rounded-lg" alt="${item.name}">
-                                <p class="font-medium">${item.name}</p>
+                                <div>
+                                    <p class="font-medium">${item.name}</p>
+                                    <p class="text-xs text-gray-500">${item.pppoeUsername || ''}</p>
+                                </div>
                             </div>
                         </td>
                         <td class="px-4 py-3">${item.mobile}</td>
                         <td class="px-4 py-3">${item.area || '-'}</td>
                         <td class="px-4 py-3">${item.zone || '-'}</td>
                         <td class="px-4 py-3">${pkg?.name || '-'}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-xs font-semibold">Active</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex gap-2">
+                                ${!readOnly ? `
+                                    <button data-action="editItem" data-type="${type}" data-id="${item.id}" class="text-blue-600 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                                    <button data-action="deleteItem" data-type="${type}" data-id="${item.id}" class="text-red-600 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else if (type === 'staff') {
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <img src="${item.photoURL || `https://ui-avatars.com/api/?name=${item.name}&background=8b5cf6&color=fff`}" class="w-10 h-10 rounded-lg" alt="${item.name}">
+                                <div>
+                                    <p class="font-medium">${item.name}</p>
+                                    <p class="text-xs text-gray-500">${item.address || ''}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">${item.mobile}</td>
+                        <td class="px-4 py-3">
+                            <a href="https://wa.me/${item.whatsapp}" target="_blank" class="text-green-600 hover:text-green-700">
+                                <i class="fab fa-whatsapp mr-1"></i>${item.whatsapp}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3">${item.email}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex gap-2">
+                                ${!readOnly ? `
+                                    <button data-action="editItem" data-type="${type}" data-id="${item.id}" class="text-blue-600 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                                    <button data-action="deleteItem" data-type="${type}" data-id="${item.id}" class="text-red-600 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else if (type === 'packages') {
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                        <td class="px-4 py-3 font-medium">${item.name}</td>
+                        <td class="px-4 py-3">${item.speed} Mbps</td>
+                        <td class="px-4 py-3 font-semibold">৳${item.price}</td>
                         <td class="px-4 py-3">
                             <div class="flex gap-2">
                                 ${!readOnly ? `
@@ -1948,8 +2658,212 @@ window.toggleTheme = function() {
         }).join('') || `<tr><td colspan="${headers.length}" class="px-4 py-8 text-center text-gray-500">No data found</td></tr>`;
     }
 
+    function filterTable(type) {
+        const input = document.getElementById('searchInput').value.toLowerCase();
+        const rows = document.querySelectorAll('#tableBody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(input) ? '' : 'none';
+        });
+    }
+
+    function showAddCustomersModal() { showCustomerModal(); }
+    function showAddStaffModal() { showStaffModal(); }
+    function showAddPackagesModal() { showPackageModal(); }
+
+    function showCustomerModal(customerId = null) {
+        const customer = customerId ? allData.customers.find(c => c.id === customerId) : null;
+        showModal(customer ? 'Edit Customer' : 'Add Customer', `
+            <form id="customerForm" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Name *</label>
+                        <input type="text" name="name" value="${customer?.name || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Mobile *</label>
+                        <input type="tel" name="mobile" value="${customer?.mobile || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Area</label>
+                        <input type="text" name="area" value="${customer?.area || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Zone</label>
+                        <input type="text" name="zone" value="${customer?.zone || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Package</label>
+                        <select name="packageId" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            <option value="">Select Package</option>
+                            ${allData.packages.map(p => `<option value="${p.id}" ${customer?.packageId === p.id ? 'selected' : ''}>${p.name} - ${p.speed}Mbps - ৳${p.price}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Assigned Staff</label>
+                        <select name="assignedStaff" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                            <option value="">Select Staff</option>
+                            ${allData.staff.map(s => `<option value="${s.id}" ${customer?.assignedStaff === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">PPPoE Username</label>
+                        <input type="text" name="pppoeUsername" value="${customer?.pppoeUsername || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">PPPoE Password</label>
+                        <input type="text" name="pppoePassword" value="${customer?.pppoePassword || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">NID Number</label>
+                        <input type="text" name="nid" value="${customer?.nid || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" name="email" value="${customer?.email || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
+                        ${customer ? 'Update' : 'Add'} Customer
+                    </button>
+                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('customerForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                if (customerId) {
+                    await db.collection('customers').doc(customerId).update({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await addLog('Customer updated', `${data.name} details updated`);
+                    showToast('Customer updated successfully!', 'success');
+                } else {
+                    await db.collection('customers').add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp(), status: 'Active' });
+                    await addLog('Customer added', `${data.name} added to system`);
+                    showToast('Customer added successfully!', 'success');
+                }
+                closeModal();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    }
+
+    function showStaffModal(staffId = null) {
+        const staff = staffId ? allData.staff.find(s => s.id === staffId) : null;
+        showModal(staff ? 'Edit Staff' : 'Add Staff', `
+            <form id="staffForm" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Name *</label>
+                        <input type="text" name="name" value="${staff?.name || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Mobile *</label>
+                        <input type="tel" name="mobile" value="${staff?.mobile || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">WhatsApp</label>
+                        <input type="tel" name="whatsapp" value="${staff?.whatsapp || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" name="email" value="${staff?.email || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium mb-2">Address</label>
+                        <input type="text" name="address" value="${staff?.address || ''}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
+                        ${staff ? 'Update' : 'Add'} Staff
+                    </button>
+                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('staffForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                if (staffId) {
+                    await db.collection('staff').doc(staffId).update({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await addLog('Staff updated', `${data.name} details updated`);
+                    showToast('Staff updated successfully!', 'success');
+                } else {
+                    await db.collection('staff').add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await addLog('Staff added', `${data.name} added to system`);
+                    showToast('Staff added successfully!', 'success');
+                }
+                closeModal();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    }
+
+    function showPackageModal(packageId = null) {
+        const pkg = packageId ? allData.packages.find(p => p.id === packageId) : null;
+        showModal(pkg ? 'Edit Package' : 'Add Package', `
+            <form id="packageForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Package Name *</label>
+                    <input type="text" name="name" value="${pkg?.name || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="e.g., Premium 20Mbps">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Speed (Mbps) *</label>
+                    <input type="number" name="speed" value="${pkg?.speed || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="20">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Price (৳) *</label>
+                    <input type="number" name="price" value="${pkg?.price || ''}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="1000">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition">
+                        ${pkg ? 'Update' : 'Add'} Package
+                    </button>
+                    <button type="button" data-action="closeModal" class="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition">Cancel</button>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('packageForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.speed = Number(data.speed);
+            data.price = Number(data.price);
+            
+            try {
+                if (packageId) {
+                    await db.collection('packages').doc(packageId).update({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await addLog('Package updated', `${data.name} updated`);
+                    showToast('Package updated successfully!', 'success');
+                } else {
+                    await db.collection('packages').add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await addLog('Package added', `${data.name} created`);
+                    showToast('Package added successfully!', 'success');
+                }
+                closeModal();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    }
+
     function editItem(type, id) {
-        showToast('Edit feature coming soon', 'info');
+        if (type === 'customers') showCustomerModal(id);
+        else if (type === 'staff') showStaffModal(id);
+        else if (type === 'packages') showPackageModal(id);
     }
 
     async function deleteItem(type, id) {
@@ -1961,22 +2875,6 @@ window.toggleTheme = function() {
         } catch (error) {
             showToast(error.message, 'error');
         }
-    }
-
-    function showAddCustomersModal() { showCustomerModal(); }
-    function showAddStaffModal() { showStaffModal(); }
-    function showAddPackagesModal() { showPackageModal(); }
-
-    function showCustomerModal(customerId = null) {
-        showToast('Customer modal - Full implementation in production', 'info');
-    }
-
-    function showStaffModal(staffId = null) {
-        showToast('Staff modal - Full implementation in production', 'info');
-    }
-
-    function showPackageModal(packageId = null) {
-        showToast('Package modal - Full implementation in production', 'info');
     }
 
     async function handleLogout() {
@@ -1991,9 +2889,6 @@ window.toggleTheme = function() {
     function initializeAppUI() {
         renderNavigation();
         navigateTo('dashboard');
-        if (userRole === 'admin') {
-            setTimeout(() => setupDemoUsers(), 2000);
-        }
     }
 
     function setupEventListeners() {
@@ -2035,43 +2930,43 @@ window.toggleTheme = function() {
                     checkPPPoEStatus();
                     break;
                 case 'showBulkBillModal':
-                    showToast('Bulk bill generation - Coming soon', 'info');
+                    showBulkBillModal();
                     break;
                 case 'sendWhatsAppPrompt':
-                    showToast('WhatsApp integration - Coming soon', 'info');
+                    sendWhatsAppPrompt();
                     break;
                 case 'showPromiseDateModal':
-                    showToast('Promise date feature - Coming soon', 'info');
+                    showPromiseDateModal(bill, customer);
                     break;
                 case 'markPromiseCollected':
-                    showToast('Mark collected - Coming soon', 'info');
+                    await markPromiseCollected(id);
                     break;
                 case 'reschedulePromise':
-                    showToast('Reschedule - Coming soon', 'info');
+                    reschedulePromise(id);
                     break;
                 case 'filterFollowUp':
-                    showToast('Filter - Coming soon', 'info');
+                    filterFollowUp(target.dataset.filter);
                     break;
                 case 'adminEditPromise':
-                    showToast('Edit promise - Coming soon', 'info');
+                    adminEditPromise(id);
                     break;
                 case 'applyPromiseFilter':
-                    showToast('Filter applied', 'info');
+                    applyPromiseFilter();
                     break;
                 case 'applyFilters':
-                    showToast('Filters applied', 'info');
+                    applyFilters();
                     break;
                 case 'exportToPDF':
-                    showToast('PDF export - Coming soon', 'info');
+                    exportToPDF();
                     break;
                 case 'exportToExcel':
-                    showToast('Excel export - Coming soon', 'info');
+                    exportToExcel();
                     break;
                 case 'forwardComplaint':
-                    showToast('Forward complaint - Coming soon', 'info');
+                    forwardComplaint(id);
                     break;
                 case 'markComplaintSolved':
-                    showToast('Mark solved - Coming soon', 'info');
+                    await markComplaintSolved(id);
                     break;
                 case 'showAddCustomersModal':
                     showAddCustomersModal();
@@ -2082,26 +2977,28 @@ window.toggleTheme = function() {
                 case 'showAddPackagesModal':
                     showAddPackagesModal();
                     break;
-                case 'showAddUserModal':
-                    showAddUserModal();
-                    break;
                 case 'editItem':
                     editItem(type, id);
                     break;
                 case 'deleteItem':
                     await deleteItem(type, id);
                     break;
-                case 'editUserRole':
-                    await editUserRole(id);
-                    break;
-                case 'deleteUser':
-                    await deleteUser(id);
-                    break;
             }
         });
     }
 
-    // AUTH FLOW
+    // Exponential backoff retry logic
+    async function retryWithBackoff(fn, retries = MAX_RETRIES, delay = 1000) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (retries === 0) throw error;
+            console.log(`Retrying... ${retries} attempts left`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return retryWithBackoff(fn, retries - 1, delay * 2);
+        }
+    }
+
     auth.onAuthStateChanged(async (user) => {
         try {
             if (authTimeoutId) {
@@ -2112,7 +3009,12 @@ window.toggleTheme = function() {
             if (user) {
                 currentUser = user;
                 authInitialized = true;
-                await loadUserData(user.uid);
+                
+                // Wait for role fetch with retry
+                await retryWithBackoff(async () => {
+                    await loadUserData(user.uid);
+                });
+                
                 hideLoader();
                 document.getElementById('authScreen').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
@@ -2121,7 +3023,6 @@ window.toggleTheme = function() {
             } else {
                 currentUser = null;
                 userRole = null;
-                userData = null;
                 authInitialized = true;
                 hideLoader();
                 document.getElementById('authScreen').classList.remove('hidden');
@@ -2129,7 +3030,13 @@ window.toggleTheme = function() {
             }
         } catch (error) {
             console.error('Auth state change error:', error);
-            hideLoaderWithError('Authentication error occurred');
+            if (error.code === 'unavailable' || error.message.includes('network')) {
+                hideLoaderWithError('Connection timeout. Check internet or Firebase status.', true);
+            } else if (error.message.includes('not found')) {
+                hideLoaderWithError('User profile not found. Contact admin.', true);
+            } else {
+                hideLoaderWithError('Authentication error: ' + error.message, true);
+            }
         }
     });
 
@@ -2137,38 +3044,33 @@ window.toggleTheme = function() {
         authTimeoutId = setTimeout(() => {
             if (!authInitialized) {
                 console.error('Auth timeout - Firebase took too long to respond');
-                hideLoaderWithError('Connection timeout');
+                hideLoaderWithError('Connection timeout. Please check your internet connection.', true);
             }
-        }, 10000);
+        }, 15000); // Increased to 15 seconds
     }).catch((error) => {
         console.error('Persistence error:', error);
     });
 
     async function loadUserData(uid) {
         try {
-            // Get user role from Firestore users collection
+            // Fetch user document from Firestore users collection
             const userDoc = await db.collection('users').doc(uid).get();
             
             if (!userDoc.exists) {
-                // If no user doc exists, check if it's admin@owns.com
+                // Fallback: check if admin by email
                 if (currentUser.email === 'admin@owns.com') {
                     userRole = 'admin';
-                    userData = { name: 'Admin', email: currentUser.email };
-                    // Create admin user doc
-                    await db.collection('users').doc(uid).set({
-                        uid: uid,
-                        email: currentUser.email,
-                        name: 'Admin',
-                        role: 'admin',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    userData = { name: 'Admin', email: currentUser.email, role: 'admin' };
                 } else {
-                    throw new Error('User not found. Please contact admin to add your account.');
+                    throw new Error('User profile not found in database. Please contact admin to set up your role.');
                 }
             } else {
-                const data = userDoc.data();
-                userRole = data.role || 'customer';
-                userData = data;
+                userData = userDoc.data();
+                userRole = userData.role;
+                
+                if (!userRole || !['admin', 'staff', 'customer'].includes(userRole)) {
+                    throw new Error('Invalid role assigned. Contact admin to configure your account.');
+                }
             }
 
             document.getElementById('userName').textContent = userData.name || 'User';
@@ -2195,7 +3097,10 @@ window.toggleTheme = function() {
             db.collection('customers').onSnapshot((snapshot) => {
                 allData.customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (window.currentPage && ['customers', 'dashboard'].includes(window.currentPage)) refreshCurrentPage();
-            }, (error) => console.error('Customers listener error:', error));
+            }, (error) => {
+                console.error('Customers listener error:', error);
+                if (!isOnline) showToast('Using cached customer data', 'info');
+            });
 
             db.collection('staff').onSnapshot((snapshot) => {
                 allData.staff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -2208,7 +3113,10 @@ window.toggleTheme = function() {
             db.collection('bills').onSnapshot((snapshot) => {
                 allData.bills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (window.currentPage) refreshCurrentPage();
-            }, (error) => console.error('Bills listener error:', error));
+            }, (error) => {
+                console.error('Bills listener error:', error);
+                if (!isOnline) showToast('Using cached bill data', 'info');
+            });
 
             db.collection('complaints').onSnapshot((snapshot) => {
                 allData.complaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -2224,11 +3132,6 @@ window.toggleTheme = function() {
                 updateFollowUpBadges();
                 if (window.currentPage === 'followup' || window.currentPage === 'promisedates') refreshCurrentPage();
             }, (error) => console.error('PromiseDates listener error:', error));
-
-            db.collection('users').onSnapshot((snapshot) => {
-                allData.users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-                if (window.currentPage === 'users') refreshCurrentPage();
-            }, (error) => console.error('Users listener error:', error));
         } catch (error) {
             console.error('Error setting up listeners:', error);
         }
@@ -2266,7 +3169,11 @@ window.toggleTheme = function() {
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            const swCode = `self.addEventListener('install', e => self.skipWaiting());self.addEventListener('activate', e => e.waitUntil(clients.claim()));self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));`;
+            const swCode = `
+                self.addEventListener('install', e => self.skipWaiting());
+                self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+            `;
             const blob = new Blob([swCode], { type: 'application/javascript' });
             const swUrl = URL.createObjectURL(blob);
             navigator.serviceWorker.register(swUrl).catch(() => {});
