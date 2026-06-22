@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OwnsBill - ISP Reseller Billing v2.2.3</title>
+<title>OwnsBill - ISP Reseller Billing v2.2.4</title>
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
@@ -526,7 +526,7 @@
           return;
         }
 
-        if (userData.status !== 'approved' && userData.status !== undefined) {
+        if (userData.status !== 'approved' && userData.status !== undefined && userData.role !== 'customer') {
           showAuthLoading(false);
           showToast('Account not approved. Contact admin.', 'error');
           await signOut(auth);
@@ -603,17 +603,12 @@
       if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }, 'bills'));
 
-    // FIX: Complaints listener for all roles with proper filtering
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
-    if (currentRole === 'customer') {
-      complaintsQuery = query(complaintsQuery, where('userId', '==', currentUser.uid));
-    } else if (currentRole === 'staff') {
-      complaintsQuery = query(complaintsQuery, where('assignedStaffId', '==', currentUser.uid));
-    }
+    if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('assignedStaffId', '==', currentUser.uid));
+    if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
     
     appState.unsubscribers.push(safeOnSnapshot(complaintsQuery, (snap) => {
       appState.complaints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      console.log('[Listener] Complaints updated:', appState.complaints.length);
       if (!isLoadingData && currentView === 'complaints') reRenderCurrentView();
     }, 'complaints'));
 
@@ -710,7 +705,7 @@
             <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
               <span class="text-3xl font-bold text-white">O</span>
             </div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.2.3</h1>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.2.4</h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">ISP Reseller Management System</p>
           </div>
           <form id="login-form" class="space-y-4">
@@ -891,7 +886,6 @@
                       </button>
                     </div>
                   </div>
-                </div>
                 <div class="md:hidden relative mobile-only">
                   <button onclick="toggleMobileProfile()" class="p-1 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                     <img src="${userPhoto}" class="w-8 h-8 rounded-full">
@@ -1123,7 +1117,7 @@
       <div class="dashboard-grid space-y-0 fade-in">
         <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           ${isLoadingData ? stats.map(() => `
-            <div class="glass rounded-xl p-3 md:p-4 border-[rgb(var(--border))]">
+            <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
               <div class="skeleton h-16 rounded-lg"></div>
             </div>
           `).join('') : stats.map(s => `
@@ -1793,6 +1787,232 @@
     }
   };
 
+  const renderBills = (myBills = false) => {
+    const list = myBills && currentRole === 'customer'
+      ? appState.bills.filter(b => b.customerId === currentUser.uid)
+      : appState.bills;
+
+    const viewId = myBills ? 'view-mybills' : 'view-bills';
+    const container = document.getElementById(viewId);
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+          </div>
+          <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
+            <i data-lucide="download" class="w-5 h-5"></i> Export CSV
+          </button>
+        </div>
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
+        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
+          <div class="table-container">
+            <table class="w-full">
+              <thead class="bg-[rgb(var(--border))] text-sm">
+                <tr>
+                  <th class="text-left p-4 font-semibold">Invoice</th>
+                  ${currentRole !== 'customer' ? '<th class="text-left p-4 font-semibold">Customer</th>' : ''}
+                  <th class="text-left p-4 font-semibold">Amount</th>
+                  <th class="text-left p-4 font-semibold">Method</th>
+                  <th class="text-left p-4 font-semibold">Status</th>
+                  <th class="text-left p-4 font-semibold">Date</th>
+                  <th class="text-right p-4 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="bills-tbody">${renderBillsTable(list)}</tbody>
+            </table>
+          </div>
+        </div>
+        `}
+      </div>
+    `;
+
+    $('#search-bill')?.addEventListener('input', debounce((e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = list.filter(b => 
+        b.invoiceNo?.toLowerCase().includes(q) || 
+        b.customerName?.toLowerCase().includes(q) ||
+        b.trxId?.toLowerCase().includes(q)
+      );
+      $('#bills-tbody').innerHTML = renderBillsTable(filtered);
+      lucide.createIcons();
+    }, 300));
+  };
+
+  const renderBillsTable = (bills) => {
+    if (!bills.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
+    return bills.map(b => `
+      <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
+        <td class="p-4"><div class="font-mono text-sm font-semibold">${b.invoiceNo || '-'}</div></td>
+        ${currentRole !== 'customer' ? `<td class="p-4"><div class="font-medium">${b.customerName || '-'}</div><div class="text-xs text-slate-500">${b.customerMobile || '-'}</div></td>` : ''}
+        <td class="p-4 font-bold text-sky-600">${formatCurrency(b.amount)}</td>
+        <td class="p-4 text-sm">${b.paymentMethod || '-'}</td>
+        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td>
+        <td class="p-4 text-sm">${formatDate(b.createdAt)}</td>
+        <td class="p-4"><div class="flex items-center justify-end gap-2">
+          <button onclick='window.showInvoicePreviewFromBill("${b.id}")' class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
+          ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="Mark Paid" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
+        </div></td>
+      </tr>
+    `).join('');
+  };
+
+  window.showInvoicePreviewFromBill = (id) => {
+    const bill = appState.bills.find(b => b.id === id);
+    if (bill) showInvoicePreview(bill);
+  };
+
+  window.markPaid = async (id) => {
+    try {
+      await updateDoc(doc(db, 'bills', id), { status: 'paid', paidAt: serverTimestamp() });
+      await logActivity('Bill Update', `Marked bill as paid`);
+      showToast('Bill marked as paid', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  // v2.2.3 FIX: v2.2.4 ENHANCED: Complaint submission with dual data structure support
+  const renderComplaints = () => {
+    const list = currentRole === 'customer' 
+      ? appState.complaints.filter(c => c.customerId === currentUser.uid)
+      : currentRole === 'staff'
+      ? appState.complaints.filter(c => c.assignedStaffId === currentUser.uid || c.assignedStaffId === null)
+      : appState.complaints;
+
+    const container = document.getElementById('view-complaints');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        ${currentRole === 'customer' ? `
+        <button onclick="handleComplaintSubmit()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
+          <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
+        </button>
+        ` : ''}
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading complaints...</span></div>' : `
+        <div class="space-y-3">
+          ${list.length ? list.map(c => `
+            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-2">
+                    <h4 class="font-bold">${c.subject || '-'}</h4>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status || 'pending'}</span>
+                  </div>
+                  <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between text-xs text-slate-500">
+                <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
+                ${currentRole !== 'customer' && c.status !== 'resolved' ? `
+                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">Mark Resolved</button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No complaints found</div>'}
+        </div>
+        `}
+      </div>
+    `;
+  };
+
+  // v2.2.4 FIX: Handle both users doc and customers collection structures
+  window.handleComplaintSubmit = () => {
+    showModal(`
+      <div class="modal-content p-6">
+        <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
+        <form id="complaint-form" class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
+            <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `);
+
+    $('#complaint-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = $('#complaint-submit-btn');
+      submitBtn.classList.add('btn-loading');
+      submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2"></i>Submitting...';
+      lucide.createIcons();
+
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      
+      try {
+        console.log('[Complaint Submit v2.2.4] Starting submission');
+        console.log('[Complaint Submit] Current user data:', currentUserData);
+        
+        if (!currentUser || !currentUserData || currentUserData.role !== 'customer') {
+          throw new Error('Only customers can submit complaints');
+        }
+
+        // v2.2.4 FIX: Flexible customer data extraction
+        // Works with both: users doc only OR users + customers collection
+        const customerId = currentUserData.customerId || currentUser.uid;
+        const customerName = currentUserData.name || currentUser.email || 'Unknown Customer';
+        const customerMobile = currentUserData.mobile || currentUserData.whatsapp || '';
+        const assignedStaffId = currentUserData.assignedStaffId || currentUserData.assignedStaff || null;
+
+        const complaintData = {
+          subject: data.subject.trim(),
+          description: data.description.trim(),
+          customerId: customerId,
+          customerName: customerName,
+          customerMobile: customerMobile,
+          assignedStaffId: assignedStaffId,
+          status: 'pending',
+          createdAt: serverTimestamp(),
+          createdBy: currentUser.uid
+        };
+
+        console.log('[Complaint Submit v2.2.4] Final complaint data:', complaintData);
+        
+        const docRef = await addDoc(collection(db, 'complaints'), complaintData);
+        console.log('[Complaint Submit] Success! Doc ID:', docRef.id);
+        
+        await logActivity('Complaint', `New complaint: ${data.subject}`);
+        
+        showToast('Complaint submitted successfully', 'success');
+        closeModal();
+        setTimeout(() => renderComplaints(), 500);
+        
+      } catch (error) {
+        console.error('[Complaint Submit v2.2.4] Error details:', error);
+        console.error('[Complaint Submit] Error code:', error.code);
+        console.error('[Complaint Submit] Error message:', error.message);
+        
+        let errorMsg = 'Failed to submit complaint';
+        if (error.code === 'permission-denied') {
+          errorMsg = 'Permission denied. Please check your account status or contact admin.';
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+        
+        showToast(errorMsg, 'error');
+      } finally {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.innerHTML = 'Submit';
+        lucide.createIcons();
+      }
+    });
+  };
+
+  window.updateComplaintStatus = async (id, status) => {
+    try {
+      await updateDoc(doc(db, 'complaints', id), { status, updatedAt: serverTimestamp() });
+      await logActivity('Complaint Update', `Status changed to ${status}`);
+      showToast('Status updated', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
   const renderReports = () => {
     const container = document.getElementById('view-reports');
     if (!container) return;
@@ -1805,7 +2025,7 @@
 
     container.innerHTML = `
       <div class="space-y-6 fade-in">
-        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+        <div class="glass rounded-2xl p-6 border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-4">Filter Reports</h3>
           <div class="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div><label class="text-sm font-medium mb-2 block">From Date</label><input type="date" id="report-from" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
@@ -1820,6 +2040,7 @@
               <button onclick="exportBillsCSV()" class="px-6 py-2.5 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="download" class="w-4 h-4"></i></button>
             </div>
           </div>
+        </div>
         <div id="report-results"></div>
       </div>
     `;
@@ -1937,7 +2158,7 @@
 
     container.innerHTML = `
       <div class="space-y-6 fade-in">
-        <div class="glass rounded-2xl p-6 border-[rgb(var(--border))]">
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-6">Company Information</h3>
           <form id="company-form" class="grid md:grid-cols-2 gap-4">
             <div><label class="text-sm font-medium mb-2 block">Company Name</label><input type="text" name="companyName" value="${companySettings.companyName||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
@@ -1987,54 +2208,60 @@
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-4">Firebase Security Rules</h3>
           <div class="text-sm text-slate-600 dark:text-slate-400 space-y-2">
-            <p><strong>Add these to Firestore Rules for full functionality:</strong></p>
+            <p><strong>Add these to Firestore Rules for full functionality (v2.2.4 requires status checks):</strong></p>
             <pre class="bg-[rgb(var(--border))] p-3 rounded-lg text-xs overflow-x-auto">
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isStaff() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff';
+    }
     function isApproved() {
       return request.auth != null && 
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
     }
-    function isAdmin() {
-      return isApproved() && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    function isStaff() {
-      return isApproved() && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff';
-    }
     
     match /users/{userId} {
-      allow read: if isApproved();
+      allow read: if request.auth != null;
       allow create: if isAdmin() || (isStaff() && request.resource.data.status == 'pending');
       allow update, delete: if isAdmin();
     }
     
     match /staff_deposits/{docId} {
-      allow read, write: if isApproved();
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.staffId == request.auth.uid;
+      allow update: if isAdmin();
     }
     match /salary_requests/{docId} {
-      allow read, write: if isApproved();
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.staffId == request.auth.uid;
+      allow update: if isAdmin();
     }
     match /areas/{docId} {
       allow read: if true;
-      allow write: if isApproved();
+      allow write: if isAdmin();
     }
     match /zones/{docId} {
       allow read: if true;
-      allow write: if isApproved();
+      allow write: if isAdmin();
     }
     match /packages/{docId} {
-      allow read: if isApproved();
+      allow read: if true;
       allow write: if isApproved();
     }
     match /bills/{docId} {
-      allow read, write: if isApproved();
+      allow read: if isApproved();
+      allow create: if isApproved();
+      allow update: if isAdmin() || (isStaff() && request.resource.data.staffId == request.auth.uid);
     }
     match /complaints/{docId} {
       allow read: if isApproved();
-      allow create: if isApproved() && request.resource.data.userId == request.auth.uid;
+      allow create: if isApproved();
       allow update: if isApproved();
     }
     match /settings/{docId} {
@@ -2042,7 +2269,7 @@ service cloud.firestore {
     }
     match /activities/{docId} {
       allow read: if isAdmin();
-      allow create: if isApproved();
+      allow create: if request.auth != null;
     }
   }
 }</pre>
@@ -2078,7 +2305,7 @@ service cloud.firestore {
           </div>
           <div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
       </div>
@@ -2126,7 +2353,7 @@ service cloud.firestore {
             <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
       </div>
@@ -2244,7 +2471,7 @@ service cloud.firestore {
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading approvals...</span></div>' : `
         <div class="space-y-3">
           ${getFilteredPendingUsers(activeTab).length ? getFilteredPendingUsers(activeTab).map(u => `
-            <div class="glass rounded-2xl p-5 border-[rgb(var(--border))]">
+            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
@@ -2398,6 +2625,7 @@ service cloud.firestore {
               </div>
             `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
           </div>
+        </div>
         `}
       </div>
     `;
@@ -2652,235 +2880,6 @@ service cloud.firestore {
     });
   };
 
-  const renderBills = (myBills = false) => {
-    const list = myBills && currentRole === 'customer'
-      ? appState.bills.filter(b => b.customerId === currentUser.uid)
-      : appState.bills;
-
-    const viewId = myBills ? 'view-mybills' : 'view-bills';
-    const container = document.getElementById(viewId);
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        <div class="flex flex-col sm:flex-row gap-3">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-          </div>
-          <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
-            <i data-lucide="download" class="w-5 h-5"></i> Export CSV
-          </button>
-        </div>
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
-        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-          <div class="table-container">
-            <table class="w-full">
-              <thead class="bg-[rgb(var(--border))] text-sm">
-                <tr>
-                  <th class="text-left p-4 font-semibold">Invoice</th>
-                  ${currentRole !== 'customer' ? '<th class="text-left p-4 font-semibold">Customer</th>' : ''}
-                  <th class="text-left p-4 font-semibold">Amount</th>
-                  <th class="text-left p-4 font-semibold">Method</th>
-                  <th class="text-left p-4 font-semibold">Status</th>
-                  <th class="text-left p-4 font-semibold">Date</th>
-                  <th class="text-right p-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="bills-tbody">${renderBillsTable(list)}</tbody>
-            </table>
-          </div>
-        </div>
-        `}
-      </div>
-    `;
-
-    $('#search-bill')?.addEventListener('input', debounce((e) => {
-      const q = e.target.value.toLowerCase();
-      const filtered = list.filter(b => 
-        b.invoiceNo?.toLowerCase().includes(q) || 
-        b.customerName?.toLowerCase().includes(q) ||
-        b.trxId?.toLowerCase().includes(q)
-      );
-      $('#bills-tbody').innerHTML = renderBillsTable(filtered);
-      lucide.createIcons();
-    }, 300));
-  };
-
-  const renderBillsTable = (bills) => {
-    if (!bills.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
-    return bills.map(b => `
-      <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-        <td class="p-4"><div class="font-mono text-sm font-semibold">${b.invoiceNo || '-'}</div></td>
-        ${currentRole !== 'customer' ? `<td class="p-4"><div class="font-medium">${b.customerName || '-'}</div><div class="text-xs text-slate-500">${b.customerMobile || '-'}</div></td>` : ''}
-        <td class="p-4 font-bold text-sky-600">${formatCurrency(b.amount)}</td>
-        <td class="p-4 text-sm">${b.paymentMethod || '-'}</td>
-        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td>
-        <td class="p-4 text-sm">${formatDate(b.createdAt)}</td>
-        <td class="p-4"><div class="flex items-center justify-end gap-2">
-          <button onclick='window.showInvoicePreviewFromBill("${b.id}")' class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
-          ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="Mark Paid" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
-        </div></td>
-      </tr>
-    `).join('');
-  };
-
-  window.showInvoicePreviewFromBill = (id) => {
-    const bill = appState.bills.find(b => b.id === id);
-    if (bill) showInvoicePreview(bill);
-  };
-
-  window.markPaid = async (id) => {
-    try {
-      await updateDoc(doc(db, 'bills', id), { status: 'paid', paidAt: serverTimestamp() });
-      await logActivity('Bill Update', `Marked bill as paid`);
-      showToast('Bill marked as paid', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  // FIXED: Complaints rendering with proper query and submit handler
-  const renderComplaints = () => {
-    const list = currentRole === 'customer' 
-      ? appState.complaints.filter(c => c.userId === currentUser.uid)
-      : currentRole === 'staff'
-      ? appState.complaints.filter(c => c.assignedStaffId === currentUser.uid)
-      : appState.complaints;
-
-    const container = document.getElementById('view-complaints');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        ${currentRole === 'customer' ? `
-        <button onclick="showComplaintForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
-        </button>
-        ` : ''}
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading complaints...</span></div>' : `
-        <div class="space-y-3">
-          ${list.length ? list.map(c => `
-            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <h4 class="font-bold">${c.subject || '-'}</h4>
-                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status || 'pending'}</span>
-                  </div>
-                  <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
-                </div>
-              <div class="flex items-center justify-between text-xs text-slate-500">
-                <span>By ${c.customerName || 'Unknown'} • ${formatDateTime(c.createdAt)}</span>
-                ${currentRole !== 'customer' && c.status !== 'resolved' ? `
-                <div class="flex gap-2">
-                  ${c.status === 'pending' ? `<button onclick="updateComplaintStatus('${c.id}','in_progress')" class="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-600 font-semibold text-xs" type="button">Start</button>` : ''}
-                  <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold text-xs" type="button">Resolve</button>
-                </div>
-                ` : ''}
-              </div>
-            </div>
-          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No complaints found</div>'}
-        </div>
-        `}
-      </div>
-    `;
-  };
-
-  // FIXED: handleComplaintSubmit with proper validation and error handling
-  window.showComplaintForm = () => {
-    showModal(`
-      <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
-        <form id="complaint-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
-            <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
-        </form>
-      </div>
-    `);
-
-    $('#complaint-form').addEventListener('submit', handleComplaintSubmit);
-  };
-
-  window.handleComplaintSubmit = async (e) => {
-    e.preventDefault();
-    const submitBtn = $('#complaint-submit-btn');
-    submitBtn.classList.add('btn-loading');
-    submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2"></i>Submitting...';
-    lucide.createIcons();
-
-    try {
-      // FIX: Validate customer profile linkage
-      if (!currentUserData.customerId) {
-        showToast('Customer profile not linked. Contact admin.', 'error');
-        submitBtn.classList.remove('btn-loading');
-        submitBtn.innerHTML = 'Submit';
-        lucide.createIcons();
-        return;
-      }
-
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      
-      // Verify customer doc exists
-      const customerDocRef = doc(db, 'customers', currentUserData.customerId);
-      const customerDoc = await getDoc(customerDocRef);
-      
-      if (!customerDoc.exists()) {
-        showToast('Customer profile not found. Contact admin.', 'error');
-        submitBtn.classList.remove('btn-loading');
-        submitBtn.innerHTML = 'Submit';
-        lucide.createIcons();
-        return;
-      }
-
-      const customerData = customerDoc.data();
-
-      // FIX: Create complaint with proper fields
-      await addDoc(collection(db, 'complaints'), {
-        subject: data.subject,
-        description: data.description,
-        customerId: currentUserData.customerId,
-        customerName: customerData.name,
-        assignedStaffId: customerData.assignedStaffId || null,
-        userId: auth.currentUser.uid,
-        status: 'pending',
-        createdAt: serverTimestamp()
-      });
-
-      await logActivity('Complaint', `New complaint: ${data.subject}`);
-      showToast('Complaint submitted successfully', 'success');
-      closeModal();
-      renderComplaints(); // FIX: Refresh list immediately
-
-    } catch (err) {
-      // FIX: Show error toast instead of silent failure
-      console.error('Complaint submit error:', err);
-      showToast(`Failed: ${err.message}`, 'error');
-    } finally {
-      submitBtn.classList.remove('btn-loading');
-      submitBtn.innerHTML = 'Submit';
-      lucide.createIcons();
-    }
-  };
-
-  window.updateComplaintStatus = async (id, status) => {
-    try {
-      await updateDoc(doc(db, 'complaints', id), { 
-        status, 
-        updatedAt: serverTimestamp(),
-        resolvedBy: status === 'resolved' ? currentUser.uid : null,
-        resolvedAt: status === 'resolved' ? serverTimestamp() : null
-      });
-      await logActivity('Complaint Update', `Status changed to ${status}`);
-      showToast('Status updated', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
   const renderInvoice = () => {
     const customers = currentRole === 'staff' 
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && (u.status === 'approved' || !u.status))
@@ -2999,7 +2998,7 @@ service cloud.firestore {
     if (!customer) return showToast('Customer not found', 'error');
     
     const preview = `
-      <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+      <div class="glass rounded-2xl p-6 border-[rgb(var(--border))]">
         <div class="flex items-center justify-between mb-6">
           <h3 class="font-bold text-lg">Invoice Preview</h3>
           <div class="flex gap-2 no-print">
@@ -3025,7 +3024,6 @@ service cloud.firestore {
               <p><strong>Customer:</strong> ${customer.name || '-'}</p>
               <p><strong>Mobile:</strong> ${customer.mobile || '-'}</p>
             </div>
-          </div>
           <table class="w-full border border-black mb-4 text-sm">
             <thead class="bg-gray-200">
               <tr><th class="border border-black p-2 text-left">Description</th><th class="border border-black p-2 text-right">Amount</th></tr>
@@ -3138,7 +3136,7 @@ service cloud.firestore {
       customer: [
         { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
         { label: 'My Bills', action: () => showView('mybills'), icon: 'receipt' },
-        { label: 'Submit Complaint', action: () => showComplaintForm(), icon: 'message-circle-warning' },
+        { label: 'Submit Complaint', action: () => handleComplaintSubmit(), icon: 'message-circle-warning' },
         { label: 'Chat Support', action: () => showView('chat'), icon: 'messages-square' }
       ]
     };
@@ -3177,10 +3175,6 @@ service cloud.firestore {
   window.showInvoicePreview = showInvoicePreview;
 </script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
