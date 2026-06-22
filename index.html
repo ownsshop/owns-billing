@@ -51,6 +51,20 @@
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { background: rgba(var(--primary), 0.5); border-radius: 3px; }
   
+  /* FIX: View section display rules */
+  .view-section {
+    display: block !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 200px;
+  }
+  .view-section.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  
   #sidebar { 
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     top: 0;
@@ -168,6 +182,7 @@
   let touchStartX = 0;
   let touchEndX = 0;
   let currentChartInstances = [];
+  let viewInitialized = false;
   
   const appState = {
     users: [],
@@ -181,7 +196,7 @@
     unsubscribers: []
   };
 
-  // Theme init - apply immediately
+  // Theme init
   const applyTheme = () => {
     document.documentElement.classList.toggle('dark', darkMode);
     document.querySelector('meta[name="theme-color"]').setAttribute('content', darkMode ? '#1e293b' : '#0ea5e9');
@@ -296,6 +311,8 @@
         await loadSettings();
         await initRealtimeListeners();
         renderApp();
+        // FIX: Explicitly call showView after app render
+        setTimeout(() => showView('dashboard'), 100);
       } else {
         showToast('User profile not found', 'error');
         signOut(auth);
@@ -319,11 +336,12 @@
     
     appState.unsubscribers.push(onSnapshot(usersQuery, (snap) => {
       appState.users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (currentRoute.startsWith('customers') || currentRoute.startsWith('staff')) renderRoute();
+      if (currentView === 'dashboard' || currentView === 'customers' || currentView === 'staff') reRenderCurrentView();
     }));
 
     appState.unsubscribers.push(onSnapshot(collection(db, 'packages'), (snap) => {
       appState.packages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (currentView === 'customers' || currentView === 'packages') reRenderCurrentView();
     }));
 
     let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
@@ -332,7 +350,7 @@
     
     appState.unsubscribers.push(onSnapshot(billsQuery, (snap) => {
       appState.bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (currentRoute === 'dashboard' || currentRoute.includes('bills')) renderRoute();
+      if (currentView === 'dashboard' || currentView === 'bills') reRenderCurrentView();
     }));
 
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
@@ -341,7 +359,7 @@
     
     appState.unsubscribers.push(onSnapshot(complaintsQuery, (snap) => {
       appState.complaints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (currentRoute.includes('complaints')) renderRoute();
+      if (currentView === 'complaints') reRenderCurrentView();
     }));
 
     appState.unsubscribers.push(onSnapshot(collection(db, 'zones'), (snap) => {
@@ -351,31 +369,89 @@
     if (currentRole === 'admin') {
       appState.unsubscribers.push(onSnapshot(query(collection(db, 'activities'), orderBy('timestamp', 'desc'), limit(100)), (snap) => {
         appState.activities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (currentView === 'activities') reRenderCurrentView();
       }));
     }
   };
 
-  // Router - FIXED: Clear previous content and manage view switching properly
-  let currentRoute = 'dashboard';
-  const navigate = (route) => {
-    console.log('Navigating to:', route, 'from:', currentRoute);
-    currentRoute = route;
+  // FIX: Rewritten Router Logic
+  let currentView = 'dashboard';
+  const showView = (viewId) => {
+    console.log('[Router] Switching to view:', viewId, 'from:', currentView);
     
-    // Destroy existing charts to prevent memory leaks
+    // 1. Clean up previous view
     currentChartInstances.forEach(chart => chart.destroy());
     currentChartInstances = [];
     
-    // Clear content area
-    const content = $('#content');
-    if (content) content.innerHTML = '';
+    // 2. Hide all view sections
+    const allViews = document.querySelectorAll('.view-section');
+    console.log('[Router] Found', allViews.length, 'view sections to hide');
+    allViews.forEach(view => {
+      view.classList.add('hidden');
+    });
     
-    renderRoute();
+    // 3. Show target view
+    const targetView = document.getElementById(`view-${viewId}`);
+    if (!targetView) {
+      console.error('[Router] Target view not found:', viewId);
+      return;
+    }
+    targetView.classList.remove('hidden');
+    
+    // 4. Update state
+    currentView = viewId;
+    
+    // 5. Force re-render content
+    reRenderCurrentView();
+    
+    // 6. Update UI states
     updateBottomNavActive();
     updateSidebarActive();
+    updatePageTitle();
+    
+    // 7. Close sidebar on mobile
     if (window.innerWidth < 768 && sidebarOpen) closeSidebar();
+    
+    console.log('[Router] View switch complete:', viewId);
   };
 
-  window.navigate = navigate;
+  window.showView = showView;
+
+  const reRenderCurrentView = () => {
+    const routes = {
+      dashboard: renderDashboard,
+      customers: renderCustomers,
+      staff: renderStaff,
+      packages: renderPackages,
+      bills: renderBills,
+      invoice: renderInvoice,
+      complaints: renderComplaints,
+      reports: renderReports,
+      activities: renderActivities,
+      settings: renderSettings,
+      mycustomers: () => renderCustomers(true),
+      mybills: () => renderBills(true),
+      profile: renderProfile,
+      chat: renderChat
+    };
+    
+    const renderFn = routes[currentView] || routes.dashboard;
+    renderFn();
+    lucide.createIcons();
+  };
+
+  window.reRenderCurrentView = reRenderCurrentView;
+
+  const updatePageTitle = () => {
+    const titles = {
+      dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
+      bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
+      activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
+      mybills: 'My Bills', profile: 'Profile', chat: 'Chat'
+    };
+    const titleEl = $('#page-title');
+    if (titleEl) titleEl.textContent = titles[currentView] || 'Dashboard';
+  };
 
   // Login UI
   const renderLogin = () => {
@@ -455,17 +531,22 @@
     };
 
     const sidebarItems = menus[currentRole].map(item => `
-      <button data-sidebar="${item.id}" onclick="navigate('${item.id}')" class="sidebar-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition">
+      <button data-view="${item.id}" class="sidebar-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition">
         <i data-lucide="${item.icon}" class="w-5 h-5"></i>
         <span>${item.label}</span>
       </button>
     `).join('');
 
     const mobileNavItems = menus[currentRole].slice(0, 5).map(item => `
-      <button data-nav="${item.id}" onclick="navigate('${item.id}')" class="bottom-nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-slate-500" type="button">
+      <button data-view="${item.id}" class="bottom-nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-slate-500" type="button">
         <i data-lucide="${item.icon}" class="w-5 h-5"></i>
         <span class="text-[10px] font-medium">${item.label}</span>
       </button>
+    `).join('');
+
+    // FIX: Each view is a separate section at top level
+    const viewSections = menus[currentRole].map(item => `
+      <section id="view-${item.id}" class="view-section ${item.id === 'dashboard' ? '' : 'hidden'}"></section>
     `).join('');
 
     $('#app').innerHTML = `
@@ -484,7 +565,7 @@
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
-          <nav class="flex-1 p-3 space-y-1 overflow-y-auto">${sidebarItems}</nav>
+          <nav id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto">${sidebarItems}</nav>
           <div class="p-3 border-t border-[rgb(var(--border))]">
             <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
               <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${currentUserData?.name}&background=0ea5e9&color=fff`}" class="w-8 h-8 rounded-full">
@@ -521,11 +602,13 @@
             </div>
           </header>
 
-          <!-- Content Area -->
-          <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6 pb-20 md:pb-6"></main>
+          <!-- Content Area - FIX: Multiple view sections -->
+          <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6 pb-20 md:pb-6">
+            ${viewSections}
+          </main>
 
           <!-- Mobile Bottom Nav -->
-          <nav class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-[rgb(var(--border))] px-2 py-2 flex items-center justify-around no-print z-30">
+          <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-[rgb(var(--border))] px-2 py-2 flex items-center justify-around no-print z-30">
             ${mobileNavItems}
           </nav>
 
@@ -536,8 +619,26 @@
         </div>
       </div>
     `;
+    
+    // FIX: Event delegation for sidebar - single listener
+    $('#sidebar-nav').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-view]');
+      if (btn) {
+        const viewId = btn.getAttribute('data-view');
+        showView(viewId);
+      }
+    });
+
+    // FIX: Event delegation for bottom nav
+    $('#bottom-nav').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-view]');
+      if (btn) {
+        const viewId = btn.getAttribute('data-view');
+        showView(viewId);
+      }
+    });
+
     lucide.createIcons();
-    renderRoute();
     updateCommandPalette();
     
     // Setup overlay click handler
@@ -558,12 +659,14 @@
         closeSidebar();
       }
     });
+
+    viewInitialized = true;
   };
 
   window.updateBottomNavActive = () => {
     $$('.bottom-nav-item').forEach(btn => {
-      const route = btn.getAttribute('data-nav');
-      if (route === currentRoute) {
+      const viewId = btn.getAttribute('data-view');
+      if (viewId === currentView) {
         btn.classList.add('active', 'text-sky-600', 'dark:text-sky-400');
         btn.classList.remove('text-slate-500');
       } else {
@@ -575,8 +678,8 @@
 
   window.updateSidebarActive = () => {
     $$('.sidebar-item').forEach(btn => {
-      const route = btn.getAttribute('data-sidebar');
-      if (route === currentRoute) {
+      const viewId = btn.getAttribute('data-view');
+      if (viewId === currentView) {
         btn.classList.add('bg-sky-500/10', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
       } else {
         btn.classList.remove('bg-sky-500/10', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
@@ -596,7 +699,7 @@
           </div>
         </div>
         <div class="space-y-2">
-          <button onclick="navigate('profile'); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left" type="button">
+          <button onclick="showView('profile'); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left" type="button">
             <i data-lucide="user" class="w-5 h-5"></i> Profile Settings
           </button>
           <button onclick="toggleTheme(); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left" type="button">
@@ -617,43 +720,7 @@
   };
   window.handleLogout = handleLogout;
 
-  // Route Renderer - FIXED
-  const renderRoute = () => {
-    console.log('Rendering route:', currentRoute);
-    const titles = {
-      dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
-      bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
-      activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
-      mybills: 'My Bills', profile: 'Profile', chat: 'Chat'
-    };
-    const titleEl = $('#page-title');
-    if (titleEl) titleEl.textContent = titles[currentRoute] || 'Dashboard';
-    
-    const routes = {
-      dashboard: renderDashboard,
-      customers: renderCustomers,
-      staff: renderStaff,
-      packages: renderPackages,
-      bills: renderBills,
-      invoice: renderInvoice,
-      complaints: renderComplaints,
-      reports: renderReports,
-      activities: renderActivities,
-      settings: renderSettings,
-      mycustomers: () => renderCustomers(true),
-      mybills: () => renderBills(true),
-      profile: renderProfile,
-      chat: renderChat
-    };
-    
-    const renderFn = routes[currentRoute] || routes.dashboard;
-    renderFn();
-    lucide.createIcons();
-    updateBottomNavActive();
-    updateSidebarActive();
-  };
-
-  // Dashboard - FIXED LAYOUT: Compact cards visible without scroll
+  // Dashboard - FIXED: Always render to view-dashboard
   const renderDashboard = () => {
     const customers = currentRole === 'staff' 
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid)
@@ -700,7 +767,7 @@
       { label: 'Speed', value: currentUserData?.packageSpeed || '-', icon: 'zap', color: 'indigo' }
     ];
 
-    $('#content').innerHTML = `
+    const dashboardHTML = `
       <div class="dashboard-grid space-y-0 fade-in">
         <!-- Row 1: Stats Cards - Compact -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -785,6 +852,12 @@
       </div>
     `;
 
+    // FIX: Always render to dashboard view section
+    const dashboardView = document.getElementById('view-dashboard');
+    if (dashboardView) {
+      dashboardView.innerHTML = dashboardHTML;
+    }
+
     if (currentRole !== 'customer') setTimeout(renderCharts, 100);
   };
 
@@ -849,7 +922,11 @@
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid)
       : appState.users.filter(u => u.role === 'customer');
 
-    $('#content').innerHTML = `
+    const viewId = myCustomers ? 'view-mycustomers' : 'view-customers';
+    const container = document.getElementById(viewId);
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="space-y-4 fade-in">
         <div class="flex flex-col sm:flex-row gap-3 justify-between">
           <div class="relative flex-1">
@@ -877,45 +954,7 @@
                 </tr>
               </thead>
               <tbody id="customers-tbody">
-                ${list.length ? list.map(c => {
-                  const due = appState.bills.filter(b => b.customerId === c.id && b.status === 'unpaid').reduce((s,b)=>s+b.amount,0);
-                  return `
-                  <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-                    <td class="p-4">
-                      <div class="font-semibold">${c.name || '-'}</div>
-                      <div class="text-xs text-slate-500">${c.pppoeUser || '-'}</div>
-                    </td>
-                    <td class="p-4">
-                      <div class="text-sm">${c.mobile || '-'}</div>
-                      <div class="text-xs text-slate-500">${c.whatsapp || '-'}</div>
-                    </td>
-                    <td class="p-4">
-                      <div class="text-sm font-medium text-sky-600">${c.packageName || '-'}</div>
-                      <div class="text-xs text-slate-500">${c.packageSpeed || '-'}</div>
-                    </td>
-                    <td class="p-4 text-sm">${c.area || '-'}</td>
-                    <td class="p-4">
-                      <span class="px-3 py-1 rounded-full text-xs font-semibold ${due > 0 ? 'bg-rose-500/20 text-rose-600' : 'bg-emerald-500/20 text-emerald-600'}">
-                        ${formatCurrency(due)}
-                      </span>
-                    </td>
-                    <td class="p-4">
-                      <div class="flex items-center justify-end gap-2">
-                        <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button">
-                          <i data-lucide="eye" class="w-4 h-4"></i>
-                        </button>
-                        ${currentRole !== 'customer' ? `
-                        <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="Create Invoice" type="button">
-                          <i data-lucide="file-text" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="WhatsApp" type="button">
-                          <i data-lucide="message-circle" class="w-4 h-4"></i>
-                        </button>
-                        ` : ''}
-                      </div>
-                    </td>
-                  </tr>
-                `}).join('') : `<tr><td colspan="6" class="p-8 text-center text-slate-500">No customers found</td></tr>`}
+                ${renderCustomersRows(list)}
               </tbody>
             </table>
           </div>
@@ -932,27 +971,52 @@
         c.area?.toLowerCase().includes(q)
       );
       const tbody = $('#customers-tbody');
-      if (tbody) tbody.innerHTML = filtered.map(c => {
-        const due = appState.bills.filter(b => b.customerId === c.id && b.status === 'unpaid').reduce((s,b)=>s+b.amount,0);
-        return `
-          <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-            <td class="p-4"><div class="font-semibold">${c.name || '-'}</div><div class="text-xs text-slate-500">${c.pppoeUser || '-'}</div></td>
-            <td class="p-4"><div class="text-sm">${c.mobile || '-'}</div><div class="text-xs text-slate-500">${c.whatsapp || '-'}</div></td>
-            <td class="p-4"><div class="text-sm font-medium text-sky-600">${c.packageName || '-'}</div><div class="text-xs text-slate-500">${c.packageSpeed || '-'}</div></td>
-            <td class="p-4 text-sm">${c.area || '-'}</td>
-            <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${due > 0 ? 'bg-rose-500/20 text-rose-600' : 'bg-emerald-500/20 text-emerald-600'}">${formatCurrency(due)}</span></td>
-            <td class="p-4"><div class="flex items-center justify-end gap-2">
-              <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
-              ${currentRole !== 'customer' ? `
-              <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" type="button"><i data-lucide="file-text" class="w-4 h-4"></i></button>
-              <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" type="button"><i data-lucide="message-circle" class="w-4 h-4"></i></button>
-              ` : ''}
-            </div></td>
-          </tr>
-        `;
-      }).join('') || `<tr><td colspan="6" class="p-8 text-center text-slate-500">No results</td></tr>`;
+      if (tbody) tbody.innerHTML = renderCustomersRows(filtered);
       lucide.createIcons();
     }, 300));
+  };
+
+  const renderCustomersRows = (list) => {
+    if (!list.length) return `<tr><td colspan="6" class="p-8 text-center text-slate-500">No customers found</td></tr>`;
+    return list.map(c => {
+      const due = appState.bills.filter(b => b.customerId === c.id && b.status === 'unpaid').reduce((s,b)=>s+b.amount,0);
+      return `
+      <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
+        <td class="p-4">
+          <div class="font-semibold">${c.name || '-'}</div>
+          <div class="text-xs text-slate-500">${c.pppoeUser || '-'}</div>
+        </td>
+        <td class="p-4">
+          <div class="text-sm">${c.mobile || '-'}</div>
+          <div class="text-xs text-slate-500">${c.whatsapp || '-'}</div>
+        </td>
+        <td class="p-4">
+          <div class="text-sm font-medium text-sky-600">${c.packageName || '-'}</div>
+          <div class="text-xs text-slate-500">${c.packageSpeed || '-'}</div>
+        </td>
+        <td class="p-4 text-sm">${c.area || '-'}</td>
+        <td class="p-4">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold ${due > 0 ? 'bg-rose-500/20 text-rose-600' : 'bg-emerald-500/20 text-emerald-600'}">
+            ${formatCurrency(due)}
+          </span>
+        </td>
+        <td class="p-4">
+          <div class="flex items-center justify-end gap-2">
+            <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+            ${currentRole !== 'customer' ? `
+            <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="Create Invoice" type="button">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+            </button>
+            <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="WhatsApp" type="button">
+              <i data-lucide="message-circle" class="w-4 h-4"></i>
+            </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `}).join('');
   };
 
   window.showCustomerForm = (id = null) => {
@@ -1050,7 +1114,10 @@
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid)
       : appState.users.filter(u => u.role === 'customer');
 
-    $('#content').innerHTML = `
+    const container = document.getElementById('view-invoice');
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="max-w-4xl mx-auto space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-6">Generate Invoice</h3>
@@ -1168,7 +1235,7 @@
   };
 
   window.createInvoiceFor = (customerId) => {
-    navigate('invoice');
+    showView('invoice');
     setTimeout(() => {
       $('#invoice-customer').value = customerId;
       $('#invoice-customer').dispatchEvent(new Event('change'));
@@ -1287,7 +1354,11 @@
       ? appState.bills.filter(b => b.customerId === currentUser.uid)
       : appState.bills;
 
-    $('#content').innerHTML = `
+    const viewId = myBills ? 'view-mybills' : 'view-bills';
+    const container = document.getElementById(viewId);
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="space-y-4 fade-in">
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1">
@@ -1386,7 +1457,10 @@
       ? appState.complaints.filter(c => c.staffId === currentUser.uid)
       : appState.complaints;
 
-    $('#content').innerHTML = `
+    const container = document.getElementById('view-complaints');
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="space-y-4 fade-in">
         ${currentRole === 'customer' ? `
         <button onclick="showComplaintForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
@@ -1467,7 +1541,10 @@
   // Staff
   const renderStaff = () => {
     const list = appState.users.filter(u => u.role === 'staff');
-    $('#content').innerHTML = `
+    const container = document.getElementById('view-staff');
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="space-y-4 fade-in">
         <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="user-plus" class="w-5 h-5"></i> Add Staff
@@ -1561,7 +1638,10 @@
 
   // Packages
   const renderPackages = () => {
-    $('#content').innerHTML = `
+    const container = document.getElementById('view-packages');
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="space-y-4 fade-in">
         <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="plus" class="w-5 h-5"></i> Add Package
@@ -1644,7 +1724,10 @@
 
   // Reports
   const renderReports = () => {
-    $('#content').innerHTML = `
+    const container = document.getElementById('view-reports');
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-4">Filter Reports</h3>
@@ -1693,7 +1776,10 @@
 
   // Activities
   const renderActivities = () => {
-    $('#content').innerHTML = `
+    const container = document.getElementById('view-activities');
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="space-y-3 fade-in">
         ${appState.activities.length ? appState.activities.map(a => `
           <div class="glass rounded-2xl p-4 border border-[rgb(var(--border))]">
@@ -1718,8 +1804,11 @@
 
   // Settings
   const renderSettings = () => {
-    if (currentRole !== 'admin') return navigate('dashboard');
-    $('#content').innerHTML = `
+    if (currentRole !== 'admin') return showView('dashboard');
+    const container = document.getElementById('view-settings');
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-6">Company Information</h3>
@@ -1751,7 +1840,10 @@
 
   // Profile
   const renderProfile = () => {
-    $('#content').innerHTML = `
+    const container = document.getElementById('view-profile');
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="max-w-2xl mx-auto space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <div class="flex items-center gap-4 mb-6">
@@ -1777,7 +1869,10 @@
 
   // Chat
   const renderChat = () => {
-    $('#content').innerHTML = `
+    const container = document.getElementById('view-chat');
+    if (!container) return;
+
+    container.innerHTML = `
       <div class="glass rounded-2xl border border-[rgb(var(--border))] h-[calc(100vh-200px)] flex flex-col fade-in">
         <div class="p-4 border-b border-[rgb(var(--border))]">
           <h3 class="font-bold">Support Chat</h3>
@@ -1817,24 +1912,24 @@
   const updateCommandPalette = () => {
     const commands = {
       admin: [
-        { label: 'Dashboard', action: () => navigate('dashboard'), icon: 'layout-dashboard' },
+        { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
         { label: 'Add Customer', action: () => showCustomerForm(), icon: 'user-plus' },
         { label: 'Add Staff', action: () => showStaffForm(), icon: 'user-cog' },
-        { label: 'Create Invoice', action: () => navigate('invoice'), icon: 'file-text' },
-        { label: 'View Reports', action: () => navigate('reports'), icon: 'bar-chart-3' },
-        { label: 'Settings', action: () => navigate('settings'), icon: 'settings' }
+        { label: 'Create Invoice', action: () => showView('invoice'), icon: 'file-text' },
+        { label: 'View Reports', action: () => showView('reports'), icon: 'bar-chart-3' },
+        { label: 'Settings', action: () => showView('settings'), icon: 'settings' }
       ],
       staff: [
-        { label: 'Dashboard', action: () => navigate('dashboard'), icon: 'layout-dashboard' },
-        { label: 'My Customers', action: () => navigate('mycustomers'), icon: 'users' },
-        { label: 'Create Invoice', action: () => navigate('invoice'), icon: 'file-text' },
-        { label: 'View Bills', action: () => navigate('bills'), icon: 'receipt' }
+        { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
+        { label: 'My Customers', action: () => showView('mycustomers'), icon: 'users' },
+        { label: 'Create Invoice', action: () => showView('invoice'), icon: 'file-text' },
+        { label: 'View Bills', action: () => showView('bills'), icon: 'receipt' }
       ],
       customer: [
-        { label: 'Dashboard', action: () => navigate('dashboard'), icon: 'layout-dashboard' },
-        { label: 'My Bills', action: () => navigate('mybills'), icon: 'receipt' },
+        { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
+        { label: 'My Bills', action: () => showView('mybills'), icon: 'receipt' },
         { label: 'Submit Complaint', action: () => showComplaintForm(), icon: 'message-circle-warning' },
-        { label: 'Chat Support', action: () => navigate('chat'), icon: 'messages-square' }
+        { label: 'Chat Support', action: () => showView('chat'), icon: 'messages-square' }
       ]
     };
 
