@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OwnsBill - ISP Reseller Billing v2.2.1</title>
+<title>OwnsBill - ISP Reseller Billing v2.2.2</title>
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
@@ -108,6 +107,14 @@
     z-index: 60;
   }
 
+  .user-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 260px;
+    z-index: 60;
+  }
+
   #view-dashboard {
     padding-top: 16px;
   }
@@ -208,6 +215,11 @@
   .btn-loading i {
     animation: spin 1s linear infinite;
   }
+
+  .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
 </style>
 </head>
 <body class="antialiased">
@@ -255,6 +267,17 @@
   const db = getFirestore(app);
   const storage = getStorage(app);
 
+  let secondaryApp = null;
+  let secondaryAuth = null;
+
+  const initSecondaryAuth = () => {
+    if (!secondaryApp) {
+      secondaryApp = initializeApp(firebaseConfig, 'secondary');
+      secondaryAuth = getAuth(secondaryApp);
+    }
+    return secondaryAuth;
+  };
+
   let currentUser = null;
   let currentRole = null;
   let currentUserData = null;
@@ -264,6 +287,7 @@
   let touchStartX = 0;
   let touchEndX = 0;
   let mobileProfileOpen = false;
+  let userDropdownOpen = false;
   let isLoadingData = true;
   let authInitialized = false;
   
@@ -425,6 +449,20 @@
     if (dropdown) dropdown.classList.add('hidden');
   };
 
+  window.toggleUserDropdown = () => {
+    userDropdownOpen = !userDropdownOpen;
+    const dropdown = $('#user-dropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('hidden', !userDropdownOpen);
+    }
+  };
+
+  window.closeUserDropdown = () => {
+    userDropdownOpen = false;
+    const dropdown = $('#user-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+  };
+
   const safeOnSnapshot = (queryRef, callback, collectionName) => {
     try {
       return onSnapshot(queryRef, callback, (error) => {
@@ -536,7 +574,6 @@
   };
 
   const initRealtimeListeners = async () => {
-    // Users - All users visible to admin, filtered for others
     let usersQuery = collection(db, 'users');
     if (currentRole === 'staff') {
       usersQuery = query(usersQuery, where('assignedStaff', '==', currentUser.uid));
@@ -550,14 +587,12 @@
       if (!isLoadingData && ['dashboard','customers','staff','approvals','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }, 'users'));
 
-    // Packages
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'packages'), (snap) => {
       appState.packages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       console.log('[Listener] Packages updated:', appState.packages.length);
       if (!isLoadingData && ['customers','packages'].includes(currentView)) reRenderCurrentView();
     }, 'packages'));
 
-    // Bills
     let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
     if (currentRole === 'staff') billsQuery = query(billsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
@@ -568,7 +603,6 @@
       if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }, 'bills'));
 
-    // Complaints
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
     if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
@@ -578,17 +612,14 @@
       if (!isLoadingData && currentView === 'complaints') reRenderCurrentView();
     }, 'complaints'));
 
-    // Zones
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'zones'), (snap) => {
       appState.zones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }, 'zones'));
 
-    // Areas
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'areas'), (snap) => {
       appState.areas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }, 'areas'));
 
-    // Staff Deposits
     let depositsQuery = query(collection(db, 'staff_deposits'), orderBy('date', 'desc'));
     if (currentRole === 'staff') depositsQuery = query(depositsQuery, where('staffId', '==', currentUser.uid));
     
@@ -597,7 +628,6 @@
       if (!isLoadingData && ['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }, 'staff_deposits'));
 
-    // Salary Requests
     let salaryQuery = query(collection(db, 'salary_requests'), orderBy('requestDate', 'desc'));
     if (currentRole === 'staff') salaryQuery = query(salaryQuery, where('staffId', '==', currentUser.uid));
     
@@ -632,6 +662,7 @@
     updateBottomNavActive();
     updateSidebarActive();
     closeMobileProfile();
+    closeUserDropdown();
     
     if (window.innerWidth < 768 && sidebarOpen) closeSidebar();
   };
@@ -674,7 +705,7 @@
             <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
               <span class="text-3xl font-bold text-white">O</span>
             </div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.2.1</h1>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.2.2</h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">ISP Reseller Management System</p>
           </div>
           <form id="login-form" class="space-y-4">
@@ -686,7 +717,7 @@
               <label class="text-sm font-medium mb-2 block">Password</label>
               <input type="password" id="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none transition" placeholder="••••••••">
             </div>
-            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition">
+            <button type="submit" id="login-submit-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition">
               Sign In
             </button>
           </form>
@@ -701,6 +732,10 @@
       e.stopPropagation();
       const email = $('#email').value;
       const password = $('#password').value;
+      const submitBtn = $('#login-submit-btn');
+      submitBtn.classList.add('btn-loading');
+      submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2"></i>Signing In...';
+      lucide.createIcons();
       try {
         showAuthLoading(true);
         await signInWithEmailAndPassword(auth, email, password);
@@ -708,6 +743,10 @@
       } catch (err) {
         showAuthLoading(false);
         showToast(err.message, 'error');
+      } finally {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.innerHTML = 'Sign In';
+        lucide.createIcons();
       }
     });
     lucide.createIcons();
@@ -814,6 +853,40 @@
                 <button onclick="toggleTheme()" class="p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                   <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-5 h-5"></i>
                 </button>
+                <div class="hidden md:block relative desktop-only">
+                  <button onclick="toggleUserDropdown()" class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
+                    <img src="${userPhoto}" class="w-8 h-8 rounded-full">
+                    <div class="text-left hidden lg:block">
+                      <p class="text-sm font-medium leading-tight">${currentUserData?.name}</p>
+                      <p class="text-xs text-slate-500 uppercase">${currentRole}</p>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500"></i>
+                  </button>
+                  <div id="user-dropdown" class="user-dropdown hidden glass rounded-xl shadow-2xl border border-[rgb(var(--border))] scale-in">
+                    <div class="p-3 border-b border-[rgb(var(--border))]">
+                      <div class="flex items-center gap-3">
+                        <img src="${userPhoto}" class="w-10 h-10 rounded-full">
+                        <div>
+                          <p class="text-sm font-semibold">${currentUserData?.name}</p>
+                          <p class="text-xs text-slate-500 truncate">${currentUser?.email}</p>
+                          <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-600 uppercase font-semibold mt-1 inline-block">${currentRole}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="p-2 space-y-1">
+                      <button onclick="showView('profile'); closeUserDropdown()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgb(var(--border))] text-left text-sm" type="button">
+                        <i data-lucide="user" class="w-4 h-4"></i> Profile Settings
+                      </button>
+                      <button onclick="toggleTheme(); closeUserDropdown()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgb(var(--border))] text-left text-sm" type="button">
+                        <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-4 h-4"></i> Toggle Theme
+                      </button>
+                      <hr class="border-[rgb(var(--border))] my-1">
+                      <button onclick="handleLogout(); closeUserDropdown()" id="logoutBtn" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-rose-500/10 text-rose-600 text-left text-sm" type="button">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <div class="md:hidden relative mobile-only">
                   <button onclick="toggleMobileProfile()" class="p-1 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                     <img src="${userPhoto}" class="w-8 h-8 rounded-full">
@@ -825,6 +898,7 @@
                         <div>
                           <p class="text-sm font-semibold">${currentUserData?.name}</p>
                           <p class="text-xs text-slate-500 truncate">${currentUser?.email}</p>
+                          <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-600 uppercase font-semibold mt-1 inline-block">${currentRole}</span>
                         </div>
                       </div>
                     </div>
@@ -835,6 +909,7 @@
                       <button onclick="toggleTheme(); closeMobileProfile()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgb(var(--border))] text-left text-sm" type="button">
                         <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-4 h-4"></i> Toggle Theme
                       </button>
+                      <hr class="border-[rgb(var(--border))] my-1">
                       <button onclick="handleLogout(); closeMobileProfile()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-rose-500/10 text-rose-600 text-left text-sm" type="button">
                         <i data-lucide="log-out" class="w-4 h-4"></i> Logout
                       </button>
@@ -891,6 +966,12 @@
       if (dropdown && !dropdown.contains(e.target) && !btn) {
         closeMobileProfile();
       }
+      
+      const userDropdown = $('#user-dropdown');
+      const userBtn = e.target.closest('.desktop-only button');
+      if (userDropdown && !userDropdown.contains(e.target) && !userBtn) {
+        closeUserDropdown();
+      }
     });
     
     const sidebar = $('#sidebar');
@@ -935,7 +1016,7 @@
   window.showProfileMenu = () => {
     const userPhoto = currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`;
     showModal(`
-      <div class="p-6">
+      <div class="modal-content p-6">
         <div class="flex items-center gap-4 mb-6">
           <img src="${userPhoto}" class="w-16 h-16 rounded-2xl">
           <div>
@@ -960,10 +1041,20 @@
   };
 
   const handleLogout = async () => {
-    cleanupListeners();
-    await signOut(auth);
-    showToast('Logged out successfully', 'success');
-    closeModal();
+    try {
+      console.log('[Auth] Logging out user');
+      cleanupListeners();
+      await signOut(auth);
+      showToast('Logged out successfully', 'success');
+      closeModal();
+      closeUserDropdown();
+      currentUser = null;
+      currentUserData = null;
+      currentRole = null;
+    } catch (err) {
+      console.error('Logout error:', err);
+      showToast('Logout failed: ' + err.message, 'error');
+    }
   };
   window.handleLogout = handleLogout;
 
@@ -972,7 +1063,6 @@
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && (u.status === 'approved' || !u.status))
       : appState.users.filter(u => u.role === 'customer' && (u.status === 'approved' || !u.status));
     
-    // Fix: Bug 1 - Staff list includes all statuses for admin
     const staffList = appState.users.filter(u => u.role === 'staff' && (u.status === 'approved'));
     const bills = appState.bills;
     
@@ -1073,6 +1163,7 @@
             <div class="h-[250px] md:h-[280px]">
               <canvas id="paymentChart"></canvas>
             </div>
+          </div>
           <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
             <h3 class="font-bold mb-2 flex items-center gap-2 text-sm">
               <i data-lucide="bar-chart" class="w-4 h-4 text-indigo-600"></i> Monthly Collection
@@ -1326,34 +1417,36 @@
     const zoneOptions = (appState.zones || []).map(z => `<option value="${z.name}" ${customer?.zone===z.name?'selected':''}>${z.name}</option>`).join('');
     
     showModal(`
-      <form id="customer-form" class="p-6 max-h-[80vh] overflow-y-auto">
+      <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
-        <div class="grid md:grid-cols-2 gap-4">
-          <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${customer?.mobile||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
-          <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
-          <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
-          <div><label class="text-sm font-medium mb-2 block">Assigned Staff</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Staff</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
-          <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
-          ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
+        <form id="customer-form">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${customer?.mobile||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">Assigned Staff</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Staff</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
+            ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button type="submit" id="customer-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
     `);
 
     $('#customer-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const submitBtn = $('#customer-submit-btn');
       submitBtn.classList.add('btn-loading');
       submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2"></i>Saving...';
       lucide.createIcons();
@@ -1370,21 +1463,51 @@
       data.status = currentRole === 'staff' ? 'pending' : 'approved';
       data.addedBy = currentUser.uid;
       
+      let userCred = null;
+      let docCreated = false;
+      
       try {
+        console.log('[Customer Create] Starting. Data:', data);
         if (id) {
           await updateDoc(doc(db, 'users', id), data);
           await logActivity('Update Customer', `Updated customer: ${data.name}`);
           showToast('Customer updated successfully', 'success');
         } else {
-          const userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
+          console.log('[Customer Create] Creating auth user for:', data.email);
+          const secondaryAut = initSecondaryAuth();
+          userCred = await createUserWithEmailAndPassword(secondaryAut, data.email, data.password);
+          console.log('[Customer Create] Auth user created:', userCred.user.uid);
+          
           delete data.password;
-          await setDoc(doc(db, 'users', userCred.user.uid), { ...data, createdAt: serverTimestamp() });
+          const userData = {
+            ...data,
+            createdAt: serverTimestamp()
+          };
+          
+          console.log('[Customer Create] Creating Firestore doc');
+          await setDoc(doc(db, 'users', userCred.user.uid), userData);
+          docCreated = true;
+          console.log('[Customer Create] Firestore doc created');
+          
           await logActivity('Add Customer', `Added customer: ${data.name} (${data.status})`);
           showToast(`Customer added ${data.status === 'pending' ? 'and pending approval' : 'successfully'}`, 'success');
         }
         closeModal();
+        setTimeout(() => renderCustomers(myCustomers), 500);
       } catch (err) {
-        showToast(err.message, 'error');
+        console.error('[Customer Create] Error:', err);
+        if (userCred && !docCreated && secondaryAuth?.currentUser?.uid === userCred.user.uid) {
+          try {
+            console.log('[Customer Create] Rolling back auth user');
+            await deleteUser(userCred.user);
+            showToast('Failed to create customer. Auth user rolled back.', 'error');
+          } catch (deleteErr) {
+            console.error('Rollback failed:', deleteErr);
+            showToast('Error: ' + err.message, 'error');
+          }
+        } else {
+          showToast(err.message, 'error');
+        }
       } finally {
         submitBtn.classList.remove('btn-loading');
         submitBtn.innerHTML = 'Save Customer';
@@ -1397,7 +1520,7 @@
     const c = appState.users.find(u => u.id === id);
     const bills = appState.bills.filter(b => b.customerId === id);
     showModal(`
-      <div class="p-6 max-h-[80vh] overflow-y-auto">
+      <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Customer Details</h3>
         <div class="space-y-4">
           ${Object.entries(c).filter(([k,v])=>!['id','role','createdAt','password','status'].includes(k)&&v).map(([k,v])=>`
@@ -1421,452 +1544,7 @@
     `);
   };
 
-  const renderApprovals = () => {
-    const pendingUsers = appState.users.filter(u => u.status === 'pending');
-    // Bug 1 Fix: Add tabs for Staff Accounts and Customers
-    const pendingStaff = pendingUsers.filter(u => u.role === 'staff');
-    const pendingCustomers = pendingUsers.filter(u => u.role === 'customer');
-    
-    const container = document.getElementById('view-approvals');
-    if (!container) return;
-
-    const activeTab = container.dataset.activeTab || 'all';
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        <h3 class="font-bold text-lg">Pending Approvals</h3>
-        
-        <div class="flex gap-2 border-b border-[rgb(var(--border))]">
-          <button data-tab="all" class="approval-tab px-4 py-2 font-medium text-sm border-b-2 ${activeTab === 'all' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500'}" type="button">
-            All (${pendingUsers.length})
-          </button>
-          <button data-tab="staff" class="approval-tab px-4 py-2 font-medium text-sm border-b-2 ${activeTab === 'staff' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500'}" type="button">
-            Staff Accounts (${pendingStaff.length})
-          </button>
-          <button data-tab="customer" class="approval-tab px-4 py-2 font-medium text-sm border-b-2 ${activeTab === 'customer' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500'}" type="button">
-            Customers (${pendingCustomers.length})
-          </button>
-        </div>
-
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading approvals...</span></div>' : `
-        <div class="space-y-3">
-          ${getFilteredPendingUsers(activeTab).length ? getFilteredPendingUsers(activeTab).map(u => `
-            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <h4 class="font-bold">${u.name}</h4>
-                    <span class="badge ${u.role === 'staff' ? 'bg-indigo-500/20 text-indigo-600' : 'bg-sky-500/20 text-sky-600'}">${u.role}</span>
-                  </div>
-                  <p class="text-sm text-slate-600 dark:text-slate-400">${u.email} • ${u.mobile}</p>
-                  <p class="text-xs text-slate-500 mt-1">Added by: ${u.addedBy} • ${formatDateTime(u.createdAt)}</p>
-                </div>
-                <div class="flex gap-2">
-                  <button onclick="approveUser('${u.id}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 font-semibold text-sm" type="button">
-                    <i data-lucide="check" class="w-4 h-4"></i> Approve
-                  </button>
-                  <button onclick="rejectUser('${u.id}')" class="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-600 font-semibold text-sm" type="button">
-                    <i data-lucide="x" class="w-4 h-4"></i> Reject
-                  </button>
-                </div>
-              </div>
-            </div>
-          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No pending approvals</div>'}
-        </div>
-        `}
-      </div>
-    `;
-
-    function getFilteredPendingUsers(tab) {
-      if (tab === 'staff') return pendingStaff;
-      if (tab === 'customer') return pendingCustomers;
-      return pendingUsers;
-    }
-
-    $$('#view-approvals .approval-tab').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const tab = e.target.dataset.tab;
-        container.dataset.activeTab = tab;
-        renderApprovals();
-      });
-    });
-  };
-
-  window.approveUser = async (id) => {
-    try {
-      await updateDoc(doc(db, 'users', id), { status: 'approved', approvedAt: serverTimestamp(), approvedBy: currentUser.uid });
-      await logActivity('Approve User', `Approved user account`);
-      showToast('User approved successfully', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  window.rejectUser = async (id) => {
-    if (!confirm('Reject this user? They will not be able to login.')) return;
-    try {
-      await updateDoc(doc(db, 'users', id), { status: 'rejected', rejectedAt: serverTimestamp(), rejectedBy: currentUser.uid });
-      await logActivity('Reject User', `Rejected user account`);
-      showToast('User rejected', 'warning');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  const renderMyWallet = () => {
-    const myDeposits = appState.staffDeposits.filter(d => d.staffId === currentUser.uid);
-    const mySalary = appState.salaryRequests.filter(s => s.staffId === currentUser.uid);
-    const myBills = appState.bills.filter(b => b.staffId === currentUser.uid);
-    
-    const totalCollected = myBills.filter(b => b.status === 'paid').reduce((sum, b) => sum + b.amount, 0);
-    const totalDeposited = myDeposits.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0);
-    const totalSalaryPaid = mySalary.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.amount, 0);
-    const pendingDeposit = myDeposits.filter(d => d.status === 'pending').reduce((sum, d) => sum + d.amount, 0);
-    const pendingSalary = mySalary.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.amount, 0);
-    const balance = totalCollected - totalDeposited - totalSalaryPaid;
-
-    const container = document.getElementById('view-mywallet');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-6 fade-in">
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading wallet data...</span></div>' : `
-        <div class="grid md:grid-cols-4 gap-4">
-          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-            <p class="text-sm text-slate-500 mb-1">Total Collected</p>
-            <p class="text-2xl font-bold text-sky-600">${formatCurrency(totalCollected)}</p>
-          </div>
-          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-            <p class="text-sm text-slate-500 mb-1">Deposited</p>
-            <p class="text-2xl font-bold text-emerald-600">${formatCurrency(totalDeposited)}</p>
-          </div>
-          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-            <p class="text-sm text-slate-500 mb-1">Salary Paid</p>
-            <p class="text-2xl font-bold text-indigo-600">${formatCurrency(totalSalaryPaid)}</p>
-          </div>
-          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-            <p class="text-sm text-slate-500 mb-1">Balance</p>
-            <p class="text-2xl font-bold ${balance >= 0 ? 'text-amber-600' : 'text-rose-600'}">${formatCurrency(balance)}</p>
-          </div>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-4">
-          <button onclick="showDepositForm()" class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition text-left" type="button">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <i data-lucide="arrow-down-circle" class="w-6 h-6 text-emerald-600"></i>
-              </div>
-              <div>
-                <h3 class="font-bold">Deposit to Admin</h3>
-                <p class="text-sm text-slate-500">Pending: ${formatCurrency(pendingDeposit)}</p>
-              </div>
-            </div>
-          </button>
-          <button onclick="showSalaryRequestForm()" class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition text-left" type="button">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-                <i data-lucide="dollar-sign" class="w-6 h-6 text-indigo-600"></i>
-              </div>
-              <div>
-                <h3 class="font-bold">Request Salary</h3>
-                <p class="text-sm text-slate-500">Pending: ${formatCurrency(pendingSalary)}</p>
-              </div>
-            </div>
-          </button>
-        </div>
-
-        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold mb-4">Recent Deposits</h3>
-          <div class="space-y-2">
-            ${myDeposits.slice(0, 5).map(d => `
-              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
-                <div>
-                  <p class="font-semibold">${formatCurrency(d.amount)} - ${d.method}</p>
-                  <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
-                </div>
-                <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
-              </div>
-            `).join('') || '<p class="text-center text-slate-500 py-4">No deposits yet</p>'}
-          </div>
-        </div>
-
-        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold mb-4">Salary Requests</h3>
-          <div class="space-y-2">
-            ${mySalary.slice(0, 5).map(s => `
-              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
-                <div>
-                  <p class="font-semibold">${formatCurrency(s.amount)}</p>
-                  <p class="text-xs text-slate-500">Requested: ${formatDate(s.requestDate)}</p>
-                </div>
-                <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
-              </div>
-            `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
-          </div>
-        </div>
-        `}
-      </div>
-    `;
-  };
-
-  window.showDepositForm = () => {
-    showModal(`
-      <form id="deposit-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
-        <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
-          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
-    `);
-
-    $('#deposit-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      try {
-        await addDoc(collection(db, 'staff_deposits'), {
-          staffId: currentUser.uid,
-          staffName: currentUserData.name,
-          amount: Number(data.amount),
-          method: data.method,
-          trxId: data.trxId,
-          date: serverTimestamp(),
-          status: 'pending'
-        });
-        await logActivity('Staff Deposit', `Deposit request: ${formatCurrency(data.amount)} via ${data.method}`);
-        showToast('Deposit request submitted', 'success');
-        closeModal();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  };
-
-  window.showSalaryRequestForm = () => {
-    showModal(`
-      <form id="salary-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">Request Salary</h3>
-        <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
-    `);
-
-    $('#salary-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      try {
-        await addDoc(collection(db, 'salary_requests'), {
-          staffId: currentUser.uid,
-          staffName: currentUserData.name,
-          amount: Number(data.amount),
-          reason: data.reason || '',
-          requestDate: serverTimestamp(),
-          status: 'pending'
-        });
-        await logActivity('Salary Request', `Salary request: ${formatCurrency(data.amount)}`);
-        showToast('Salary request submitted', 'success');
-        closeModal();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  };
-
-  const renderStaffAccounts = () => {
-    // Bug 1 Fix: Show ALL staff regardless of status
-    const staffList = appState.users.filter(u => u.role === 'staff');
-    const container = document.getElementById('view-staffaccounts');
-    if (!container) return;
-
-    const staffData = staffList.map(staff => {
-      const deposits = appState.staffDeposits.filter(d => d.staffId === staff.id);
-      const salaries = appState.salaryRequests.filter(s => s.staffId === staff.id);
-      const bills = appState.bills.filter(b => b.staffId === staff.id && b.status === 'paid');
-      
-      const totalCollected = bills.reduce((sum, b) => sum + b.amount, 0);
-      const totalDeposited = deposits.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0);
-      const totalSalaryPaid = salaries.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.amount, 0);
-      const pendingDeposit = deposits.filter(d => d.status === 'pending').reduce((sum, d) => sum + d.amount, 0);
-      const pendingSalary = salaries.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.amount, 0);
-      const balance = totalCollected - totalDeposited - totalSalaryPaid;
-
-      return { staff, totalCollected, totalDeposited, totalSalaryPaid, balance, pendingDeposit, pendingSalary };
-    });
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff accounts...</span></div>' : `
-        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-          <div class="table-container">
-            <table class="w-full">
-              <thead class="bg-[rgb(var(--border))] text-sm">
-                <tr>
-                  <th class="text-left p-4 font-semibold">Staff Name</th>
-                  <th class="text-left p-4 font-semibold">Collected</th>
-                  <th class="text-left p-4 font-semibold">Deposited</th>
-                  <th class="text-left p-4 font-semibold">Salary Paid</th>
-                  <th class="text-left p-4 font-semibold">Balance</th>
-                  <th class="text-left p-4 font-semibold">Pending</th>
-                  <th class="text-right p-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${staffData.map(data => `
-                  <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-                    <td class="p-4">
-                      <div class="font-semibold">${data.staff.name}</div>
-                      <div class="text-xs text-slate-500 flex items-center gap-2">
-                        <span>${data.staff.mobile}</span>
-                        <span class="badge ${data.staff.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : data.staff.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
-                          ${data.staff.status || 'approved'}
-                        </span>
-                      </div>
-                    </td>
-                    <td class="p-4 font-semibold text-sky-600">${formatCurrency(data.totalCollected)}</td>
-                    <td class="p-4 font-semibold text-emerald-600">${formatCurrency(data.totalDeposited)}</td>
-                    <td class="p-4 font-semibold text-indigo-600">${formatCurrency(data.totalSalaryPaid)}</td>
-                    <td class="p-4">
-                      <span class="font-bold ${data.balance >= 0 ? 'text-amber-600' : 'text-rose-600'}">${formatCurrency(data.balance)}</span>
-                    </td>
-                    <td class="p-4">
-                      <div class="text-xs">
-                        <div class="text-amber-600">Deposit: ${formatCurrency(data.pendingDeposit)}</div>
-                        <div class="text-purple-600">Salary: ${formatCurrency(data.pendingSalary)}</div>
-                      </div>
-                    </td>
-                    <td class="p-4">
-                      <button onclick="viewStaffDetails('${data.staff.id}')" class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                `).join('') || '<tr><td colspan="7" class="p-8 text-center text-slate-500">No staff accounts</td></tr>'}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        `}
-      </div>
-    `;
-  };
-
-  window.viewStaffDetails = (staffId) => {
-    const staff = appState.users.find(u => u.id === staffId);
-    const deposits = appState.staffDeposits.filter(d => d.staffId === staffId);
-    const salaries = appState.salaryRequests.filter(s => s.staffId === staffId);
-    
-    showModal(`
-      <div class="p-6 max-h-[80vh] overflow-y-auto">
-        <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'} <span class="badge ${staff.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : staff.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">${staff.status || 'approved'}</span></h3>
-        
-        <div class="mb-6">
-          <h4 class="font-bold mb-3">Deposits</h4>
-          <div class="space-y-2">
-            ${deposits.map(d => `
-              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
-                <div>
-                  <p class="font-semibold">${formatCurrency(d.amount)} - ${d.method}</p>
-                  <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
-                  ${d.status === 'pending' ? `<button onclick="approveDeposit('${d.id}')" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-600" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
-                </div>
-              </div>
-            `).join('') || '<p class="text-center text-slate-500 py-4">No deposits</p>'}
-          </div>
-        </div>
-
-        <div class="mb-6">
-          <h4 class="font-bold mb-3">Salary Requests</h4>
-          <div class="space-y-2">
-            ${salaries.map(s => `
-              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
-                <div>
-                  <p class="font-semibold">${formatCurrency(s.amount)}</p>
-                  <p class="text-xs text-slate-500">Requested: ${formatDate(s.requestDate)}</p>
-                  ${s.reason ? `<p class="text-xs text-slate-500">Reason: ${s.reason}</p>` : ''}
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
-                  ${s.status === 'pending' ? `<button onclick="paySalary('${s.id}')" class="p-2 rounded-lg bg-indigo-500/20 text-indigo-600" type="button"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>` : ''}
-                </div>
-              </div>
-            `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
-          </div>
-        </div>
-
-        <button onclick="closeModal()" class="w-full py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
-      </div>
-    `);
-    lucide.createIcons();
-  };
-
-  window.approveDeposit = async (id) => {
-    try {
-      await updateDoc(doc(db, 'staff_deposits', id), { 
-        status: 'approved', 
-        approvedBy: currentUser.uid,
-        approvedAt: serverTimestamp()
-      });
-      await logActivity('Approve Deposit', `Approved staff deposit`);
-      showToast('Deposit approved', 'success');
-      closeModal();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  window.paySalary = (id) => {
-    showModal(`
-      <form id="pay-salary-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
-        <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
-          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
-    `);
-
-    $('#pay-salary-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      try {
-        await updateDoc(doc(db, 'salary_requests', id), { 
-          status: 'paid',
-          paidBy: currentUser.uid,
-          paidDate: serverTimestamp(),
-          method: data.method,
-          trxId: data.trxId
-        });
-        await logActivity('Pay Salary', `Paid salary via ${data.method}`);
-        showToast('Salary paid successfully', 'success');
-        closeModal();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  };
-
-  // Bug 1 Fix: Show ALL staff including pending
+  // Bug 3 Fix: Show ALL staff including pending/rejected with status badge
   const renderStaff = () => {
     const list = appState.users.filter(u => u.role === 'staff');
     const container = document.getElementById('view-staff');
@@ -1921,22 +1599,24 @@
   window.showStaffForm = (id = null) => {
     const staff = id ? appState.users.find(u => u.id === id) : null;
     showModal(`
-      <form id="staff-form" class="p-6">
+      <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff</h3>
-        <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
-          ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
-          ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">Status</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="pending" ${staff?.status === 'pending' ? 'selected' : ''}>Pending</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" id="staff-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
+        <form id="staff-form">
+          <div class="space-y-4">
+            <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
+            ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+            ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">Status</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="pending" ${staff?.status === 'pending' ? 'selected' : ''}>Pending</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button type="submit" id="staff-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
     `);
 
     $('#staff-form').addEventListener('submit', async (e) => {
@@ -1956,6 +1636,7 @@
       let docCreated = false;
       
       try {
+        console.log('[Staff Create] Starting. Email:', data.email);
         if (id) {
           await updateDoc(doc(db, 'users', id), data);
           await logActivity('Update Staff', `Updated staff: ${data.name}`);
@@ -1963,24 +1644,20 @@
           closeModal();
           renderStaff();
         } else {
-          // Bug 1 & 2 Fix: Create Auth first, then Firestore doc with same UID
-          console.log('[Staff Create] Creating auth user:', data.email);
-          userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
-          console.log('[Staff Create] Auth user created:', userCred.user.uid);
+          // Bug 3 Fix: Use secondary auth to create user without logging out admin
+          console.log('[Staff Create] Initializing secondary auth');
+          const secondaryAut = initSecondaryAuth();
+          console.log('[Staff Create] Creating auth user');
+          userCred = await createUserWithEmailAndPassword(secondaryAut, data.email, data.password);
+          console.log('[Staff Create] Auth user created UID:', userCred.user.uid);
           
+          delete data.password;
           const userData = {
-            name: data.name,
-            email: data.email,
-            mobile: data.mobile,
-            whatsapp: data.whatsapp,
-            address: data.address || '',
-            role: 'staff',
-            status: 'pending',
-            addedBy: currentUser.uid,
+            ...data,
             createdAt: serverTimestamp()
           };
           
-          console.log('[Staff Create] Creating Firestore doc with UID:', userCred.user.uid);
+          console.log('[Staff Create] Creating Firestore doc');
           await setDoc(doc(db, 'users', userCred.user.uid), userData);
           docCreated = true;
           console.log('[Staff Create] Firestore doc created successfully');
@@ -1992,15 +1669,15 @@
         }
       } catch (err) {
         console.error('[Staff Create] Error:', err);
-        // Bug 1 Fix: If Firestore fails after Auth creation, delete the Auth user
-        if (userCred && !docCreated && auth.currentUser?.uid === userCred.user.uid) {
+        // Bug 3 Fix: Rollback if Firestore fails after Auth creation
+        if (userCred && !docCreated && secondaryAuth?.currentUser?.uid === userCred.user.uid) {
           try {
-            console.log('[Staff Create] Rolling back: Deleting auth user');
+            console.log('[Staff Create] Rolling back auth user');
             await deleteUser(userCred.user);
             showToast('Failed to create staff. Auth user rolled back.', 'error');
           } catch (deleteErr) {
             console.error('Rollback failed:', deleteErr);
-            showToast('Error: ' + err.message + ' (Auth user may need manual cleanup)', 'error');
+            showToast('Error: ' + err.message + ' (Manual cleanup may be needed)', 'error');
           }
         } else {
           showToast(err.message, 'error');
@@ -2052,7 +1729,7 @@
                 <span class="text-sm font-medium">${p.speed || '-'}</span>
               </div>
               <div class="flex gap-2">
-                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">Edit</button>
+                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">Edit</button>
                 <button onclick="deletePackage('${p.id}')" class="px-4 py-2 rounded-xl hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
               </div>
             </div>
@@ -2066,18 +1743,20 @@
   window.showPackageForm = (id = null) => {
     const pkg = id ? appState.packages.find(p => p.id === id) : null;
     showModal(`
-      <form id="package-form" class="p-6">
+      <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
-        <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Package Name *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Speed *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="e.g. 10 Mbps" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
+        <form id="package-form">
+          <div class="space-y-4">
+            <div><label class="text-sm font-medium mb-2 block">Package Name *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Speed *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="e.g. 10 Mbps" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
     `);
 
     $('#package-form').addEventListener('submit', async (e) => {
@@ -2382,17 +2061,19 @@ service cloud.firestore {
   window.showAreaForm = (id = null) => {
     const area = id ? appState.areas.find(a => a.id === id) : null;
     showModal(`
-      <form id="area-form" class="p-6">
+      <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
-        <div>
-          <label class="text-sm font-medium mb-2 block">Area Name *</label>
-          <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
+        <form id="area-form">
+          <div>
+            <label class="text-sm font-medium mb-2 block">Area Name *</label>
+            <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
     `);
 
     $('#area-form').addEventListener('submit', async (e) => {
@@ -2429,17 +2110,18 @@ service cloud.firestore {
   window.showZoneForm = (id = null) => {
     const zone = id ? appState.zones.find(z => z.id === id) : null;
     showModal(`
-      <form id="zone-form" class="p-6">
+      <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Zone</h3>
-        <div>
-          <label class="text-sm font-medium mb-2 block">Zone Name *</label>
-          <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
+        <form id="zone-form">
+          <div>
+            <label class="text-sm font-medium mb-2 block">Zone Name *</label>
+            <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div class="flex gap-3 mt-6">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
     `);
 
     $('#zone-form').addEventListener('submit', async (e) => {
@@ -2487,6 +2169,7 @@ service cloud.firestore {
               <p class="text-slate-500">${currentUser?.email || '-'}</p>
               <span class="text-xs px-2 py-1 rounded-full bg-sky-500/20 text-sky-600 uppercase font-semibold mt-2 inline-block">${currentRole || '-'}</span>
             </div>
+          </div>
           <div class="space-y-3">
             ${Object.entries(currentUserData || {}).filter(([k,v])=>!['role','createdAt','photo','status','addedBy','approvedAt'].includes(k)&&v).map(([k,v])=>`
               <div class="flex justify-between py-3 border-b border-[rgb(var(--border))]">
@@ -2515,13 +2198,629 @@ service cloud.firestore {
         </div>
         <div class="p-4 border-t border-[rgb(var(--border))]">
           <form id="chat-form" class="flex gap-2">
-            <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-3 rounded-xl border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white"><i data-lucide="send" class="w-5 h-5"></i></button>
           </form>
         </div>
       </div>
     `;
     lucide.createIcons();
+  };
+
+  // Bug 3 Fix: Approvals page with Staff Accounts tab
+  const renderApprovals = () => {
+    const pendingUsers = appState.users.filter(u => u.status === 'pending');
+    const pendingStaff = pendingUsers.filter(u => u.role === 'staff');
+    const pendingCustomers = pendingUsers.filter(u => u.role === 'customer');
+    
+    const container = document.getElementById('view-approvals');
+    if (!container) return;
+
+    const activeTab = container.dataset.activeTab || 'all';
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        <h3 class="font-bold text-lg">Pending Approvals</h3>
+        
+        <div class="flex gap-2 border-b border-[rgb(var(--border))]">
+          <button data-tab="all" class="approval-tab px-4 py-2 font-medium text-sm border-b-2 ${activeTab === 'all' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500'}" type="button">
+            All (${pendingUsers.length})
+          </button>
+          <button data-tab="staff" class="approval-tab px-4 py-2 font-medium text-sm border-b-2 ${activeTab === 'staff' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500'}" type="button">
+            Staff Accounts (${pendingStaff.length})
+          </button>
+          <button data-tab="customer" class="approval-tab px-4 py-2 font-medium text-sm border-b-2 ${activeTab === 'customer' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500'}" type="button">
+            Customers (${pendingCustomers.length})
+          </button>
+        </div>
+
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading approvals...</span></div>' : `
+        <div class="space-y-3">
+          ${getFilteredPendingUsers(activeTab).length ? getFilteredPendingUsers(activeTab).map(u => `
+            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-2">
+                    <h4 class="font-bold">${u.name}</h4>
+                    <span class="badge ${u.role === 'staff' ? 'bg-indigo-500/20 text-indigo-600' : 'bg-sky-500/20 text-sky-600'}">${u.role}</span>
+                  </div>
+                  <p class="text-sm text-slate-600 dark:text-slate-400">${u.email} • ${u.mobile}</p>
+                  <p class="text-xs text-slate-500 mt-1">Added by: ${u.addedBy} • ${formatDateTime(u.createdAt)}</p>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="approveUser('${u.id}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 font-semibold text-sm" type="button">
+                    <i data-lucide="check" class="w-4 h-4"></i> Approve
+                  </button>
+                  <button onclick="rejectUser('${u.id}')" class="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-600 font-semibold text-sm" type="button">
+                    <i data-lucide="x" class="w-4 h-4"></i> Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No pending approvals</div>'}
+        </div>
+        `}
+      </div>
+    `;
+
+    function getFilteredPendingUsers(tab) {
+      if (tab === 'staff') return pendingStaff;
+      if (tab === 'customer') return pendingCustomers;
+      return pendingUsers;
+    }
+
+    $$('#view-approvals .approval-tab').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tab = e.target.dataset.tab;
+        container.dataset.activeTab = tab;
+        renderApprovals();
+      });
+    });
+  };
+
+  window.approveUser = async (id) => {
+    try {
+      console.log('[Approve] Approving user:', id);
+      await updateDoc(doc(db, 'users', id), { status: 'approved', approvedAt: serverTimestamp(), approvedBy: currentUser.uid });
+      await logActivity('Approve User', `Approved user account`);
+      showToast('User approved successfully', 'success');
+    } catch (err) {
+      console.error('[Approve] Error:', err);
+      showToast(err.message, 'error');
+    }
+  };
+
+  window.rejectUser = async (id) => {
+    if (!confirm('Reject this user? They will not be able to login.')) return;
+    try {
+      await updateDoc(doc(db, 'users', id), { status: 'rejected', rejectedAt: serverTimestamp(), rejectedBy: currentUser.uid });
+      await logActivity('Reject User', `Rejected user account`);
+      showToast('User rejected', 'warning');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const renderMyWallet = () => {
+    const myDeposits = appState.staffDeposits.filter(d => d.staffId === currentUser.uid);
+    const mySalary = appState.salaryRequests.filter(s => s.staffId === currentUser.uid);
+    const myBills = appState.bills.filter(b => b.staffId === currentUser.uid);
+    
+    const totalCollected = myBills.filter(b => b.status === 'paid').reduce((sum, b) => sum + b.amount, 0);
+    const totalDeposited = myDeposits.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0);
+    const totalSalaryPaid = mySalary.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.amount, 0);
+    const pendingDeposit = myDeposits.filter(d => d.status === 'pending').reduce((sum, d) => sum + d.amount, 0);
+    const pendingSalary = mySalary.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.amount, 0);
+    const balance = totalCollected - totalDeposited - totalSalaryPaid;
+
+    const container = document.getElementById('view-mywallet');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-6 fade-in">
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading wallet data...</span></div>' : `
+        <div class="grid md:grid-cols-4 gap-4">
+          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+            <p class="text-sm text-slate-500 mb-1">Total Collected</p>
+            <p class="text-2xl font-bold text-sky-600">${formatCurrency(totalCollected)}</p>
+          </div>
+          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+            <p class="text-sm text-slate-500 mb-1">Deposited</p>
+            <p class="text-2xl font-bold text-emerald-600">${formatCurrency(totalDeposited)}</p>
+          </div>
+          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+            <p class="text-sm text-slate-500 mb-1">Salary Paid</p>
+            <p class="text-2xl font-bold text-indigo-600">${formatCurrency(totalSalaryPaid)}</p>
+          </div>
+          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+            <p class="text-sm text-slate-500 mb-1">Balance</p>
+            <p class="text-2xl font-bold ${balance >= 0 ? 'text-amber-600' : 'text-rose-600'}">${formatCurrency(balance)}</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <button onclick="showDepositForm()" class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition text-left" type="button">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <i data-lucide="arrow-down-circle" class="w-6 h-6 text-emerald-600"></i>
+              </div>
+              <div>
+                <h3 class="font-bold">Deposit to Admin</h3>
+                <p class="text-sm text-slate-500">Pending: ${formatCurrency(pendingDeposit)}</p>
+              </div>
+            </div>
+          </button>
+          <button onclick="showSalaryRequestForm()" class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition text-left" type="button">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                <i data-lucide="dollar-sign" class="w-6 h-6 text-indigo-600"></i>
+              </div>
+              <div>
+                <h3 class="font-bold">Request Salary</h3>
+                <p class="text-sm text-slate-500">Pending: ${formatCurrency(pendingSalary)}</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold mb-4">Recent Deposits</h3>
+          <div class="space-y-2">
+            ${myDeposits.slice(0, 5).map(d => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(d.amount)} - ${d.method}</p>
+                  <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
+                </div>
+                <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No deposits yet</p>'}
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold mb-4">Salary Requests</h3>
+          <div class="space-y-2">
+            ${mySalary.slice(0, 5).map(s => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(s.amount)}</p>
+                  <p class="text-xs text-slate-500">Requested: ${formatDate(s.requestDate)}</p>
+                </div>
+                <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
+          </div>
+        `}
+      </div>
+    `;
+  };
+
+  window.showDepositForm = () => {
+    showModal(`
+      <div class="modal-content p-6">
+        <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
+        <form id="deposit-form" class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `);
+
+    $('#deposit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        await addDoc(collection(db, 'staff_deposits'), {
+          staffId: currentUser.uid,
+          staffName: currentUserData.name,
+          amount: Number(data.amount),
+          method: data.method,
+          trxId: data.trxId,
+          date: serverTimestamp(),
+          status: 'pending'
+        });
+        await logActivity('Staff Deposit', `Deposit request: ${formatCurrency(data.amount)} via ${data.method}`);
+        showToast('Deposit request submitted', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  window.showSalaryRequestForm = () => {
+    showModal(`
+      <div class="modal-content p-6">
+        <h3 class="text-xl font-bold mb-6">Request Salary</h3>
+        <form id="salary-form" class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `);
+
+    $('#salary-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        await addDoc(collection(db, 'salary_requests'), {
+          staffId: currentUser.uid,
+          staffName: currentUserData.name,
+          amount: Number(data.amount),
+          reason: data.reason || '',
+          requestDate: serverTimestamp(),
+          status: 'pending'
+        });
+        await logActivity('Salary Request', `Salary request: ${formatCurrency(data.amount)}`);
+        showToast('Salary request submitted', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  // Bug 3 Fix: Show ALL staff regardless of status with status badge
+  const renderStaffAccounts = () => {
+    const staffList = appState.users.filter(u => u.role === 'staff');
+    const container = document.getElementById('view-staffaccounts');
+    if (!container) return;
+
+    const staffData = staffList.map(staff => {
+      const deposits = appState.staffDeposits.filter(d => d.staffId === staff.id);
+      const salaries = appState.salaryRequests.filter(s => s.staffId === staff.id);
+      const bills = appState.bills.filter(b => b.staffId === staff.id && b.status === 'paid');
+      
+      const totalCollected = bills.reduce((sum, b) => sum + b.amount, 0);
+      const totalDeposited = deposits.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0);
+      const totalSalaryPaid = salaries.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.amount, 0);
+      const pendingDeposit = deposits.filter(d => d.status === 'pending').reduce((sum, d) => sum + d.amount, 0);
+      const pendingSalary = salaries.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.amount, 0);
+      const balance = totalCollected - totalDeposited - totalSalaryPaid;
+
+      return { staff, totalCollected, totalDeposited, totalSalaryPaid, balance, pendingDeposit, pendingSalary };
+    });
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff accounts...</span></div>' : `
+        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
+          <div class="table-container">
+            <table class="w-full">
+              <thead class="bg-[rgb(var(--border))] text-sm">
+                <tr>
+                  <th class="text-left p-4 font-semibold">Staff Name</th>
+                  <th class="text-left p-4 font-semibold">Collected</th>
+                  <th class="text-left p-4 font-semibold">Deposited</th>
+                  <th class="text-left p-4 font-semibold">Salary Paid</th>
+                  <th class="text-left p-4 font-semibold">Balance</th>
+                  <th class="text-left p-4 font-semibold">Pending</th>
+                  <th class="text-right p-4 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${staffData.map(data => `
+                  <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
+                    <td class="p-4">
+                      <div class="font-semibold">${data.staff.name}</div>
+                      <div class="text-xs text-slate-500 flex items-center gap-2">
+                        <span>${data.staff.mobile}</span>
+                        <span class="badge ${data.staff.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : data.staff.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
+                          ${data.staff.status || 'approved'}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="p-4 font-semibold text-sky-600">${formatCurrency(data.totalCollected)}</td>
+                    <td class="p-4 font-semibold text-emerald-600">${formatCurrency(data.totalDeposited)}</td>
+                    <td class="p-4 font-semibold text-indigo-600">${formatCurrency(data.totalSalaryPaid)}</td>
+                    <td class="p-4">
+                      <span class="font-bold ${data.balance >= 0 ? 'text-amber-600' : 'text-rose-600'}">${formatCurrency(data.balance)}</span>
+                    </td>
+                    <td class="p-4">
+                      <div class="text-xs">
+                        <div class="text-amber-600">Deposit: ${formatCurrency(data.pendingDeposit)}</div>
+                        <div class="text-purple-600">Salary: ${formatCurrency(data.pendingSalary)}</div>
+                      </div>
+                    </td>
+                    <td class="p-4">
+                      <button onclick="viewStaffDetails('${data.staff.id}')" class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                `).join('') || '<tr><td colspan="7" class="p-8 text-center text-slate-500">No staff accounts</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        `}
+      </div>
+    `;
+  };
+
+  window.viewStaffDetails = (staffId) => {
+    const staff = appState.users.find(u => u.id === staffId);
+    const deposits = appState.staffDeposits.filter(d => d.staffId === staffId);
+    const salaries = appState.salaryRequests.filter(s => s.staffId === staffId);
+    
+    showModal(`
+      <div class="modal-content p-6">
+        <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'} <span class="badge ${staff.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : staff.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">${staff.status || 'approved'}</span></h3>
+        
+        <div class="mb-6">
+          <h4 class="font-bold mb-3">Deposits</h4>
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            ${deposits.map(d => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(d.amount)} - ${d.method}</p>
+                  <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
+                  ${d.status === 'pending' ? `<button onclick="approveDeposit('${d.id}')" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-600" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
+                </div>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No deposits</p>'}
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <h4 class="font-bold mb-3">Salary Requests</h4>
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            ${salaries.map(s => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(s.amount)}</p>
+                  <p class="text-xs text-slate-500">Requested: ${formatDate(s.requestDate)}</p>
+                  ${s.reason ? `<p class="text-xs text-slate-500">Reason: ${s.reason}</p>` : ''}
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
+                  ${s.status === 'pending' ? `<button onclick="paySalary('${s.id}')" class="p-2 rounded-lg bg-indigo-500/20 text-indigo-600" type="button"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>` : ''}
+                </div>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
+          </div>
+        </div>
+
+        <button onclick="closeModal()" class="w-full py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
+      </div>
+    `);
+    lucide.createIcons();
+  };
+
+  window.approveDeposit = async (id) => {
+    try {
+      await updateDoc(doc(db, 'staff_deposits', id), { 
+        status: 'approved', 
+        approvedBy: currentUser.uid,
+        approvedAt: serverTimestamp()
+      });
+      await logActivity('Approve Deposit', `Approved staff deposit`);
+      showToast('Deposit approved', 'success');
+      closeModal();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  window.paySalary = (id) => {
+    showModal(`
+      <div class="modal-content p-6">
+        <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
+        <form id="pay-salary-form" class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `);
+
+    $('#pay-salary-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        await updateDoc(doc(db, 'salary_requests', id), { 
+          status: 'paid',
+          paidBy: currentUser.uid,
+          paidDate: serverTimestamp(),
+          method: data.method,
+          trxId: data.trxId
+        });
+        await logActivity('Pay Salary', `Paid salary via ${data.method}`);
+        showToast('Salary paid successfully', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  const renderBills = (myBills = false) => {
+    const list = myBills && currentRole === 'customer'
+      ? appState.bills.filter(b => b.customerId === currentUser.uid)
+      : appState.bills;
+
+    const viewId = myBills ? 'view-mybills' : 'view-bills';
+    const container = document.getElementById(viewId);
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+          </div>
+          <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
+            <i data-lucide="download" class="w-5 h-5"></i> Export CSV
+          </button>
+        </div>
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
+        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
+          <div class="table-container">
+            <table class="w-full">
+              <thead class="bg-[rgb(var(--border))] text-sm">
+                <tr>
+                  <th class="text-left p-4 font-semibold">Invoice</th>
+                  ${currentRole !== 'customer' ? '<th class="text-left p-4 font-semibold">Customer</th>' : ''}
+                  <th class="text-left p-4 font-semibold">Amount</th>
+                  <th class="text-left p-4 font-semibold">Method</th>
+                  <th class="text-left p-4 font-semibold">Status</th>
+                  <th class="text-left p-4 font-semibold">Date</th>
+                  <th class="text-right p-4 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="bills-tbody">${renderBillsTable(list)}</tbody>
+            </table>
+          </div>
+        </div>
+        `}
+      </div>
+    `;
+
+    $('#search-bill')?.addEventListener('input', debounce((e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = list.filter(b => 
+        b.invoiceNo?.toLowerCase().includes(q) || 
+        b.customerName?.toLowerCase().includes(q) ||
+        b.trxId?.toLowerCase().includes(q)
+      );
+      $('#bills-tbody').innerHTML = renderBillsTable(filtered);
+      lucide.createIcons();
+    }, 300));
+  };
+
+  const renderBillsTable = (bills) => {
+    if (!bills.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
+    return bills.map(b => `
+      <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
+        <td class="p-4"><div class="font-mono text-sm font-semibold">${b.invoiceNo || '-'}</div></td>
+        ${currentRole !== 'customer' ? `<td class="p-4"><div class="font-medium">${b.customerName || '-'}</div><div class="text-xs text-slate-500">${b.customerMobile || '-'}</div></td>` : ''}
+        <td class="p-4 font-bold text-sky-600">${formatCurrency(b.amount)}</td>
+        <td class="p-4 text-sm">${b.paymentMethod || '-'}</td>
+        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td>
+        <td class="p-4 text-sm">${formatDate(b.createdAt)}</td>
+        <td class="p-4"><div class="flex items-center justify-end gap-2">
+          <button onclick='window.showInvoicePreviewFromBill("${b.id}")' class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
+          ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="Mark Paid" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
+        </div></td>
+      </tr>
+    `).join('');
+  };
+
+  window.showInvoicePreviewFromBill = (id) => {
+    const bill = appState.bills.find(b => b.id === id);
+    if (bill) showInvoicePreview(bill);
+  };
+
+  window.markPaid = async (id) => {
+    try {
+      await updateDoc(doc(db, 'bills', id), { status: 'paid', paidAt: serverTimestamp() });
+      await logActivity('Bill Update', `Marked bill as paid`);
+      showToast('Bill marked as paid', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const renderComplaints = () => {
+    const list = currentRole === 'customer' 
+      ? appState.complaints.filter(c => c.customerId === currentUser.uid)
+      : currentRole === 'staff'
+      ? appState.complaints.filter(c => c.staffId === currentUser.uid)
+      : appState.complaints;
+
+    const container = document.getElementById('view-complaints');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        ${currentRole === 'customer' ? `
+        <button onclick="showComplaintForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
+          <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
+        </button>
+        ` : ''}
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading complaints...</span></div>' : `
+        <div class="space-y-3">
+          ${list.length ? list.map(c => `
+            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-2">
+                    <h4 class="font-bold">${c.subject || '-'}</h4>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status || 'pending'}</span>
+                  </div>
+                  <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between text-xs text-slate-500">
+                <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
+                ${currentRole !== 'customer' && c.status !== 'resolved' ? `
+                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">Mark Resolved</button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No complaints found</div>'}
+        </div>
+        `}
+      </div>
+    `;
+  };
+
+  window.showComplaintForm = () => {
+    showModal(`
+      <div class="modal-content p-6">
+        <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
+        <form id="complaint-form" class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `);
+
+    $('#complaint-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        await addDoc(collection(db, 'complaints'), {
+          ...data,
+          customerId: currentUser.uid,
+          customerName: currentUserData.name,
+          staffId: currentUserData.assignedStaff || null,
+          status: 'pending',
+          createdAt: serverTimestamp()
+        });
+        await logActivity('Complaint', `New complaint: ${data.subject}`);
+        showToast('Complaint submitted', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  window.updateComplaintStatus = async (id, status) => {
+    try {
+      await updateDoc(doc(db, 'complaints', id), { status, updatedAt: serverTimestamp() });
+      await logActivity('Complaint Update', `Status changed to ${status}`);
+      showToast('Status updated', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   };
 
   const renderInvoice = () => {
@@ -2547,20 +2846,15 @@ service cloud.firestore {
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Amount *</label>
-                <input type="number" name="amount" id="invoice-amount" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-              <div>
+                <input type="number" name="amount" id="invoice-amount" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div>
                 <label class="text-sm font-medium mb-2 block">Payment Method *</label>
-                <select name="paymentMethod" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
-              <div>
+                <select name="paymentMethod" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div>
                 <label class="text-sm font-medium mb-2 block">Transaction ID</label>
-                <input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-              <div>
+                <input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div>
                 <label class="text-sm font-medium mb-2 block">Status *</label>
-                <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div>
-              <div>
+                <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div><div>
                 <label class="text-sm font-medium mb-2 block">Promise Date</label>
-                <input type="date" name="promiseDate" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-              <div class="md:col-span-2">
+                <input type="date" name="promiseDate" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="md:col-span-2">
                 <label class="text-sm font-medium mb-2 block">Notes</label>
                 <textarea name="notes" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
             </div>
@@ -2748,185 +3042,6 @@ service cloud.firestore {
     window.open(url, '_blank');
   };
 
-  const renderBills = (myBills = false) => {
-    const list = myBills && currentRole === 'customer'
-      ? appState.bills.filter(b => b.customerId === currentUser.uid)
-      : appState.bills;
-
-    const viewId = myBills ? 'view-mybills' : 'view-bills';
-    const container = document.getElementById(viewId);
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        <div class="flex flex-col sm:flex-row gap-3">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-          </div>
-          <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
-            <i data-lucide="download" class="w-5 h-5"></i> Export CSV
-          </button>
-        </div>
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
-        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-          <div class="table-container">
-            <table class="w-full">
-              <thead class="bg-[rgb(var(--border))] text-sm">
-                <tr>
-                  <th class="text-left p-4 font-semibold">Invoice</th>
-                  ${currentRole !== 'customer' ? '<th class="text-left p-4 font-semibold">Customer</th>' : ''}
-                  <th class="text-left p-4 font-semibold">Amount</th>
-                  <th class="text-left p-4 font-semibold">Method</th>
-                  <th class="text-left p-4 font-semibold">Status</th>
-                  <th class="text-left p-4 font-semibold">Date</th>
-                  <th class="text-right p-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="bills-tbody">${renderBillsTable(list)}</tbody>
-            </table>
-          </div>
-        </div>
-        `}
-      </div>
-    `;
-
-    $('#search-bill')?.addEventListener('input', debounce((e) => {
-      const q = e.target.value.toLowerCase();
-      const filtered = list.filter(b => 
-        b.invoiceNo?.toLowerCase().includes(q) || 
-        b.customerName?.toLowerCase().includes(q) ||
-        b.trxId?.toLowerCase().includes(q)
-      );
-      $('#bills-tbody').innerHTML = renderBillsTable(filtered);
-      lucide.createIcons();
-    }, 300));
-  };
-
-  const renderBillsTable = (bills) => {
-    if (!bills.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
-    return bills.map(b => `
-      <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-        <td class="p-4"><div class="font-mono text-sm font-semibold">${b.invoiceNo || '-'}</div></td>
-        ${currentRole !== 'customer' ? `<td class="p-4"><div class="font-medium">${b.customerName || '-'}</div><div class="text-xs text-slate-500">${b.customerMobile || '-'}</div></td>` : ''}
-        <td class="p-4 font-bold text-sky-600">${formatCurrency(b.amount)}</td>
-        <td class="p-4 text-sm">${b.paymentMethod || '-'}</td>
-        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td>
-        <td class="p-4 text-sm">${formatDate(b.createdAt)}</td>
-        <td class="p-4"><div class="flex items-center justify-end gap-2">
-          <button onclick='window.showInvoicePreviewFromBill("${b.id}")' class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
-          ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="Mark Paid" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
-        </div></td>
-      </tr>
-    `).join('');
-  };
-
-  window.showInvoicePreviewFromBill = (id) => {
-    const bill = appState.bills.find(b => b.id === id);
-    if (bill) showInvoicePreview(bill);
-  };
-
-  window.markPaid = async (id) => {
-    try {
-      await updateDoc(doc(db, 'bills', id), { status: 'paid', paidAt: serverTimestamp() });
-      await logActivity('Bill Update', `Marked bill as paid`);
-      showToast('Bill marked as paid', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  const renderComplaints = () => {
-    const list = currentRole === 'customer' 
-      ? appState.complaints.filter(c => c.customerId === currentUser.uid)
-      : currentRole === 'staff'
-      ? appState.complaints.filter(c => c.staffId === currentUser.uid)
-      : appState.complaints;
-
-    const container = document.getElementById('view-complaints');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        ${currentRole === 'customer' ? `
-        <button onclick="showComplaintForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
-        </button>
-        ` : ''}
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading complaints...</span></div>' : `
-        <div class="space-y-3">
-          ${list.length ? list.map(c => `
-            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <h4 class="font-bold">${c.subject || '-'}</h4>
-                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status || 'pending'}</span>
-                  </div>
-                  <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
-                </div>
-              </div>
-              <div class="flex items-center justify-between text-xs text-slate-500">
-                <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
-                ${currentRole !== 'customer' && c.status !== 'resolved' ? `
-                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">Mark Resolved</button>
-                ` : ''}
-              </div>
-            </div>
-          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No complaints found</div>'}
-        </div>
-        `}
-      </div>
-    `;
-  };
-
-  window.showComplaintForm = () => {
-    showModal(`
-      <form id="complaint-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
-        <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
-    `);
-
-    $('#complaint-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      try {
-        await addDoc(collection(db, 'complaints'), {
-          ...data,
-          customerId: currentUser.uid,
-          customerName: currentUserData.name,
-          staffId: currentUserData.assignedStaff || null,
-          status: 'pending',
-          createdAt: serverTimestamp()
-        });
-        await logActivity('Complaint', `New complaint: ${data.subject}`);
-        showToast('Complaint submitted', 'success');
-        closeModal();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  };
-
-  window.updateComplaintStatus = async (id, status) => {
-    try {
-      await updateDoc(doc(db, 'complaints', id), { status, updatedAt: serverTimestamp() });
-      await logActivity('Complaint Update', `Status changed to ${status}`);
-      showToast('Status updated', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
   const showModal = (content) => {
     $('#modal-container').innerHTML = `
       <div class="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeModal()">
@@ -2996,15 +3111,17 @@ service cloud.firestore {
       closeModal();
       if (sidebarOpen && window.innerWidth < 768) closeSidebar();
       closeMobileProfile();
+      closeUserDropdown();
     }
   });
 
   window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
 </script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
