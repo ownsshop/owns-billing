@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OwnsBill - ISP Reseller Billing</title>
+<title>OwnsBill - ISP Reseller Billing v1.8</title>
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiT3duc0JpbGwiLCJzaG9ydF9uYW1lIjoiT3duc0JpbGwiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzBlYTVlOSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEyOCAxMjgnPjxyZWN0IHdpZHRoPScxMjgnIGhlaWdodD0nMTI4JyBmaWxsPScjMGVhNWU5Jy8+PHRleHQgeD0nNTAlJyB5PSc1MCUnIGZvbnQtc2l6ZT0nNjQnIGZpbGw9JyNmZmYnIGRvbWluYW50LWJhc2VsaW5lPSdtaWRkbGUnIHRleHQtYW5jaG9yPSdtaWRkbGUnPk88L3RleHQ+PC9zdmc+Iiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
@@ -100,10 +100,17 @@
     z-index: 60;
   }
 
-  /* Desktop: footer relative, pushes to bottom via flex */
+  /* Fix: Dashboard overlap with header */
+  #view-dashboard {
+    padding-top: 16px;
+  }
+
   @media (min-width: 768px) {
     .main-wrapper {
       padding-top: var(--header-h);
+    }
+    #view-dashboard {
+      padding-top: 0;
     }
     #footer-desktop {
       position: relative;
@@ -112,11 +119,14 @@
     .mobile-only { display: none !important; }
   }
   
-  /* Mobile: fixed footer above bottom nav + content padding */
   @media (max-width: 767px) {
     .table-container table { min-width: 600px; }
     #content {
       padding-bottom: calc(var(--bottom-nav-h) + var(--footer-h) + 16px);
+      padding-top: var(--header-h);
+    }
+    #view-dashboard {
+      padding-top: 16px;
     }
     #footer-mobile {
       position: fixed;
@@ -157,6 +167,15 @@
       grid-template-rows: auto auto auto;
       height: auto;
     }
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
   }
 </style>
 </head>
@@ -223,7 +242,10 @@
     complaints: [],
     activities: [],
     zones: [],
+    areas: [],
     chats: [],
+    staffDeposits: [],
+    salaryRequests: [],
     unsubscribers: []
   };
 
@@ -231,7 +253,8 @@
     dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
     bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
     activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
-    mybills: 'My Bills', profile: 'Profile', chat: 'Chat'
+    mybills: 'My Bills', profile: 'Profile', chat: 'Chat', approvals: 'Approvals',
+    mywallet: 'My Wallet', staffaccounts: 'Staff Accounts'
   };
 
   // Theme init
@@ -356,10 +379,21 @@
     appState.unsubscribers = [];
     
     if (user) {
-      currentUser = user;
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
-        currentUserData = { id: user.uid, ...userDoc.data() };
+        const userData = userDoc.data();
+        if (userData.status === 'pending') {
+          showToast('Your account is pending admin approval', 'warning');
+          signOut(auth);
+          return;
+        }
+        if (userData.status === 'rejected') {
+          showToast('Your account has been rejected', 'error');
+          signOut(auth);
+          return;
+        }
+        currentUser = user;
+        currentUserData = { id: user.uid, ...userData };
         currentRole = currentUserData.role;
         await loadSettings();
         await initRealtimeListeners();
@@ -388,12 +422,12 @@
     
     appState.unsubscribers.push(onSnapshot(usersQuery, (snap) => {
       appState.users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (currentView === 'dashboard' || currentView === 'customers' || currentView === 'staff') reRenderCurrentView();
+      if (['dashboard','customers','staff','approvals','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }));
 
     appState.unsubscribers.push(onSnapshot(collection(db, 'packages'), (snap) => {
       appState.packages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (currentView === 'customers' || currentView === 'packages') reRenderCurrentView();
+      if (['customers','packages'].includes(currentView)) reRenderCurrentView();
     }));
 
     let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
@@ -402,7 +436,7 @@
     
     appState.unsubscribers.push(onSnapshot(billsQuery, (snap) => {
       appState.bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (currentView === 'dashboard' || currentView === 'bills') reRenderCurrentView();
+      if (['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }));
 
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
@@ -416,6 +450,26 @@
 
     appState.unsubscribers.push(onSnapshot(collection(db, 'zones'), (snap) => {
       appState.zones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }));
+
+    appState.unsubscribers.push(onSnapshot(collection(db, 'areas'), (snap) => {
+      appState.areas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }));
+
+    let depositsQuery = query(collection(db, 'staff_deposits'), orderBy('date', 'desc'));
+    if (currentRole === 'staff') depositsQuery = query(depositsQuery, where('staffId', '==', currentUser.uid));
+    
+    appState.unsubscribers.push(onSnapshot(depositsQuery, (snap) => {
+      appState.staffDeposits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
+    }));
+
+    let salaryQuery = query(collection(db, 'salary_requests'), orderBy('requestDate', 'desc'));
+    if (currentRole === 'staff') salaryQuery = query(salaryQuery, where('staffId', '==', currentUser.uid));
+    
+    appState.unsubscribers.push(onSnapshot(salaryQuery, (snap) => {
+      appState.salaryRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }));
 
     if (currentRole === 'admin') {
@@ -469,7 +523,10 @@
       mycustomers: () => renderCustomers(true),
       mybills: () => renderBills(true),
       profile: renderProfile,
-      chat: renderChat
+      chat: renderChat,
+      approvals: renderApprovals,
+      mywallet: renderMyWallet,
+      staffaccounts: renderStaffAccounts
     };
     
     const renderFn = routes[currentView] || routes.dashboard;
@@ -531,9 +588,11 @@
         { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
         { id: 'customers', label: 'Customers', icon: 'users' },
         { id: 'staff', label: 'Staff', icon: 'user-cog' },
+        { id: 'approvals', label: 'Approvals', icon: 'check-circle' },
         { id: 'packages', label: 'Packages', icon: 'package' },
         { id: 'bills', label: 'Bills', icon: 'receipt' },
         { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
+        { id: 'staffaccounts', label: 'Staff Accounts', icon: 'wallet' },
         { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
         { id: 'reports', label: 'Reports', icon: 'bar-chart-3' },
         { id: 'activities', label: 'Activity Log', icon: 'history' },
@@ -541,9 +600,10 @@
       ],
       staff: [
         { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
-        { id: 'mycustomers', label: 'My Customers', icon: 'users' },
+        { id: 'mycustomers', label: 'Customers', icon: 'users' },
         { id: 'bills', label: 'Bills', icon: 'receipt' },
         { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
+        { id: 'mywallet', label: 'My Wallet', icon: 'wallet' },
         { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
         { id: 'reports', label: 'Reports', icon: 'bar-chart-3' }
       ],
@@ -570,8 +630,9 @@
       </button>
     `).join('');
 
-    const viewSections = menus[currentRole].map(item => `
-      <section id="view-${item.id}" class="view-section ${item.id === 'dashboard' ? '' : 'hidden'}"></section>
+    const allViews = new Set(menus.admin.concat(menus.staff, menus.customer).map(m => m.id));
+    const viewSections = Array.from(allViews).map(id => `
+      <section id="view-${id}" class="view-section ${id === 'dashboard' ? '' : 'hidden'}"></section>
     `).join('');
 
     const userPhoto = currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`;
@@ -786,10 +847,10 @@
   // Dashboard
   const renderDashboard = () => {
     const customers = currentRole === 'staff' 
-      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid)
-      : appState.users.filter(u => u.role === 'customer');
+      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && u.status === 'approved')
+      : appState.users.filter(u => u.role === 'customer' && u.status === 'approved');
     
-    const staffList = appState.users.filter(u => u.role === 'staff');
+    const staffList = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
     const bills = appState.bills;
     
     const today = new Date();
@@ -807,11 +868,18 @@
       return pd && pd >= today && pd < tomorrow;
     });
 
+    const pendingDeposits = appState.staffDeposits.filter(d => d.status === 'pending');
+    const pendingSalary = appState.salaryRequests.filter(s => s.status === 'pending');
+    const totalPendingDeposits = pendingDeposits.reduce((sum, d) => sum + (d.amount || 0), 0);
+    const totalSalaryRequests = pendingSalary.reduce((sum, s) => sum + (s.amount || 0), 0);
+
     const stats = currentRole === 'admin' ? [
       { label: 'Total Customers', value: customers.length, icon: 'users', color: 'sky' },
       { label: 'Total Staff', value: staffList.length, icon: 'user-cog', color: 'indigo' },
       { label: "Today's Collection", value: formatCurrency(todayBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'wallet', color: 'emerald' },
-      { label: 'Monthly Due', value: formatCurrency(monthBills.filter(b=>b.status==='unpaid').reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' }
+      { label: 'Monthly Due', value: formatCurrency(monthBills.filter(b=>b.status==='unpaid').reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
+      { label: 'Pending Deposits', value: formatCurrency(totalPendingDeposits), icon: 'arrow-down-circle', color: 'amber' },
+      { label: 'Salary Requests', value: formatCurrency(totalSalaryRequests), icon: 'dollar-sign', color: 'purple' }
     ] : currentRole === 'staff' ? [
       { label: 'Assigned Customers', value: customers.length, icon: 'users', color: 'sky' },
       { label: "Today's Promise", value: todayPromise.length, icon: 'calendar', color: 'amber' },
@@ -826,7 +894,7 @@
 
     const dashboardHTML = `
       <div class="dashboard-grid space-y-0 fade-in">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           ${stats.map(s => `
             <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))] hover:shadow-lg transition">
               <div class="flex items-start justify-between">
@@ -970,9 +1038,13 @@
 
   // Customers
   const renderCustomers = (myCustomers = false) => {
-    const list = myCustomers 
+    let list = myCustomers 
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid)
       : appState.users.filter(u => u.role === 'customer');
+    
+    if (currentRole === 'admin') {
+      list = list.filter(u => u.status === 'approved' || !u.status);
+    }
 
     const viewId = myCustomers ? 'view-mycustomers' : 'view-customers';
     const container = document.getElementById(viewId);
@@ -985,7 +1057,7 @@
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
             <input id="search-customer" type="text" placeholder="Search customers..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none">
           </div>
-          ${currentRole === 'admin' ? `
+          ${(currentRole === 'admin' || currentRole === 'staff') ? `
           <button onclick="showCustomerForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:shadow-lg flex items-center gap-2 whitespace-nowrap" type="button">
             <i data-lucide="user-plus" class="w-5 h-5"></i> Add Customer
           </button>
@@ -1002,6 +1074,7 @@
                   <th class="text-left p-4 font-semibold">Package</th>
                   <th class="text-left p-4 font-semibold">Area</th>
                   <th class="text-left p-4 font-semibold">Due</th>
+                  ${currentRole === 'staff' ? '<th class="text-left p-4 font-semibold">Status</th>' : ''}
                   <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -1029,9 +1102,16 @@
   };
 
   const renderCustomersRows = (list) => {
-    if (!list.length) return `<tr><td colspan="6" class="p-8 text-center text-slate-500">No customers found</td></tr>`;
+    if (!list.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No customers found</td></tr>`;
     return list.map(c => {
       const due = appState.bills.filter(b => b.customerId === c.id && b.status === 'unpaid').reduce((s,b)=>s+b.amount,0);
+      const statusBadge = currentRole === 'staff' ? `
+        <td class="p-4">
+          <span class="badge ${c.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : c.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
+            ${c.status || 'approved'}
+          </span>
+        </td>
+      ` : '';
       return `
       <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
         <td class="p-4">
@@ -1052,6 +1132,7 @@
             ${formatCurrency(due)}
           </span>
         </td>
+        ${statusBadge}
         <td class="p-4">
           <div class="flex items-center justify-end gap-2">
             <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button">
@@ -1065,6 +1146,11 @@
               <i data-lucide="message-circle" class="w-4 h-4"></i>
             </button>
             ` : ''}
+            ${(currentRole === 'admin' || (currentRole === 'staff' && c.addedBy === currentUser.uid)) ? `
+            <button onclick="showCustomerForm('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="Edit" type="button">
+              <i data-lucide="edit" class="w-4 h-4"></i>
+            </button>
+            ` : ''}
           </div>
         </td>
       </tr>
@@ -1073,20 +1159,22 @@
 
   window.showCustomerForm = (id = null) => {
     const customer = id ? appState.users.find(u => u.id === id) : null;
-    const staffList = appState.users.filter(u => u.role === 'staff');
+    const staffList = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
+    const areaOptions = appState.areas.map(a => `<option value="${a.name}" ${customer?.area===a.name?'selected':''}>${a.name}</option>`).join('');
+    const zoneOptions = appState.zones.map(z => `<option value="${z.name}" ${customer?.zone===z.name?'selected':''}>${z.name}</option>`).join('');
     
     showModal(`
       <form id="customer-form" class="p-6 max-h-[80vh] overflow-y-auto">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
         <div class="grid md:grid-cols-2 gap-4">
           <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${customer?.mobile||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">WhatsApp</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Zone</label><input type="text" name="zone" value="${customer?.zone||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Area</label><input type="text" name="area" value="${customer?.area||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
+          <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
           <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
@@ -1112,6 +1200,8 @@
         data.packagePrice = pkg.price;
       }
       data.role = 'customer';
+      data.status = currentRole === 'staff' ? 'pending' : 'approved';
+      data.addedBy = currentUser.uid;
       
       try {
         if (id) {
@@ -1122,8 +1212,8 @@
           const userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
           delete data.password;
           await setDoc(doc(db, 'users', userCred.user.uid), { ...data, createdAt: serverTimestamp() });
-          await logActivity('Add Customer', `Added customer: ${data.name}`);
-          showToast('Customer added successfully', 'success');
+          await logActivity('Add Customer', `Added customer: ${data.name} (${data.status})`);
+          showToast(`Customer added ${data.status === 'pending' ? 'and pending approval' : 'successfully'}`, 'success');
         }
         closeModal();
       } catch (err) {
@@ -1160,11 +1250,950 @@
     `);
   };
 
+  // Approvals
+  const renderApprovals = () => {
+    const pendingUsers = appState.users.filter(u => u.status === 'pending');
+    const container = document.getElementById('view-approvals');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        <h3 class="font-bold text-lg">Pending Approvals (${pendingUsers.length})</h3>
+        <div class="space-y-3">
+          ${pendingUsers.length ? pendingUsers.map(u => `
+            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-2">
+                    <h4 class="font-bold">${u.name}</h4>
+                    <span class="badge ${u.role === 'staff' ? 'bg-indigo-500/20 text-indigo-600' : 'bg-sky-500/20 text-sky-600'}">${u.role}</span>
+                  </div>
+                  <p class="text-sm text-slate-600 dark:text-slate-400">${u.email} • ${u.mobile}</p>
+                  <p class="text-xs text-slate-500 mt-1">Added by: ${u.addedBy} • ${formatDateTime(u.createdAt)}</p>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="approveUser('${u.id}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 font-semibold text-sm" type="button">
+                    <i data-lucide="check" class="w-4 h-4"></i> Approve
+                  </button>
+                  <button onclick="rejectUser('${u.id}')" class="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-600 font-semibold text-sm" type="button">
+                    <i data-lucide="x" class="w-4 h-4"></i> Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No pending approvals</div>'}
+        </div>
+      </div>
+    `;
+  };
+
+  window.approveUser = async (id) => {
+    try {
+      await updateDoc(doc(db, 'users', id), { status: 'approved', approvedAt: serverTimestamp(), approvedBy: currentUser.uid });
+      await logActivity('Approve User', `Approved user account`);
+      showToast('User approved successfully', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  window.rejectUser = async (id) => {
+    if (!confirm('Reject this user? They will not be able to login.')) return;
+    try {
+      await updateDoc(doc(db, 'users', id), { status: 'rejected', rejectedAt: serverTimestamp(), rejectedBy: currentUser.uid });
+      await logActivity('Reject User', `Rejected user account`);
+      showToast('User rejected', 'warning');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  // My Wallet - Staff
+  const renderMyWallet = () => {
+    const myDeposits = appState.staffDeposits.filter(d => d.staffId === currentUser.uid);
+    const mySalary = appState.salaryRequests.filter(s => s.staffId === currentUser.uid);
+    const myBills = appState.bills.filter(b => b.staffId === currentUser.uid);
+    
+    const totalCollected = myBills.filter(b => b.status === 'paid').reduce((sum, b) => sum + b.amount, 0);
+    const totalDeposited = myDeposits.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0);
+    const totalSalaryPaid = mySalary.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.amount, 0);
+    const pendingDeposit = myDeposits.filter(d => d.status === 'pending').reduce((sum, d) => sum + d.amount, 0);
+    const pendingSalary = mySalary.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.amount, 0);
+    const balance = totalCollected - totalDeposited - totalSalaryPaid;
+
+    const container = document.getElementById('view-mywallet');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-6 fade-in">
+        <div class="grid md:grid-cols-4 gap-4">
+          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+            <p class="text-sm text-slate-500 mb-1">Total Collected</p>
+            <p class="text-2xl font-bold text-sky-600">${formatCurrency(totalCollected)}</p>
+          </div>
+          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+            <p class="text-sm text-slate-500 mb-1">Deposited</p>
+            <p class="text-2xl font-bold text-emerald-600">${formatCurrency(totalDeposited)}</p>
+          </div>
+          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+            <p class="text-sm text-slate-500 mb-1">Salary Paid</p>
+            <p class="text-2xl font-bold text-indigo-600">${formatCurrency(totalSalaryPaid)}</p>
+          </div>
+          <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+            <p class="text-sm text-slate-500 mb-1">Balance</p>
+            <p class="text-2xl font-bold ${balance >= 0 ? 'text-amber-600' : 'text-rose-600'}">${formatCurrency(balance)}</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <button onclick="showDepositForm()" class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition text-left" type="button">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <i data-lucide="arrow-down-circle" class="w-6 h-6 text-emerald-600"></i>
+              </div>
+              <div>
+                <h3 class="font-bold">Deposit to Admin</h3>
+                <p class="text-sm text-slate-500">Pending: ${formatCurrency(pendingDeposit)}</p>
+              </div>
+            </div>
+          </button>
+          <button onclick="showSalaryRequestForm()" class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition text-left" type="button">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                <i data-lucide="dollar-sign" class="w-6 h-6 text-indigo-600"></i>
+              </div>
+              <div>
+                <h3 class="font-bold">Request Salary</h3>
+                <p class="text-sm text-slate-500">Pending: ${formatCurrency(pendingSalary)}</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold mb-4">Recent Deposits</h3>
+          <div class="space-y-2">
+            ${myDeposits.slice(0, 5).map(d => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(d.amount)} - ${d.method}</p>
+                  <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
+                </div>
+                <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No deposits yet</p>'}
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold mb-4">Salary Requests</h3>
+          <div class="space-y-2">
+            ${mySalary.slice(0, 5).map(s => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(s.amount)}</p>
+                  <p class="text-xs text-slate-500">Requested: ${formatDate(s.requestDate)}</p>
+                </div>
+                <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  window.showDepositForm = () => {
+    showModal(`
+      <form id="deposit-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
+          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+        </div>
+      </form>
+    `);
+
+    $('#deposit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        await addDoc(collection(db, 'staff_deposits'), {
+          staffId: currentUser.uid,
+          staffName: currentUserData.name,
+          amount: Number(data.amount),
+          method: data.method,
+          trxId: data.trxId,
+          date: serverTimestamp(),
+          status: 'pending'
+        });
+        await logActivity('Staff Deposit', `Deposit request: ${formatCurrency(data.amount)} via ${data.method}`);
+        showToast('Deposit request submitted', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  window.showSalaryRequestForm = () => {
+    showModal(`
+      <form id="salary-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">Request Salary</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+        </div>
+      </form>
+    `);
+
+    $('#salary-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        await addDoc(collection(db, 'salary_requests'), {
+          staffId: currentUser.uid,
+          staffName: currentUserData.name,
+          amount: Number(data.amount),
+          reason: data.reason || '',
+          requestDate: serverTimestamp(),
+          status: 'pending'
+        });
+        await logActivity('Salary Request', `Salary request: ${formatCurrency(data.amount)}`);
+        showToast('Salary request submitted', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  // Staff Accounts - Admin
+  const renderStaffAccounts = () => {
+    const staffList = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
+    const container = document.getElementById('view-staffaccounts');
+    if (!container) return;
+
+    const staffData = staffList.map(staff => {
+      const deposits = appState.staffDeposits.filter(d => d.staffId === staff.id);
+      const salaries = appState.salaryRequests.filter(s => s.staffId === staff.id);
+      const bills = appState.bills.filter(b => b.staffId === staff.id && b.status === 'paid');
+      
+      const totalCollected = bills.reduce((sum, b) => sum + b.amount, 0);
+      const totalDeposited = deposits.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0);
+      const totalSalaryPaid = salaries.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.amount, 0);
+      const pendingDeposit = deposits.filter(d => d.status === 'pending').reduce((sum, d) => sum + d.amount, 0);
+      const pendingSalary = salaries.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.amount, 0);
+      const balance = totalCollected - totalDeposited - totalSalaryPaid;
+
+      return { staff, totalCollected, totalDeposited, totalSalaryPaid, balance, pendingDeposit, pendingSalary };
+    });
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
+          <div class="table-container">
+            <table class="w-full">
+              <thead class="bg-[rgb(var(--border))] text-sm">
+                <tr>
+                  <th class="text-left p-4 font-semibold">Staff Name</th>
+                  <th class="text-left p-4 font-semibold">Collected</th>
+                  <th class="text-left p-4 font-semibold">Deposited</th>
+                  <th class="text-left p-4 font-semibold">Salary Paid</th>
+                  <th class="text-left p-4 font-semibold">Balance</th>
+                  <th class="text-left p-4 font-semibold">Pending</th>
+                  <th class="text-right p-4 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${staffData.map(data => `
+                  <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
+                    <td class="p-4">
+                      <div class="font-semibold">${data.staff.name}</div>
+                      <div class="text-xs text-slate-500">${data.staff.mobile}</div>
+                    </td>
+                    <td class="p-4 font-semibold text-sky-600">${formatCurrency(data.totalCollected)}</td>
+                    <td class="p-4 font-semibold text-emerald-600">${formatCurrency(data.totalDeposited)}</td>
+                    <td class="p-4 font-semibold text-indigo-600">${formatCurrency(data.totalSalaryPaid)}</td>
+                    <td class="p-4">
+                      <span class="font-bold ${data.balance >= 0 ? 'text-amber-600' : 'text-rose-600'}">${formatCurrency(data.balance)}</span>
+                    </td>
+                    <td class="p-4">
+                      <div class="text-xs">
+                        <div class="text-amber-600">Deposit: ${formatCurrency(data.pendingDeposit)}</div>
+                        <div class="text-purple-600">Salary: ${formatCurrency(data.pendingSalary)}</div>
+                      </div>
+                    </td>
+                    <td class="p-4">
+                      <button onclick="viewStaffDetails('${data.staff.id}')" class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                `).join('') || '<tr><td colspan="7" class="p-8 text-center text-slate-500">No staff accounts</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  window.viewStaffDetails = (staffId) => {
+    const staff = appState.users.find(u => u.id === staffId);
+    const deposits = appState.staffDeposits.filter(d => d.staffId === staffId);
+    const salaries = appState.salaryRequests.filter(s => s.staffId === staffId);
+    
+    showModal(`
+      <div class="p-6 max-h-[80vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'}</h3>
+        
+        <div class="mb-6">
+          <h4 class="font-bold mb-3">Deposits</h4>
+          <div class="space-y-2">
+            ${deposits.map(d => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(d.amount)} - ${d.method}</p>
+                  <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
+                  ${d.status === 'pending' ? `<button onclick="approveDeposit('${d.id}')" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-600" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
+                </div>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No deposits</p>'}
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <h4 class="font-bold mb-3">Salary Requests</h4>
+          <div class="space-y-2">
+            ${salaries.map(s => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(s.amount)}</p>
+                  <p class="text-xs text-slate-500">Requested: ${formatDate(s.requestDate)}</p>
+                  ${s.reason ? `<p class="text-xs text-slate-500">Reason: ${s.reason}</p>` : ''}
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
+                  ${s.status === 'pending' ? `<button onclick="paySalary('${s.id}')" class="p-2 rounded-lg bg-indigo-500/20 text-indigo-600" type="button"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>` : ''}
+                </div>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
+          </div>
+        </div>
+
+        <button onclick="closeModal()" class="w-full py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
+      </div>
+    `);
+    lucide.createIcons();
+  };
+
+  window.approveDeposit = async (id) => {
+    try {
+      await updateDoc(doc(db, 'staff_deposits', id), { 
+        status: 'approved', 
+        approvedBy: currentUser.uid,
+        approvedAt: serverTimestamp()
+      });
+      await logActivity('Approve Deposit', `Approved staff deposit`);
+      showToast('Deposit approved', 'success');
+      closeModal();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  window.paySalary = (id) => {
+    showModal(`
+      <form id="pay-salary-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
+          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+        </div>
+      </form>
+    `);
+
+    $('#pay-salary-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        await updateDoc(doc(db, 'salary_requests', id), { 
+          status: 'paid',
+          paidBy: currentUser.uid,
+          paidDate: serverTimestamp(),
+          method: data.method,
+          trxId: data.trxId
+        });
+        await logActivity('Pay Salary', `Paid salary via ${data.method}`);
+        showToast('Salary paid successfully', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  // Staff
+  const renderStaff = () => {
+    const list = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
+    const container = document.getElementById('view-staff');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
+          <i data-lucide="user-plus" class="w-5 h-5"></i> Add Staff
+        </button>
+        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
+          <div class="table-container">
+            <table class="w-full">
+              <thead class="bg-[rgb(var(--border))] text-sm">
+                <tr>
+                  <th class="text-left p-4 font-semibold">Name</th>
+                  <th class="text-left p-4 font-semibold">Contact</th>
+                  <th class="text-left p-4 font-semibold">Assigned Customers</th>
+                  <th class="text-right p-4 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${list.length ? list.map(s => {
+                  const assignedCount = appState.users.filter(u => u.assignedStaff === s.id && u.status === 'approved').length;
+                  return `
+                  <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
+                    <td class="p-4"><div class="font-semibold">${s.name || '-'}</div><div class="text-xs text-slate-500">${s.email || '-'}</div></td>
+                    <td class="p-4 text-sm">${s.mobile || '-'}<br><span class="text-xs text-slate-500">${s.whatsapp || '-'}</span></td>
+                    <td class="p-4"><span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-600 text-xs font-semibold">${assignedCount} customers</span></td>
+                    <td class="p-4"><div class="flex items-center justify-end gap-2">
+                      <button onclick="showStaffForm('${s.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                      <button onclick="deleteStaff('${s.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div></td>
+                  </tr>
+                `}).join('') : `<tr><td colspan="4" class="p-8 text-center text-slate-500">No staff found</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  window.showStaffForm = (id = null) => {
+    const staff = id ? appState.users.find(u => u.id === id) : null;
+    showModal(`
+      <form id="staff-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
+          ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+        </div>
+      </form>
+    `);
+
+    $('#staff-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      data.role = 'staff';
+      data.status = currentRole === 'staff' ? 'pending' : 'approved';
+      data.addedBy = currentUser.uid;
+      try {
+        if (id) {
+          await updateDoc(doc(db, 'users', id), data);
+          await logActivity('Update Staff', `Updated staff: ${data.name}`);
+          showToast('Staff updated', 'success');
+        } else {
+          const userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
+          delete data.password;
+          await setDoc(doc(db, 'users', userCred.user.uid), { ...data, createdAt: serverTimestamp() });
+          await logActivity('Add Staff', `Added staff: ${data.name} (${data.status})`);
+          showToast(`Staff added ${data.status === 'pending' ? 'and pending approval' : 'successfully'}`, 'success');
+        }
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  window.deleteStaff = async (id) => {
+    if (!confirm('Delete this staff member?')) return;
+    try {
+      await deleteDoc(doc(db, 'users', id));
+      await logActivity('Delete Staff', `Deleted staff`);
+      showToast('Staff deleted', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  // Packages
+  const renderPackages = () => {
+    const container = document.getElementById('view-packages');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
+          <i data-lucide="plus" class="w-5 h-5"></i> Add Package
+        </button>
+        <div class="grid md:grid-cols-3 gap-4">
+          ${appState.packages.map(p => `
+            <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <h4 class="font-bold text-lg">${p.name || '-'}</h4>
+                  <p class="text-3xl font-bold text-sky-600 mt-2">${formatCurrency(p.price)}<span class="text-sm text-slate-500 font-normal">/mo</span></p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
+                  <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 mb-4 text-slate-600 dark:text-slate-400">
+                <i data-lucide="gauge" class="w-4 h-4"></i>
+                <span class="text-sm font-medium">${p.speed || '-'}</span>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">Edit</button>
+                <button onclick="deletePackage('${p.id}')" class="px-4 py-2 rounded-xl hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+          `).join('') || '<div class="col-span-3 glass rounded-2xl p-8 text-center text-slate-500">No packages found</div>'}
+        </div>
+      </div>
+    `;
+  };
+
+  window.showPackageForm = (id = null) => {
+    const pkg = id ? appState.packages.find(p => p.id === id) : null;
+    showModal(`
+      <form id="package-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Package Name *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Speed *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="e.g. 10 Mbps" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+        </div>
+      </form>
+    `);
+
+    $('#package-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      data.price = Number(data.price);
+      try {
+        if (id) {
+          await updateDoc(doc(db, 'packages', id), data);
+          await logActivity('Update Package', `Updated package: ${data.name}`);
+        } else {
+          await addDoc(collection(db, 'packages'), { ...data, createdAt: serverTimestamp() });
+          await logActivity('Add Package', `Added package: ${data.name}`);
+        }
+        showToast('Package saved', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  window.deletePackage = async (id) => {
+    if (!confirm('Delete this package?')) return;
+    try {
+      await deleteDoc(doc(db, 'packages', id));
+      await logActivity('Delete Package', `Deleted package`);
+      showToast('Package deleted', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  // Reports
+  const renderReports = () => {
+    const container = document.getElementById('view-reports');
+    if (!container) return;
+
+    const staffOptions = appState.users.filter(u => u.role === 'staff').map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    const areaOptions = appState.areas.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+    const zoneOptions = appState.zones.map(z => `<option value="${z.name}">${z.name}</option>`).join('');
+
+    const isStaff = currentRole === 'staff';
+
+    container.innerHTML = `
+      <div class="space-y-6 fade-in">
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold text-lg mb-4">Filter Reports</h3>
+          <div class="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div><label class="text-sm font-medium mb-2 block">From Date</label><input type="date" id="report-from" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
+            <div><label class="text-sm font-medium mb-2 block">To Date</label><input type="date" id="report-to" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
+            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">Staff</label><select id="report-staff" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Staff</option>${staffOptions}</select></div>` : ''}
+            <div><label class="text-sm font-medium mb-2 block">Area</label><select id="report-area" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Areas</option>${areaOptions}</select></div>
+            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">Zone</label><select id="report-zone" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Zones</option>${zoneOptions}</select></div>` : ''}
+            <div><label class="text-sm font-medium mb-2 block">Status</label><select id="report-status" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div>
+            <div class="md:col-span-3 lg:col-span-6"><label class="text-sm font-medium mb-2 block">Customer Search</label><input type="text" id="report-customer" placeholder="Search by name or mobile..." class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
+            <div class="md:col-span-3 lg:col-span-6 flex gap-3">
+              <button onclick="generateReport()" class="flex-1 py-2.5 rounded-xl bg-sky-500 text-white font-semibold" type="button">Generate Report</button>
+              <button onclick="exportBillsCSV()" class="px-6 py-2.5 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="download" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        </div>
+        <div id="report-results"></div>
+      </div>
+    `;
+  };
+
+  window.generateReport = () => {
+    const from = $('#report-from').value;
+    const to = $('#report-to').value;
+    const status = $('#report-status').value;
+    const staffId = $('#report-staff')?.value || '';
+    const area = $('#report-area').value;
+    const zone = $('#report-zone')?.value || '';
+    const customerSearch = $('#report-customer').value.toLowerCase();
+    
+    let filtered = appState.bills;
+    if (from) filtered = filtered.filter(b => b.createdAt?.toDate() >= new Date(from));
+    if (to) filtered = filtered.filter(b => b.createdAt?.toDate() <= new Date(to));
+    if (status) filtered = filtered.filter(b => b.status === status);
+    if (staffId) filtered = filtered.filter(b => b.staffId === staffId);
+    if (area) {
+      const areaCustomers = appState.users.filter(u => u.area === area).map(u => u.id);
+      filtered = filtered.filter(b => areaCustomers.includes(b.customerId));
+    }
+    if (zone) {
+      const zoneCustomers = appState.users.filter(u => u.zone === zone).map(u => u.id);
+      filtered = filtered.filter(b => zoneCustomers.includes(b.customerId));
+    }
+    if (customerSearch) {
+      filtered = filtered.filter(b => 
+        b.customerName?.toLowerCase().includes(customerSearch) || 
+        b.customerMobile?.includes(customerSearch)
+      );
+    }
+    if (currentRole === 'staff') {
+      filtered = filtered.filter(b => b.staffId === currentUser.uid);
+    }
+    
+    const total = filtered.reduce((s,b)=>s+b.amount,0);
+    const paid = filtered.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0);
+    const unpaid = filtered.filter(b=>b.status==='unpaid').reduce((s,b)=>s+b.amount,0);
+    
+    $('#report-results').innerHTML = `
+      <div class="grid md:grid-cols-3 gap-4 mb-6">
+        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Total Amount</p><p class="text-2xl font-bold">${formatCurrency(total)}</p></div>
+        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Paid</p><p class="text-2xl font-bold text-emerald-600">${formatCurrency(paid)}</p></div>
+        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Unpaid</p><p class="text-2xl font-bold text-rose-600">${formatCurrency(unpaid)}</p></div>
+      </div>
+      <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
+        <div class="table-container">
+          <table class="w-full">
+            <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">Invoice</th><th class="text-left p-4 text-sm">Customer</th><th class="text-left p-4 text-sm">Amount</th><th class="text-left p-4 text-sm">Status</th><th class="text-left p-4 text-sm">Date</th></tr></thead>
+            <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo || '-'}</td><td class="p-4 text-sm">${b.customerName || '-'}<br><span class="text-xs text-slate-500">${b.customerMobile || '-'}</span></td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    lucide.createIcons();
+  };
+
+  window.exportBillsCSV = () => {
+    const csv = [
+      ['Invoice', 'Customer', 'Mobile', 'Amount', 'Method', 'TrxID', 'Status', 'Date'].join(','),
+      ...appState.bills.map(b => [b.invoiceNo, b.customerName, b.customerMobile, b.amount, b.paymentMethod, b.trxId||'', b.status, formatDate(b.createdAt)].join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bills-${Date.now()}.csv`;
+    a.click();
+    showToast('CSV exported', 'success');
+  };
+
+  // Activities
+  const renderActivities = () => {
+    const container = document.getElementById('view-activities');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-3 fade-in">
+        ${appState.activities.length ? appState.activities.map(a => `
+          <div class="glass rounded-2xl p-4 border border-[rgb(var(--border))]">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="activity" class="w-5 h-5 text-sky-600"></i>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-semibold">${a.userName || '-'}</span>
+                  <span class="px-2 py-0.5 rounded-full bg-[rgb(var(--border))] text-xs uppercase">${a.role || '-'}</span>
+                </div>
+                <p class="text-sm text-slate-600 dark:text-slate-400">${a.action || '-'}: ${a.details || '-'}</p>
+                <p class="text-xs text-slate-500 mt-1">${formatDateTime(a.timestamp)}</p>
+              </div>
+            </div>
+          </div>
+        `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No activities yet</div>'}
+      </div>
+    `;
+  };
+
+  // Settings with Area/Zone Management
+  const renderSettings = () => {
+    if (currentRole !== 'admin') return showView('dashboard');
+    const container = document.getElementById('view-settings');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-6 fade-in">
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold text-lg mb-6">Company Information</h3>
+          <form id="company-form" class="grid md:grid-cols-2 gap-4">
+            <div><label class="text-sm font-medium mb-2 block">Company Name</label><input type="text" name="companyName" value="${companySettings.companyName||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">WhatsApp</label><input type="tel" name="whatsapp" value="${companySettings.whatsapp||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${companySettings.address||''}</textarea></div>
+            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Logo URL</label><input type="url" name="logo" value="${companySettings.logo||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div class="md:col-span-2"><button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Settings</button></div>
+          </form>
+        </div>
+
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="font-bold text-lg">Area Management</h3>
+            <button onclick="showAreaForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Area</button>
+          </div>
+          <div class="space-y-2">
+            ${appState.areas.map(a => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <span class="font-medium">${a.name}</span>
+                <div class="flex gap-2">
+                  <button onclick="showAreaForm('${a.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--card))]" type="button"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                  <button onclick="deleteArea('${a.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No areas added</p>'}
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="font-bold text-lg">Zone Management</h3>
+            <button onclick="showZoneForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Zone</button>
+          </div>
+          <div class="space-y-2">
+            ${appState.zones.map(z => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <span class="font-medium">${z.name}</span>
+                <div class="flex gap-2">
+                  <button onclick="showZoneForm('${z.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--card))]" type="button"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                  <button onclick="deleteZone('${z.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No zones added</p>'}
+          </div>
+        </div>
+      </div>
+    `;
+
+    $('#company-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        await setDoc(doc(db, 'settings', 'company'), data);
+        companySettings = data;
+        await logActivity('Settings Update', 'Updated company info');
+        showToast('Settings saved', 'success');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  window.showAreaForm = (id = null) => {
+    const area = id ? appState.areas.find(a => a.id === id) : null;
+    showModal(`
+      <form id="area-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
+        <div>
+          <label class="text-sm font-medium mb-2 block">Area Name *</label>
+          <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+        </div>
+      </form>
+    `);
+
+    $('#area-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        if (id) {
+          await updateDoc(doc(db, 'areas', id), data);
+          await logActivity('Update Area', `Updated area: ${data.name}`);
+        } else {
+          await addDoc(collection(db, 'areas'), { ...data, createdAt: serverTimestamp() });
+          await logActivity('Add Area', `Added area: ${data.name}`);
+        }
+        showToast('Area saved', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  window.deleteArea = async (id) => {
+    if (!confirm('Delete this area?')) return;
+    try {
+      await deleteDoc(doc(db, 'areas', id));
+      await logActivity('Delete Area', 'Deleted area');
+      showToast('Area deleted', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  window.showZoneForm = (id = null) => {
+    const zone = id ? appState.zones.find(z => z.id === id) : null;
+    showModal(`
+      <form id="zone-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Zone</h3>
+        <div>
+          <label class="text-sm font-medium mb-2 block">Zone Name *</label>
+          <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+        </div>
+      </form>
+    `);
+
+    $('#zone-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      try {
+        if (id) {
+          await updateDoc(doc(db, 'zones', id), data);
+          await logActivity('Update Zone', `Updated zone: ${data.name}`);
+        } else {
+          await addDoc(collection(db, 'zones'), { ...data, createdAt: serverTimestamp() });
+          await logActivity('Add Zone', `Added zone: ${data.name}`);
+        }
+        showToast('Zone saved', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  window.deleteZone = async (id) => {
+    if (!confirm('Delete this zone?')) return;
+    try {
+      await deleteDoc(doc(db, 'zones', id));
+      await logActivity('Delete Zone', 'Deleted zone');
+      showToast('Zone deleted', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  // Profile
+  const renderProfile = () => {
+    const container = document.getElementById('view-profile');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="max-w-2xl mx-auto space-y-6 fade-in">
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <div class="flex items-center gap-4 mb-6">
+            <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`}" class="w-20 h-20 rounded-2xl">
+            <div>
+              <h3 class="text-xl font-bold">${currentUserData?.name || '-'}</h3>
+              <p class="text-slate-500">${currentUser?.email || '-'}</p>
+              <span class="text-xs px-2 py-1 rounded-full bg-sky-500/20 text-sky-600 uppercase font-semibold mt-2 inline-block">${currentRole || '-'}</span>
+            </div>
+          </div>
+          <div class="space-y-3">
+            ${Object.entries(currentUserData || {}).filter(([k,v])=>!['role','createdAt','photo','status','addedBy','approvedBy','approvedAt'].includes(k)&&v).map(([k,v])=>`
+              <div class="flex justify-between py-3 border-b border-[rgb(var(--border))]">
+                <span class="text-slate-500 capitalize">${k.replace(/([A-Z])/g,' $1')}</span>
+                <span class="font-semibold">${v}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  // Chat
+  const renderChat = () => {
+    const container = document.getElementById('view-chat');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="glass rounded-2xl border border-[rgb(var(--border))] h-[calc(100vh-200px)] flex flex-col fade-in">
+        <div class="p-4 border-b border-[rgb(var(--border))]">
+          <h3 class="font-bold">Support Chat</h3>
+          <p class="text-xs text-slate-500">Chat with ${currentRole === 'customer' ? 'Staff & Admin' : 'Customer'}</p>
+        </div>
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
+          <div class="text-center text-slate-500 text-sm py-8">Start a conversation</div>
+        </div>
+        <div class="p-4 border-t border-[rgb(var(--border))]">
+          <form id="chat-form" class="flex gap-2">
+            <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white"><i data-lucide="send" class="w-5 h-5"></i></button>
+          </form>
+        </div>
+      </div>
+    `;
+    lucide.createIcons();
+  };
+
   // Invoice Generator
   const renderInvoice = () => {
     const customers = currentRole === 'staff' 
-      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid)
-      : appState.users.filter(u => u.role === 'customer');
+      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && u.status === 'approved')
+      : appState.users.filter(u => u.role === 'customer' && u.status === 'approved');
 
     const container = document.getElementById('view-invoice');
     if (!container) return;
@@ -1487,20 +2516,6 @@
     }
   };
 
-  window.exportBillsCSV = () => {
-    const csv = [
-      ['Invoice', 'Customer', 'Amount', 'Method', 'TrxID', 'Status', 'Date'].join(','),
-      ...appState.bills.map(b => [b.invoiceNo, b.customerName, b.amount, b.paymentMethod, b.trxId||'', b.status, formatDate(b.createdAt)].join(','))
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `bills-${Date.now()}.csv`;
-    a.click();
-    showToast('CSV exported', 'success');
-  };
-
   // Complaints
   const renderComplaints = () => {
     const list = currentRole === 'customer' 
@@ -1530,6 +2545,7 @@
                   </div>
                   <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
                 </div>
+              </div>
               <div class="flex items-center justify-between text-xs text-slate-500">
                 <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
                 ${currentRole !== 'customer' && c.status !== 'resolved' ? `
@@ -1590,360 +2606,6 @@
     }
   };
 
-  // Staff
-  const renderStaff = () => {
-    const list = appState.users.filter(u => u.role === 'staff');
-    const container = document.getElementById('view-staff');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="user-plus" class="w-5 h-5"></i> Add Staff
-        </button>
-        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-          <div class="table-container">
-            <table class="w-full">
-              <thead class="bg-[rgb(var(--border))] text-sm">
-                <tr>
-                  <th class="text-left p-4 font-semibold">Name</th>
-                  <th class="text-left p-4 font-semibold">Contact</th>
-                  <th class="text-left p-4 font-semibold">Assigned Customers</th>
-                  <th class="text-right p-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${list.length ? list.map(s => {
-                  const assignedCount = appState.users.filter(u => u.assignedStaff === s.id).length;
-                  return `
-                  <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-                    <td class="p-4"><div class="font-semibold">${s.name || '-'}</div><div class="text-xs text-slate-500">${s.email || '-'}</div></td>
-                    <td class="p-4 text-sm">${s.mobile || '-'}</td>
-                    <td class="p-4"><span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-600 text-xs font-semibold">${assignedCount} customers</span></td>
-                    <td class="p-4"><div class="flex items-center justify-end gap-2">
-                      <button onclick="showStaffForm('${s.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                      <button onclick="deleteStaff('${s.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div></td>
-                  </tr>
-                `}).join('') : `<tr><td colspan="4" class="p-8 text-center text-slate-500">No staff found</td></tr>`}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    `;
-  };
-
-  window.showStaffForm = (id = null) => {
-    const staff = id ? appState.users.find(u => u.id === id) : null;
-    showModal(`
-      <form id="staff-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff</h3>
-        <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
-          ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
-    `);
-
-    $('#staff-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      data.role = 'staff';
-      try {
-        if (id) {
-          await updateDoc(doc(db, 'users', id), data);
-          await logActivity('Update Staff', `Updated staff: ${data.name}`);
-          showToast('Staff updated', 'success');
-        } else {
-          const userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
-          delete data.password;
-          await setDoc(doc(db, 'users', userCred.user.uid), { ...data, createdAt: serverTimestamp() });
-          await logActivity('Add Staff', `Added staff: ${data.name}`);
-          showToast('Staff added', 'success');
-        }
-        closeModal();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  };
-
-  window.deleteStaff = async (id) => {
-    if (!confirm('Delete this staff member?')) return;
-    try {
-      await deleteDoc(doc(db, 'users', id));
-      await logActivity('Delete Staff', `Deleted staff`);
-      showToast('Staff deleted', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  // Packages
-  const renderPackages = () => {
-    const container = document.getElementById('view-packages');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="plus" class="w-5 h-5"></i> Add Package
-        </button>
-        <div class="grid md:grid-cols-3 gap-4">
-          ${appState.packages.map(p => `
-            <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition">
-              <div class="flex items-start justify-between mb-4">
-                <div>
-                  <h4 class="font-bold text-lg">${p.name || '-'}</h4>
-                  <p class="text-3xl font-bold text-sky-600 mt-2">${formatCurrency(p.price)}<span class="text-sm text-slate-500 font-normal">/mo</span></p>
-                </div>
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
-                  <i data-lucide="zap" class="w-6 h-6 text-white"></i>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 mb-4 text-slate-600 dark:text-slate-400">
-                <i data-lucide="gauge" class="w-4 h-4"></i>
-                <span class="text-sm font-medium">${p.speed || '-'}</span>
-              </div>
-              <div class="flex gap-2">
-                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">Edit</button>
-                <button onclick="deletePackage('${p.id}')" class="px-4 py-2 rounded-xl hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-              </div>
-            </div>
-          `).join('') || '<div class="col-span-3 glass rounded-2xl p-8 text-center text-slate-500">No packages found</div>'}
-        </div>
-      </div>
-    `;
-  };
-
-  window.showPackageForm = (id = null) => {
-    const pkg = id ? appState.packages.find(p => p.id === id) : null;
-    showModal(`
-      <form id="package-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
-        <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Package Name *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Speed *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="e.g. 10 Mbps" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-        </div>
-      </form>
-    `);
-
-    $('#package-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      data.price = Number(data.price);
-      try {
-        if (id) {
-          await updateDoc(doc(db, 'packages', id), data);
-          await logActivity('Update Package', `Updated package: ${data.name}`);
-        } else {
-          await addDoc(collection(db, 'packages'), { ...data, createdAt: serverTimestamp() });
-          await logActivity('Add Package', `Added package: ${data.name}`);
-        }
-        showToast('Package saved', 'success');
-        closeModal();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  };
-
-  window.deletePackage = async (id) => {
-    if (!confirm('Delete this package?')) return;
-    try {
-      await deleteDoc(doc(db, 'packages', id));
-      await logActivity('Delete Package', `Deleted package`);
-      showToast('Package deleted', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  // Reports
-  const renderReports = () => {
-    const container = document.getElementById('view-reports');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-6 fade-in">
-        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold text-lg mb-4">Filter Reports</h3>
-          <div class="grid md:grid-cols-4 gap-4">
-            <div><label class="text-sm font-medium mb-2 block">From Date</label><input type="date" id="report-from" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">To Date</label><input type="date" id="report-to" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Status</label><select id="report-status" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">All</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div>
-            <div class="flex items-end"><button onclick="generateReport()" class="w-full py-2 rounded-xl bg-sky-500 text-white font-semibold" type="button">Generate</button></div>
-          </div>
-        </div>
-        <div id="report-results"></div>
-      </div>
-    `;
-  };
-
-  window.generateReport = () => {
-    const from = $('#report-from').value;
-    const to = $('#report-to').value;
-    const status = $('#report-status').value;
-    
-    let filtered = appState.bills;
-    if (from) filtered = filtered.filter(b => b.createdAt?.toDate() >= new Date(from));
-    if (to) filtered = filtered.filter(b => b.createdAt?.toDate() <= new Date(to));
-    if (status) filtered = filtered.filter(b => b.status === status);
-    
-    const total = filtered.reduce((s,b)=>s+b.amount,0);
-    const paid = filtered.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0);
-    const unpaid = filtered.filter(b=>b.status==='unpaid').reduce((s,b)=>s+b.amount,0);
-    
-    $('#report-results').innerHTML = `
-      <div class="grid md:grid-cols-3 gap-4 mb-6">
-        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Total Amount</p><p class="text-2xl font-bold">${formatCurrency(total)}</p></div>
-        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Paid</p><p class="text-2xl font-bold text-emerald-600">${formatCurrency(paid)}</p></div>
-        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Unpaid</p><p class="text-2xl font-bold text-rose-600">${formatCurrency(unpaid)}</p></div>
-      </div>
-      <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-        <div class="table-container">
-          <table class="w-full">
-            <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">Invoice</th><th class="text-left p-4 text-sm">Customer</th><th class="text-left p-4 text-sm">Amount</th><th class="text-left p-4 text-sm">Status</th><th class="text-left p-4 text-sm">Date</th></tr></thead>
-            <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo || '-'}</td><td class="p-4 text-sm">${b.customerName || '-'}</td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  };
-
-  // Activities
-  const renderActivities = () => {
-    const container = document.getElementById('view-activities');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-3 fade-in">
-        ${appState.activities.length ? appState.activities.map(a => `
-          <div class="glass rounded-2xl p-4 border border-[rgb(var(--border))]">
-            <div class="flex items-start gap-3">
-              <div class="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="activity" class="w-5 h-5 text-sky-600"></i>
-              </div>
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-semibold">${a.userName || '-'}</span>
-                  <span class="px-2 py-0.5 rounded-full bg-[rgb(var(--border))] text-xs uppercase">${a.role || '-'}</span>
-                </div>
-                <p class="text-sm text-slate-600 dark:text-slate-400">${a.action || '-'}: ${a.details || '-'}</p>
-                <p class="text-xs text-slate-500 mt-1">${formatDateTime(a.timestamp)}</p>
-              </div>
-            </div>
-          </div>
-        `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No activities yet</div>'}
-      </div>
-    `;
-  };
-
-  // Settings
-  const renderSettings = () => {
-    if (currentRole !== 'admin') return showView('dashboard');
-    const container = document.getElementById('view-settings');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-6 fade-in">
-        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold text-lg mb-6">Company Information</h3>
-          <form id="company-form" class="grid md:grid-cols-2 gap-4">
-            <div><label class="text-sm font-medium mb-2 block">Company Name</label><input type="text" name="companyName" value="${companySettings.companyName||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">WhatsApp</label><input type="tel" name="whatsapp" value="${companySettings.whatsapp||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${companySettings.address||''}</textarea></div>
-            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Logo URL</label><input type="url" name="logo" value="${companySettings.logo||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div class="md:col-span-2"><button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Settings</button></div>
-          </form>
-        </div>
-      </div>
-    `;
-
-    $('#company-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      try {
-        await setDoc(doc(db, 'settings', 'company'), data);
-        companySettings = data;
-        await logActivity('Settings Update', 'Updated company info');
-        showToast('Settings saved', 'success');
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  };
-
-  // Profile
-  const renderProfile = () => {
-    const container = document.getElementById('view-profile');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="max-w-2xl mx-auto space-y-6 fade-in">
-        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <div class="flex items-center gap-4 mb-6">
-            <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`}" class="w-20 h-20 rounded-2xl">
-            <div>
-              <h3 class="text-xl font-bold">${currentUserData?.name || '-'}</h3>
-              <p class="text-slate-500">${currentUser?.email || '-'}</p>
-              <span class="text-xs px-2 py-1 rounded-full bg-sky-500/20 text-sky-600 uppercase font-semibold mt-2 inline-block">${currentRole || '-'}</span>
-            </div>
-          </div>
-          <div class="space-y-3">
-            ${Object.entries(currentUserData || {}).filter(([k,v])=>!['role','createdAt','photo'].includes(k)&&v).map(([k,v])=>`
-              <div class="flex justify-between py-3 border-b border-[rgb(var(--border))]">
-                <span class="text-slate-500 capitalize">${k.replace(/([A-Z])/g,' $1')}</span>
-                <span class="font-semibold">${v}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-    `;
-  };
-
-  // Chat
-  const renderChat = () => {
-    const container = document.getElementById('view-chat');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="glass rounded-2xl border border-[rgb(var(--border))] h-[calc(100vh-200px)] flex flex-col fade-in">
-        <div class="p-4 border-b border-[rgb(var(--border))]">
-          <h3 class="font-bold">Support Chat</h3>
-          <p class="text-xs text-slate-500">Chat with ${currentRole === 'customer' ? 'Staff & Admin' : 'Customer'}</p>
-        </div>
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
-          <div class="text-center text-slate-500 text-sm py-8">Start a conversation</div>
-        </div>
-        <div class="p-4 border-t border-[rgb(var(--border))]">
-          <form id="chat-form" class="flex gap-2">
-            <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-            <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white"><i data-lucide="send" class="w-5 h-5"></i></button>
-          </form>
-        </div>
-      </div>
-    `;
-    lucide.createIcons();
-  };
-
   // Modal System
   const showModal = (content) => {
     $('#modal-container').innerHTML = `
@@ -1969,12 +2631,16 @@
         { label: 'Add Staff', action: () => showStaffForm(), icon: 'user-cog' },
         { label: 'Create Invoice', action: () => showView('invoice'), icon: 'file-text' },
         { label: 'View Reports', action: () => showView('reports'), icon: 'bar-chart-3' },
+        { label: 'Staff Accounts', action: () => showView('staffaccounts'), icon: 'wallet' },
+        { label: 'Approvals', action: () => showView('approvals'), icon: 'check-circle' },
         { label: 'Settings', action: () => showView('settings'), icon: 'settings' }
       ],
       staff: [
         { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
         { label: 'My Customers', action: () => showView('mycustomers'), icon: 'users' },
+        { label: 'Add Customer', action: () => showCustomerForm(), icon: 'user-plus' },
         { label: 'Create Invoice', action: () => showView('invoice'), icon: 'file-text' },
+        { label: 'My Wallet', action: () => showView('mywallet'), icon: 'wallet' },
         { label: 'View Bills', action: () => showView('bills'), icon: 'receipt' }
       ],
       customer: [
