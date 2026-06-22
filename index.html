@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OwnsBill - ISP Reseller Billing</title>
-<meta name="description" content="Modern ISP Reseller Billing System with Firebase">
+<meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiT3duc0JpbGwiLCJzaG9ydF9uYW1lIjoiT3duc0JpbGwiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzBlYTVlOSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEyOCAxMjgnPjxyZWN0IHdpZHRoPScxMjgnIGhlaWdodD0nMTI4JyBmaWxsPScjMGVhNWU5Jy8+PHRleHQgeD0nNTAlJyB5PSc1MCUnIGZvbnQtc2l6ZT0nNjQnIGZpbGw9JyNmZmYnIGRvbWluYW50LWJhc2VsaW5lPSdtaWRkbGUnIHRleHQtYW5jaG9yPSdtaWRkbGUnPk88L3RleHQ+PC9zdmc+Iiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
@@ -68,6 +68,9 @@
   
   .main-wrapper {
     padding-top: var(--header-h);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
   }
   
   @media (min-width: 768px) {
@@ -95,6 +98,20 @@
   .bottom-nav-item.active {
     color: rgb(var(--primary));
     transform: translateY(-2px);
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 1rem;
+    height: 100%;
+  }
+
+  @media (max-width: 640px) {
+    .dashboard-grid {
+      grid-template-rows: auto auto auto;
+      height: auto;
+    }
   }
 </style>
 </head>
@@ -150,6 +167,7 @@
   let sidebarOpen = false;
   let touchStartX = 0;
   let touchEndX = 0;
+  let currentChartInstances = [];
   
   const appState = {
     users: [],
@@ -337,12 +355,23 @@
     }
   };
 
-  // Router
+  // Router - FIXED: Clear previous content and manage view switching properly
   let currentRoute = 'dashboard';
   const navigate = (route) => {
+    console.log('Navigating to:', route, 'from:', currentRoute);
     currentRoute = route;
+    
+    // Destroy existing charts to prevent memory leaks
+    currentChartInstances.forEach(chart => chart.destroy());
+    currentChartInstances = [];
+    
+    // Clear content area
+    const content = $('#content');
+    if (content) content.innerHTML = '';
+    
     renderRoute();
     updateBottomNavActive();
+    updateSidebarActive();
     if (window.innerWidth < 768 && sidebarOpen) closeSidebar();
   };
 
@@ -426,14 +455,14 @@
     };
 
     const sidebarItems = menus[currentRole].map(item => `
-      <button onclick="navigate('${item.id}')" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition ${currentRoute === item.id ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 font-semibold' : ''}">
+      <button data-sidebar="${item.id}" onclick="navigate('${item.id}')" class="sidebar-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition">
         <i data-lucide="${item.icon}" class="w-5 h-5"></i>
         <span>${item.label}</span>
       </button>
     `).join('');
 
     const mobileNavItems = menus[currentRole].slice(0, 5).map(item => `
-      <button data-nav="${item.id}" onclick="navigate('${item.id}')" class="bottom-nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl ${currentRoute === item.id ? 'active text-sky-600 dark:text-sky-400' : 'text-slate-500'}" type="button">
+      <button data-nav="${item.id}" onclick="navigate('${item.id}')" class="bottom-nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-slate-500" type="button">
         <i data-lucide="${item.icon}" class="w-5 h-5"></i>
         <span class="text-[10px] font-medium">${item.label}</span>
       </button>
@@ -544,6 +573,17 @@
     });
   };
 
+  window.updateSidebarActive = () => {
+    $$('.sidebar-item').forEach(btn => {
+      const route = btn.getAttribute('data-sidebar');
+      if (route === currentRoute) {
+        btn.classList.add('bg-sky-500/10', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
+      } else {
+        btn.classList.remove('bg-sky-500/10', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
+      }
+    });
+  };
+
   window.showProfileMenu = () => {
     showModal(`
       <div class="p-6">
@@ -577,15 +617,17 @@
   };
   window.handleLogout = handleLogout;
 
-  // Route Renderer
+  // Route Renderer - FIXED
   const renderRoute = () => {
+    console.log('Rendering route:', currentRoute);
     const titles = {
       dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
       bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
       activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
       mybills: 'My Bills', profile: 'Profile', chat: 'Chat'
     };
-    $('#page-title').textContent = titles[currentRoute] || 'Dashboard';
+    const titleEl = $('#page-title');
+    if (titleEl) titleEl.textContent = titles[currentRoute] || 'Dashboard';
     
     const routes = {
       dashboard: renderDashboard,
@@ -603,11 +645,15 @@
       profile: renderProfile,
       chat: renderChat
     };
-    (routes[currentRoute] || routes.dashboard)();
+    
+    const renderFn = routes[currentRoute] || routes.dashboard;
+    renderFn();
     lucide.createIcons();
+    updateBottomNavActive();
+    updateSidebarActive();
   };
 
-  // Dashboard
+  // Dashboard - FIXED LAYOUT: Compact cards visible without scroll
   const renderDashboard = () => {
     const customers = currentRole === 'staff' 
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid)
@@ -640,19 +686,13 @@
     const stats = currentRole === 'admin' ? [
       { label: 'Total Customers', value: customers.length, icon: 'users', color: 'sky' },
       { label: 'Total Staff', value: staffList.length, icon: 'user-cog', color: 'indigo' },
-      { label: 'Today Collection', value: formatCurrency(todayBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'wallet', color: 'emerald' },
-      { label: 'Monthly Collection', value: formatCurrency(monthBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'trending-up', color: 'emerald' },
-      { label: 'Total Paid', value: formatCurrency(paidBills.reduce((s,b)=>s+b.amount,0)), icon: 'check-circle', color: 'emerald' },
-      { label: 'Total Due', value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
-      { label: "Today's Promise", value: todayPromise.length, icon: 'calendar', color: 'amber' },
-      { label: "Tomorrow's Promise", value: tomorrowPromise.length, icon: 'calendar-days', color: 'amber' }
+      { label: "Today's Collection", value: formatCurrency(todayBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'wallet', color: 'emerald' },
+      { label: 'Monthly Due', value: formatCurrency(monthBills.filter(b=>b.status==='unpaid').reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' }
     ] : currentRole === 'staff' ? [
       { label: 'Assigned Customers', value: customers.length, icon: 'users', color: 'sky' },
-      { label: 'Today Paid', value: formatCurrency(todayBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'wallet', color: 'emerald' },
-      { label: 'Month Paid', value: formatCurrency(monthBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'trending-up', color: 'emerald' },
-      { label: 'Unpaid', value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
       { label: "Today's Promise", value: todayPromise.length, icon: 'calendar', color: 'amber' },
-      { label: "Tomorrow's Promise", value: tomorrowPromise.length, icon: 'calendar-days', color: 'amber' }
+      { label: 'Month Paid', value: formatCurrency(monthBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'trending-up', color: 'emerald' },
+      { label: 'Unpaid Due', value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' }
     ] : [
       { label: 'Current Due', value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
       { label: 'Last Payment', value: paidBills[0] ? formatDate(paidBills[0].createdAt) : '-', icon: 'calendar', color: 'emerald' },
@@ -661,17 +701,18 @@
     ];
 
     $('#content').innerHTML = `
-      <div class="space-y-4 md:space-y-6 fade-in">
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      <div class="dashboard-grid space-y-0 fade-in">
+        <!-- Row 1: Stats Cards - Compact -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
           ${stats.map(s => `
-            <div class="glass rounded-xl md:rounded-2xl p-3 md:p-5 border border-[rgb(var(--border))] hover:shadow-lg transition">
+            <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))] hover:shadow-lg transition">
               <div class="flex items-start justify-between">
                 <div class="flex-1 min-w-0">
-                  <p class="text-[10px] md:text-xs text-slate-500 mb-0.5 md:mb-1 truncate">${s.label}</p>
-                  <p class="text-base md:text-2xl font-bold truncate">${s.value}</p>
+                  <p class="text-[10px] text-slate-500 mb-1 truncate">${s.label}</p>
+                  <p class="text-lg md:text-xl font-bold truncate">${s.value}</p>
                 </div>
-                <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-${s.color}-500/20 flex items-center justify-center flex-shrink-0 ml-2">
-                  <i data-lucide="${s.icon}" class="w-4 h-4 md:w-5 md:h-5 text-${s.color}-600"></i>
+                <div class="w-9 h-9 rounded-lg bg-${s.color}-500/20 flex items-center justify-center flex-shrink-0 ml-2">
+                  <i data-lucide="${s.icon}" class="w-4 h-4 text-${s.color}-600"></i>
                 </div>
               </div>
             </div>
@@ -679,28 +720,34 @@
         </div>
 
         ${currentRole !== 'customer' ? `
-        <div class="grid lg:grid-cols-2 gap-4 md:gap-6">
-          <div class="glass rounded-xl md:rounded-2xl p-4 md:p-6 border border-[rgb(var(--border))]">
-            <h3 class="font-bold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
-              <i data-lucide="pie-chart" class="w-4 h-4 md:w-5 md:h-5 text-sky-600"></i> Payment Status
+        <!-- Row 2: Charts - Fixed Height -->
+        <div class="grid lg:grid-cols-2 gap-3">
+          <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
+            <h3 class="font-bold mb-2 flex items-center gap-2 text-sm">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-sky-600"></i> Payment Status
             </h3>
-            <canvas id="paymentChart" height="180"></canvas>
+            <div class="h-[250px] md:h-[280px]">
+              <canvas id="paymentChart"></canvas>
+            </div>
           </div>
-          <div class="glass rounded-xl md:rounded-2xl p-4 md:p-6 border border-[rgb(var(--border))]">
-            <h3 class="font-bold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
-              <i data-lucide="bar-chart" class="w-4 h-4 md:w-5 md:h-5 text-indigo-600"></i> Monthly Collection
+          <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
+            <h3 class="font-bold mb-2 flex items-center gap-2 text-sm">
+              <i data-lucide="bar-chart" class="w-4 h-4 text-indigo-600"></i> Monthly Collection
             </h3>
-            <canvas id="collectionChart" height="180"></canvas>
+            <div class="h-[250px] md:h-[280px]">
+              <canvas id="collectionChart"></canvas>
+            </div>
           </div>
         </div>
 
-        <div class="glass rounded-xl md:rounded-2xl p-4 md:p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
-            <i data-lucide="calendar-clock" class="w-4 h-4 md:w-5 md:h-5 text-amber-600"></i> Today's Promise (${todayPromise.length})
+        <!-- Row 3: Today's Promise -->
+        <div class="glass rounded-xl p-4 border border-[rgb(var(--border))] overflow-hidden">
+          <h3 class="font-bold mb-3 flex items-center gap-2 text-sm">
+            <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-600"></i> Today's Promise (${todayPromise.length})
           </h3>
-          <div class="space-y-2 max-h-64 md:max-h-80 overflow-y-auto">
+          <div class="space-y-2 overflow-y-auto max-h-[200px]">
             ${todayPromise.length ? todayPromise.map(c => `
-              <div class="flex items-center justify-between p-2.5 md:p-3 rounded-lg md:rounded-xl bg-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/70">
+              <div class="flex items-center justify-between p-2.5 rounded-lg bg-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/70">
                 <div class="flex-1 min-w-0">
                   <p class="font-semibold text-sm truncate">${c.name}</p>
                   <p class="text-xs text-slate-500 truncate">${c.mobile} • ${c.area}</p>
@@ -709,13 +756,14 @@
                   <i data-lucide="message-circle" class="w-4 h-4"></i>
                 </button>
               </div>
-            `).join('') : '<p class="text-sm text-slate-500 text-center py-6 md:py-8">No promises for today</p>'}
+            `).join('') : '<p class="text-sm text-slate-500 text-center py-6">No promises for today</p>'}
           </div>
         </div>
         ` : `
-        <div class="glass rounded-xl md:rounded-2xl p-4 md:p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold mb-4 text-sm md:text-base">Connection Details</h3>
-          <div class="space-y-2 md:space-y-3">
+        <!-- Customer Connection Details -->
+        <div class="glass rounded-xl p-4 border border-[rgb(var(--border))]">
+          <h3 class="font-bold mb-3 text-sm">Connection Details</h3>
+          <div class="space-y-2">
             <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
               <span class="text-slate-500 text-sm">PPPoE Username</span>
               <span class="font-mono font-semibold text-sm">${currentUserData?.pppoeUser || '-'}</span>
@@ -746,14 +794,15 @@
     
     const paymentCanvas = $('#paymentChart');
     if (paymentCanvas) {
-      new Chart(paymentCanvas, {
+      const chart = new Chart(paymentCanvas, {
         type: 'doughnut',
         data: {
           labels: ['Paid', 'Unpaid'],
           datasets: [{ data: [paid, unpaid], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0 }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } }
       });
+      currentChartInstances.push(chart);
     }
 
     const months = [];
@@ -772,11 +821,11 @@
 
     const collectionCanvas = $('#collectionChart');
     if (collectionCanvas) {
-      new Chart(collectionCanvas, {
+      const chart = new Chart(collectionCanvas, {
         type: 'bar',
         data: {
           labels: months,
-          datasets: [{ label: 'Collection', data, backgroundColor: '#0ea5e9', borderRadius: 8 }]
+          datasets: [{ label: 'Collection', data, backgroundColor: '#0ea5e9', borderRadius: 6 }]
         },
         options: { 
           responsive: true, 
@@ -785,11 +834,12 @@
             legend: { display: false } 
           }, 
           scales: { 
-            y: { beginAtZero: true, ticks: { font: { size: 10 } } },
-            x: { ticks: { font: { size: 10 } } }
+            y: { beginAtZero: true, ticks: { font: { size: 9 } } },
+            x: { ticks: { font: { size: 9 } } }
           } 
         }
       });
+      currentChartInstances.push(chart);
     }
   };
 
@@ -1292,11 +1342,16 @@
         <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td>
         <td class="p-4 text-sm">${formatDate(b.createdAt)}</td>
         <td class="p-4"><div class="flex items-center justify-end gap-2">
-          <button onclick='showInvoicePreview(${JSON.stringify(b).replace(/'/g,"&apos;")})' class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
+          <button onclick='window.showInvoicePreviewFromBill("${b.id}")' class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
           ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="Mark Paid" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
         </div></td>
       </tr>
     `).join('');
+  };
+
+  window.showInvoicePreviewFromBill = (id) => {
+    const bill = appState.bills.find(b => b.id === id);
+    if (bill) showInvoicePreview(bill);
   };
 
   window.markPaid = async (id) => {
@@ -1349,7 +1404,6 @@
                   </div>
                   <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
                 </div>
-              </div>
               <div class="flex items-center justify-between text-xs text-slate-500">
                 <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
                 ${currentRole !== 'customer' && c.status !== 'resolved' ? `
@@ -1735,7 +1789,7 @@
         <div class="p-4 border-t border-[rgb(var(--border))]">
           <form id="chat-form" class="flex gap-2">
             <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-            <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white" type="button"><i data-lucide="send" class="w-5 h-5"></i></button>
+            <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white"><i data-lucide="send" class="w-5 h-5"></i></button>
           </form>
         </div>
       </div>
@@ -1825,7 +1879,7 @@
     navigator.serviceWorker.register(swUrl).catch(console.error);
   }
 
-  // Expose functions
+  // Expose functions to window
   window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
 </script>
