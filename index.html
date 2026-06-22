@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OwnsBill - ISP Reseller Billing v2.2</title>
-<meta name="description" content="Modern ISP Reseller Management System with Firebase - Bilingual">
+<title>OwnsBill - ISP Reseller Billing v2.1</title>
+<meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
+<!-- Manifest removed: blob URL causes errors on GitHub Pages. Uncomment for production with valid PNG -->
+<!-- <link rel="manifest" href="manifest.json"> -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Bengali:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Tailwind CDN for development. For production, use Tailwind CLI to avoid warning -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = { darkMode: 'class' }
@@ -40,7 +40,7 @@
   body { 
     background: rgb(var(--bg)); 
     color: rgb(var(--text)); 
-    font-family: 'Inter', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overscroll-behavior: none;
   }
   body.no-scroll { overflow: hidden; }
@@ -186,18 +186,6 @@
     font-size: 0.75rem;
     font-weight: 600;
   }
-
-  .lang-btn {
-    padding: 0.375rem 0.75rem;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    transition: all 0.2s;
-  }
-  .lang-btn.active {
-    background: rgb(var(--primary));
-    color: white;
-  }
 </style>
 </head>
 <body class="antialiased">
@@ -208,7 +196,7 @@
   <div class="w-full max-w-2xl mx-4 glass rounded-2xl shadow-2xl border border-[rgb(var(--border))] scale-in" onclick="event.stopPropagation()">
     <div class="p-4 border-b border-[rgb(var(--border))] flex items-center gap-3">
       <i data-lucide="search" class="w-5 h-5 text-[rgb(var(--primary))]"></i>
-      <input id="cmd-search" type="text" placeholder="" class="flex-1 bg-transparent outline-none text-sm" data-i18n-placeholder="searchPlaceholder">
+      <input id="cmd-search" type="text" placeholder="Type a command or search..." class="flex-1 bg-transparent outline-none text-sm">
       <kbd class="text-xs px-2 py-1 rounded bg-[rgb(var(--border))]">ESC</kbd>
     </div>
     <div id="cmd-results" class="max-h-80 overflow-y-auto p-2"></div>
@@ -236,384 +224,6 @@
   const db = getFirestore(app);
   const storage = getStorage(app);
 
-  // i18n System
-  const translations = {
-    en: {
-      appName: 'OwnsBill v2.2',
-      appDesc: 'ISP Reseller Management System',
-      email: 'Email',
-      password: 'Password',
-      signIn: 'Sign In',
-      quickAccess: 'Press Ctrl+K for quick access',
-      searchPlaceholder: 'Type a command or search...',
-      search: 'Search',
-      toggleTheme: 'Toggle Theme',
-      profileSettings: 'Profile Settings',
-      logout: 'Logout',
-      
-      // Menus
-      dashboard: 'Dashboard',
-      customers: 'Customers',
-      staff: 'Staff',
-      approvals: 'Approvals',
-      packages: 'Packages',
-      bills: 'Bills',
-      invoice: 'Invoice Generator',
-      staffAccounts: 'Staff Accounts',
-      complaints: 'Complaints',
-      reports: 'Reports',
-      activities: 'Activity Log',
-      settings: 'Settings',
-      myCustomers: 'My Customers',
-      myBills: 'My Bills',
-      profile: 'Profile',
-      chat: 'Chat',
-      myWallet: 'My Wallet',
-      
-      // Dashboard
-      totalCustomers: 'Total Customers',
-      totalStaff: 'Total Staff',
-      todayCollection: "Today's Collection",
-      monthlyDue: 'Monthly Due',
-      pendingDeposits: 'Pending Deposits',
-      salaryRequests: 'Salary Requests',
-      assignedCustomers: 'Assigned Customers',
-      todayPromise: "Today's Promise",
-      monthPaid: 'Month Paid',
-      unpaidDue: 'Unpaid Due',
-      currentDue: 'Current Due',
-      lastPayment: 'Last Payment',
-      package: 'Package',
-      speed: 'Speed',
-      paymentStatus: 'Payment Status',
-      monthlyCollection: 'Monthly Collection',
-      promiseToday: "Today's Promise",
-      connectionDetails: 'Connection Details',
-      pppoeUser: 'PPPoE Username',
-      pppoePass: 'PPPoE Password',
-      noPromiseToday: 'No promises for today',
-      
-      // Customers
-      searchCustomers: 'Search customers...',
-      addCustomer: 'Add Customer',
-      name: 'Name',
-      contact: 'Contact',
-      area: 'Area',
-      due: 'Due',
-      status: 'Status',
-      actions: 'Actions',
-      edit: 'Edit',
-      view: 'View',
-      createInvoice: 'Create Invoice',
-      whatsapp: 'WhatsApp',
-      noCustomersFound: 'No customers found',
-      editCustomer: 'Edit Customer',
-      saveCustomer: 'Save Customer',
-      cancel: 'Cancel',
-      
-      // Forms
-      mobile: 'Mobile',
-      imo: 'Imo',
-      nid: 'NID',
-      zone: 'Zone',
-      address: 'Address',
-      selectZone: 'Select Zone',
-      selectArea: 'Select Area',
-      selectPackage: 'Select Package',
-      assignedStaff: 'Assigned Staff',
-      selectStaff: 'Select Staff',
-      required: 'required',
-      
-      // Approvals
-      pendingApprovals: 'Pending Approvals',
-      approve: 'Approve',
-      reject: 'Reject',
-      noPendingApprovals: 'No pending approvals',
-      
-      // My Wallet
-      totalCollected: 'Total Collected',
-      deposited: 'Deposited',
-      salaryPaid: 'Salary Paid',
-      balance: 'Balance',
-      depositToAdmin: 'Deposit to Admin',
-      requestSalary: 'Request Salary',
-      pending: 'Pending',
-      recentDeposits: 'Recent Deposits',
-      salaryRequests: 'Salary Requests',
-      noDeposits: 'No deposits yet',
-      noSalaryRequests: 'No salary requests',
-      
-      // Packages
-      addPackage: 'Add Package',
-      noPackages: 'No packages found',
-      
-      // Reports
-      filterReports: 'Filter Reports',
-      fromDate: 'From Date',
-      toDate: 'To Date',
-      generateReport: 'Generate Report',
-      staffAccountsTitle: 'Staff Accounts',
-      totalAmount: 'Total Amount',
-      paid: 'Paid',
-      unpaid: 'Unpaid',
-      invoiceNo: 'Invoice',
-      amount: 'Amount',
-      method: 'Method',
-      date: 'Date',
-      noData: 'No data',
-      exportCSV: 'Export CSV',
-      
-      // Settings
-      companyInfo: 'Company Information',
-      companyName: 'Company Name',
-      logoUrl: 'Logo URL',
-      areaManagement: 'Area Management',
-      addArea: 'Add Area',
-      noAreas: 'No areas added',
-      zoneManagement: 'Zone Management',
-      addZone: 'Add Zone',
-      noZones: 'No zones added',
-      saveSettings: 'Save Settings',
-      
-      // Invoice
-      selectCustomer: 'Select Customer',
-      chooseCustomer: 'Choose customer',
-      paymentMethod: 'Payment Method',
-      transactionId: 'Transaction ID',
-      promiseDate: 'Promise Date',
-      notes: 'Notes',
-      createInvoice: 'Create Invoice',
-      preview: 'Preview',
-      
-      // Complaints
-      newComplaint: 'New Complaint',
-      subject: 'Subject',
-      description: 'Description',
-      submit: 'Submit',
-      submitComplaint: 'Submit Complaint',
-      markResolved: 'Mark Resolved',
-      noComplaints: 'No complaints found',
-      
-      // Messages
-      welcomeBack: 'Welcome back!',
-      loggedOut: 'Logged out successfully',
-      customerAdded: 'Customer added successfully',
-      customerUpdated: 'Customer updated successfully',
-      customerDeleted: 'Customer deleted',
-      staffAdded: 'Staff added successfully',
-      staffUpdated: 'Staff updated',
-      packageSaved: 'Package saved',
-      packageDeleted: 'Package deleted',
-      invoiceCreated: 'Invoice created successfully',
-      depositSubmitted: 'Deposit request submitted',
-      salaryRequestSubmitted: 'Salary request submitted',
-      complaintSubmitted: 'Complaint submitted',
-      statusUpdated: 'Status updated',
-      settingsSaved: 'Settings saved',
-      invalidWhatsApp: 'Invalid WhatsApp number',
-      
-      // Status
-      approved: 'approved',
-      rejected: 'rejected',
-      confirmed: 'confirmed',
-      inProgress: 'in progress',
-      resolved: 'resolved'
-    },
-    bn: {
-      appName: 'ওন্সবিল v2.2',
-      appDesc: 'আইএসপি রিসেলার ম্যানেজমেন্ট সিস্টেম',
-      email: 'ইমেইল',
-      password: 'পাসওয়ার্ড',
-      signIn: 'সাইন ইন',
-      quickAccess: 'দ্রুত অ্যাক্সেসের জন্য Ctrl+K চাপুন',
-      searchPlaceholder: 'কমান্ড বা খুঁজুন টাইপ করুন...',
-      search: 'খুঁজুন',
-      toggleTheme: 'থিম পরিবর্তন',
-      profileSettings: 'প্রোফাইল সেটিংস',
-      logout: 'লগআউট',
-      
-      // Menus
-      dashboard: 'ড্যাশবোর্ড',
-      customers: 'গ্রাহকগণ',
-      staff: 'স্টাফ',
-      approvals: 'অনুমোদন',
-      packages: 'প্যাকেজ',
-      bills: 'বিল',
-      invoice: 'ইনভয়েস জেনারেটর',
-      staffAccounts: 'স্টাফ অ্যাকাউন্ট',
-      complaints: 'অভিযোগ',
-      reports: 'রিপোর্ট',
-      activities: 'কার্যকলাপ লগ',
-      settings: 'সেটিংস',
-      myCustomers: 'আমার গ্রাহক',
-      myBills: 'আমার বিল',
-      profile: 'প্রোফাইল',
-      chat: 'চ্যাট',
-      myWallet: 'আমার ওয়ালেট',
-      
-      // Dashboard
-      totalCustomers: 'মোট গ্রাহক',
-      totalStaff: 'মোট স্টাফ',
-      todayCollection: 'আজকের আদায়',
-      monthlyDue: 'মাসিক বকেয়া',
-      pendingDeposits: 'বাকি জমা',
-      salaryRequests: 'বেতন অনুরোধ',
-      assignedCustomers: 'নির্ধারিত গ্রাহক',
-      todayPromise: 'আজকের প্রতিশ্রুতি',
-      monthPaid: 'মাসে আদায়',
-      unpaidDue: 'অপরিশোধিত',
-      currentDue: 'বর্তমান বকেয়া',
-      lastPayment: 'শেষ পেমেন্ট',
-      package: 'প্যাকেজ',
-      speed: 'গতি',
-      paymentStatus: 'পেমেন্ট স্ট্যাটাস',
-      monthlyCollection: 'মাসিক আদায়',
-      promiseToday: 'আজকের প্রতিশ্রুতি',
-      connectionDetails: 'সংযোগ বিবরণ',
-      pppoeUser: 'পিপিওই ইউজারনেম',
-      pppoePass: 'পিপিওই পাসওয়ার্ড',
-      noPromiseToday: 'আজকের কোনো প্রতিশ্রুতি নেই',
-      
-      // Customers
-      searchCustomers: 'গ্রাহক খুঁজুন...',
-      addCustomer: 'গ্রাহক যোগ করুন',
-      name: 'নাম',
-      contact: 'যোগাযোগ',
-      area: 'এলাকা',
-      due: 'বকেয়া',
-      status: 'স্ট্যাটাস',
-      actions: 'অ্যাকশন',
-      edit: 'সম্পাদনা',
-      view: 'দেখুন',
-      createInvoice: 'ইনভয়েস তৈরি',
-      whatsapp: 'হোয়াটসঅ্যাপ',
-      noCustomersFound: 'কোনো গ্রাহক পাওয়া যায়নি',
-      editCustomer: 'গ্রাহক সম্পাদনা',
-      saveCustomer: 'গ্রাহক সংরক্ষণ',
-      cancel: 'বাতিল',
-      
-      // Forms
-      mobile: 'মোবাইল',
-      imo: 'ইমো',
-      nid: 'এনআইডি',
-      zone: 'জোন',
-      address: 'ঠিকানা',
-      selectZone: 'জোন নির্বাচন',
-      selectArea: 'এলাকা নির্বাচন',
-      selectPackage: 'প্যাকেজ নির্বাচন',
-      assignedStaff: 'নির্ধারিত স্টাফ',
-      selectStaff: 'স্টাফ নির্বাচন',
-      required: 'আবশ্যক',
-      
-      // Approvals
-      pendingApprovals: 'অনুমোদনের অপেক্ষায়',
-      approve: 'অনুমোদন',
-      reject: 'বাতিল',
-      noPendingApprovals: 'কোনো অনুমোদন বাকি নেই',
-      
-      // My Wallet
-      totalCollected: 'মোট আদায়',
-      deposited: 'জমা',
-      salaryPaid: 'বেতন পরিশোধ',
-      balance: 'ব্যালেন্স',
-      depositToAdmin: 'অ্যাডমিনকে জমা দিন',
-      requestSalary: 'বেতন অনুরোধ',
-      pending: 'অপেক্ষমাণ',
-      recentDeposits: 'সাম্প্রতিক জমা',
-      salaryRequests: 'বেতন অনুরোধ',
-      noDeposits: 'কোনো জমা নেই',
-      noSalaryRequests: 'কোনো বেতন অনুরোধ নেই',
-      
-      // Packages
-      addPackage: 'প্যাকেজ যোগ করুন',
-      noPackages: 'কোনো প্যাকেজ পাওয়া যায়নি',
-      
-      // Reports
-      filterReports: 'রিপোর্ট ফিল্টার',
-      fromDate: 'শুরুর তারিখ',
-      toDate: 'শেষ তারিখ',
-      generateReport: 'রিপোর্ট তৈরি',
-      staffAccountsTitle: 'স্টাফ অ্যাকাউন্ট',
-      totalAmount: 'মোট পরিমাণ',
-      paid: 'পরিশোধিত',
-      unpaid: 'অপরিশোধিত',
-      invoiceNo: 'ইনভয়েস',
-      amount: 'পরিমাণ',
-      method: 'পদ্ধতি',
-      date: 'তারিখ',
-      noData: 'কোনো তথ্য নেই',
-      exportCSV: 'CSV এক্সপোর্ট',
-      
-      // Settings
-      companyInfo: 'কোম্পানি তথ্য',
-      companyName: 'কোম্পানির নাম',
-      logoUrl: 'লোগো URL',
-      areaManagement: 'এলাকা ব্যবস্থাপনা',
-      addArea: 'এলাকা যোগ করুন',
-      noAreas: 'কোনো এলাকা যোগ করা হয়নি',
-      zoneManagement: 'জোন ব্যবস্থাপনা',
-      addZone: 'জোন যোগ করুন',
-      noZones: 'কোনো জোন যোগ করা হয়নি',
-      saveSettings: 'সেটিংস সংরক্ষণ',
-      
-      // Invoice
-      selectCustomer: 'গ্রাহক নির্বাচন',
-      chooseCustomer: 'গ্রাহক বেছে নিন',
-      paymentMethod: 'পেমেন্ট পদ্ধতি',
-      transactionId: 'ট্রানজেকশন আইডি',
-      promiseDate: 'প্রতিশ্রুতির তারিখ',
-      notes: 'নোটস',
-      createInvoice: 'ইনভয়েস তৈরি',
-      preview: 'প্রিভিউ',
-      
-      // Complaints
-      newComplaint: 'নতুন অভিযোগ',
-      subject: 'বিষয়',
-      description: 'বিবরণ',
-      submit: 'জমা দিন',
-      submitComplaint: 'অভিযোগ জমা দিন',
-      markResolved: 'সমাধান হয়েছে',
-      noComplaints: 'কোনো অভিযোগ পাওয়া যায়নি',
-      
-      // Messages
-      welcomeBack: 'স্বাগতম!',
-      loggedOut: 'সফলভাবে লগআউট হয়েছে',
-      customerAdded: 'গ্রাহক সফলভাবে যোগ করা হয়েছে',
-      customerUpdated: 'গ্রাহক আপডেট করা হয়েছে',
-      customerDeleted: 'গ্রাহক মুছে ফেলা হয়েছে',
-      staffAdded: 'স্টাফ সফলভাবে যোগ করা হয়েছে',
-      staffUpdated: 'স্টাফ আপডেট করা হয়েছে',
-      packageSaved: 'প্যাকেজ সংরক্ষণ করা হয়েছে',
-      packageDeleted: 'প্যাকেজ মুছে ফেলা হয়েছে',
-      invoiceCreated: 'ইনভয়েস সফলভাবে তৈরি হয়েছে',
-      depositSubmitted: 'জমার অনুরোধ জমা দেওয়া হয়েছে',
-      salaryRequestSubmitted: 'বেতনের অনুরোধ জমা দেওয়া হয়েছে',
-      complaintSubmitted: 'অভিযোগ জমা দেওয়া হয়েছে',
-      statusUpdated: 'স্ট্যাটাস আপডেট করা হয়েছে',
-      settingsSaved: 'সেটিংস সংরক্ষণ করা হয়েছে',
-      invalidWhatsApp: 'অবৈধ হোয়াটসঅ্যাপ নম্বর',
-      
-      // Status
-      approved: 'অনুমোদিত',
-      rejected: 'বাতিল',
-      confirmed: 'নিশ্চিত',
-      inProgress: 'প্রক্রিয়াধীন',
-      resolved: 'সমাধান হয়েছে'
-    }
-  };
-
-  let currentLang = localStorage.getItem('language') || (navigator.language.startsWith('bn') ? 'bn' : 'en');
-  
-  const t = (key) => translations[currentLang][key] || translations.en[key] || key;
-  
-  window.toggleLanguage = () => {
-    currentLang = currentLang === 'en' ? 'bn' : 'en';
-    localStorage.setItem('language', currentLang);
-    renderApp();
-    showView(currentView);
-    showToast(currentLang === 'bn' ? 'ভাষা পরিবর্তন সফল' : 'Language changed successfully', 'success');
-  };
-
   let currentUser = null;
   let currentRole = null;
   let currentUserData = null;
@@ -625,6 +235,7 @@
   let mobileProfileOpen = false;
   let isLoadingData = true;
   
+  // Chart instances stored globally to prevent "already in use" errors
   let paymentChart = null;
   let collectionChart = null;
   
@@ -641,6 +252,14 @@
     staffDeposits: [],
     salaryRequests: [],
     unsubscribers: []
+  };
+
+  const menuNames = {
+    dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
+    bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
+    activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
+    mybills: 'My Bills', profile: 'Profile', chat: 'Chat', approvals: 'Approvals',
+    mywallet: 'My Wallet', staffaccounts: 'Staff Accounts'
   };
 
   const applyTheme = () => {
@@ -668,16 +287,16 @@
     }
   };
   
-  const formatCurrency = (num) => `৳${Number(num || 0).toLocaleString(currentLang === 'bn' ? 'bn-BD' : 'en-IN')}`;
+  const formatCurrency = (num) => `৳${Number(num || 0).toLocaleString('en-IN')}`;
   const formatDate = (ts) => {
     const d = toDate(ts);
     if (!d) return '-';
-    return d.toLocaleDateString(currentLang === 'bn' ? 'bn-BD' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   };
   const formatDateTime = (ts) => {
     const d = toDate(ts);
     if (!d) return '-';
-    return d.toLocaleString(currentLang === 'bn' ? 'bn-BD' : 'en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
   };
   const debounce = (fn, delay) => {
     let timeout;
@@ -717,7 +336,7 @@
     darkMode = !darkMode;
     applyTheme();
     setTimeout(() => lucide.createIcons(), 50);
-    showToast(darkMode ? (currentLang === 'bn' ? 'ডার্ক মোড চালু' : 'Dark mode enabled') : (currentLang === 'bn' ? 'লাইট মোড চালু' : 'Light mode enabled'), 'info');
+    showToast(darkMode ? 'Dark mode enabled' : 'Light mode enabled', 'info');
   };
 
   window.toggleCommandPalette = (show) => {
@@ -770,13 +389,14 @@
     if (dropdown) dropdown.classList.add('hidden');
   };
 
+  // Safe onSnapshot wrapper with error handling
   const safeOnSnapshot = (queryRef, callback, collectionName) => {
     try {
       return onSnapshot(queryRef, callback, (error) => {
         console.error(`Firestore listener error for ${collectionName}:`, error);
         if (error.code === 'permission-denied') {
           console.warn(`${collectionName} collection not accessible. Using empty array.`);
-          callback({ docs: [] });
+          callback({ docs: [] }); // Provide empty data to prevent UI break
         }
       });
     } catch (err) {
@@ -796,12 +416,12 @@
         if (userDoc.exists()) {
           const userData = userDoc.data();
           if (userData.status === 'pending') {
-            showToast(currentLang === 'bn' ? 'আপনার অ্যাকাউন্ট অ্যাডমিন অনুমোদনের অপেক্ষায়' : 'Your account is pending admin approval', 'warning');
+            showToast('Your account is pending admin approval', 'warning');
             signOut(auth);
             return;
           }
           if (userData.status === 'rejected') {
-            showToast(currentLang === 'bn' ? 'আপনার অ্যাকাউন্ট প্রত্যাখ্যান করা হয়েছে' : 'Your account has been rejected', 'error');
+            showToast('Your account has been rejected', 'error');
             signOut(auth);
             return;
           }
@@ -817,12 +437,12 @@
             isLoadingData = false;
           }, 100);
         } else {
-          showToast(currentLang === 'bn' ? 'ব্যবহারকারী প্রোফাইল পাওয়া যায়নি' : 'User profile not found', 'error');
+          showToast('User profile not found', 'error');
           signOut(auth);
         }
       } catch (err) {
         console.error('Auth error:', err);
-        showToast(currentLang === 'bn' ? 'প্রমাণীকরণ ত্রুটি' : 'Authentication error', 'error');
+        showToast('Authentication error', 'error');
         signOut(auth);
       }
     } else {
@@ -843,6 +463,7 @@
   };
 
   const initRealtimeListeners = async () => {
+    // Users
     let usersQuery = collection(db, 'users');
     if (currentRole === 'staff') usersQuery = query(usersQuery, where('assignedStaff', '==', currentUser.uid));
     if (currentRole === 'customer') usersQuery = query(usersQuery, where('__name__', '==', currentUser.uid));
@@ -852,11 +473,13 @@
       if (!isLoadingData && ['dashboard','customers','staff','approvals','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }, 'users'));
 
+    // Packages with error handling - collection might not exist
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'packages'), (snap) => {
       appState.packages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       if (!isLoadingData && ['customers','packages'].includes(currentView)) reRenderCurrentView();
     }, 'packages'));
 
+    // Bills
     let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
     if (currentRole === 'staff') billsQuery = query(billsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
@@ -866,6 +489,7 @@
       if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }, 'bills'));
 
+    // Complaints
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
     if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
@@ -875,14 +499,17 @@
       if (!isLoadingData && currentView === 'complaints') reRenderCurrentView();
     }, 'complaints'));
 
+    // Zones - might not exist
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'zones'), (snap) => {
       appState.zones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }, 'zones'));
 
+    // Areas - might not exist
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'areas'), (snap) => {
       appState.areas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }, 'areas'));
 
+    // Staff Deposits - might not exist
     let depositsQuery = query(collection(db, 'staff_deposits'), orderBy('date', 'desc'));
     if (currentRole === 'staff') depositsQuery = query(depositsQuery, where('staffId', '==', currentUser.uid));
     
@@ -891,6 +518,7 @@
       if (!isLoadingData && ['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }, 'staff_deposits'));
 
+    // Salary Requests - might not exist
     let salaryQuery = query(collection(db, 'salary_requests'), orderBy('requestDate', 'desc'));
     if (currentRole === 'staff') salaryQuery = query(salaryQuery, where('staffId', '==', currentUser.uid));
     
@@ -909,6 +537,8 @@
 
   let currentView = 'dashboard';
   const showView = (viewId) => {
+    // Charts will be destroyed in renderCharts before recreation
+    
     const allViews = document.querySelectorAll('.view-section');
     allViews.forEach(view => view.classList.add('hidden'));
     
@@ -919,7 +549,7 @@
     currentView = viewId;
     
     const titleEl = document.getElementById('page-title');
-    if (titleEl) titleEl.textContent = t(viewId);
+    if (titleEl) titleEl.textContent = menuNames[viewId] || 'Dashboard';
     
     reRenderCurrentView();
     updateBottomNavActive();
@@ -967,27 +597,24 @@
             <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
               <span class="text-3xl font-bold text-white">O</span>
             </div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">${t('appName')}</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">${t('appDesc')}</p>
-            <button onclick="toggleLanguage()" class="mt-3 lang-btn active">
-              ${currentLang === 'en' ? 'EN | BN' : 'EN | BN'}
-            </button>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.1</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">ISP Reseller Management System</p>
           </div>
           <form id="login-form" class="space-y-4">
             <div>
-              <label class="text-sm font-medium mb-2 block">${t('email')}</label>
+              <label class="text-sm font-medium mb-2 block">Email</label>
               <input type="email" id="email" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none transition" placeholder="admin@owns.bd">
             </div>
             <div>
-              <label class="text-sm font-medium mb-2 block">${t('password')}</label>
+              <label class="text-sm font-medium mb-2 block">Password</label>
               <input type="password" id="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none transition" placeholder="••••••••">
             </div>
             <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition">
-              ${t('signIn')}
+              Sign In
             </button>
           </form>
           <div class="mt-6 text-center text-xs text-slate-500">
-            ${t('quickAccess')}
+            Press <kbd class="px-2 py-1 rounded bg-[rgb(var(--border))]">Ctrl+K</kbd> for quick access
           </div>
         </div>
       </div>
@@ -998,7 +625,7 @@
       const password = $('#password').value;
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        showToast(t('welcomeBack'), 'success');
+        showToast('Welcome back!', 'success');
       } catch (err) {
         showToast(err.message, 'error');
       }
@@ -1009,34 +636,34 @@
   const renderApp = () => {
     const menus = {
       admin: [
-        { id: 'dashboard', label: t('dashboard'), icon: 'layout-dashboard' },
-        { id: 'customers', label: t('customers'), icon: 'users' },
-        { id: 'staff', label: t('staff'), icon: 'user-cog' },
-        { id: 'approvals', label: t('approvals'), icon: 'check-circle' },
-        { id: 'packages', label: t('packages'), icon: 'package' },
-        { id: 'bills', label: t('bills'), icon: 'receipt' },
-        { id: 'invoice', label: t('invoice'), icon: 'file-text' },
-        { id: 'staffaccounts', label: t('staffAccounts'), icon: 'wallet' },
-        { id: 'complaints', label: t('complaints'), icon: 'message-circle-warning' },
-        { id: 'reports', label: t('reports'), icon: 'bar-chart-3' },
-        { id: 'activities', label: t('activities'), icon: 'history' },
-        { id: 'settings', label: t('settings'), icon: 'settings' }
+        { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
+        { id: 'customers', label: 'Customers', icon: 'users' },
+        { id: 'staff', label: 'Staff', icon: 'user-cog' },
+        { id: 'approvals', label: 'Approvals', icon: 'check-circle' },
+        { id: 'packages', label: 'Packages', icon: 'package' },
+        { id: 'bills', label: 'Bills', icon: 'receipt' },
+        { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
+        { id: 'staffaccounts', label: 'Staff Accounts', icon: 'wallet' },
+        { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
+        { id: 'reports', label: 'Reports', icon: 'bar-chart-3' },
+        { id: 'activities', label: 'Activity Log', icon: 'history' },
+        { id: 'settings', label: 'Settings', icon: 'settings' }
       ],
       staff: [
-        { id: 'dashboard', label: t('dashboard'), icon: 'layout-dashboard' },
-        { id: 'mycustomers', label: t('customers'), icon: 'users' },
-        { id: 'bills', label: t('bills'), icon: 'receipt' },
-        { id: 'invoice', label: t('invoice'), icon: 'file-text' },
-        { id: 'mywallet', label: t('myWallet'), icon: 'wallet' },
-        { id: 'complaints', label: t('complaints'), icon: 'message-circle-warning' },
-        { id: 'reports', label: t('reports'), icon: 'bar-chart-3' }
+        { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
+        { id: 'mycustomers', label: 'Customers', icon: 'users' },
+        { id: 'bills', label: 'Bills', icon: 'receipt' },
+        { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
+        { id: 'mywallet', label: 'My Wallet', icon: 'wallet' },
+        { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
+        { id: 'reports', label: 'Reports', icon: 'bar-chart-3' }
       ],
       customer: [
-        { id: 'dashboard', label: t('dashboard'), icon: 'layout-dashboard' },
-        { id: 'mybills', label: t('myBills'), icon: 'receipt' },
-        { id: 'profile', label: t('profile'), icon: 'user' },
-        { id: 'complaints', label: t('complaints'), icon: 'message-circle-warning' },
-        { id: 'chat', label: t('chat'), icon: 'messages-square' }
+        { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
+        { id: 'mybills', label: 'My Bills', icon: 'receipt' },
+        { id: 'profile', label: 'Profile', icon: 'user' },
+        { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
+        { id: 'chat', label: 'Chat', icon: 'messages-square' }
       ]
     };
 
@@ -1099,12 +726,9 @@
                 <h1 id="page-title" class="text-lg md:text-xl font-bold truncate"></h1>
               </div>
               <div class="flex items-center gap-2">
-                <button onclick="toggleLanguage()" class="lang-btn" type="button">
-                  ${currentLang === 'en' ? 'EN' : 'BN'}
-                </button>
                 <button onclick="toggleCommandPalette(true)" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm" type="button">
                   <i data-lucide="search" class="w-4 h-4"></i>
-                  <span class="text-slate-500">${t('search')}</span>
+                  <span class="text-slate-500">Search</span>
                   <kbd class="text-xs px-1.5 py-0.5 rounded bg-[rgb(var(--border))]">⌘K</kbd>
                 </button>
                 <button onclick="toggleTheme()" class="p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
@@ -1126,13 +750,13 @@
                     </div>
                     <div class="p-2 space-y-1">
                       <button onclick="showView('profile'); closeMobileProfile()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgb(var(--border))] text-left text-sm" type="button">
-                        <i data-lucide="user" class="w-4 h-4"></i> ${t('profileSettings')}
+                        <i data-lucide="user" class="w-4 h-4"></i> Profile Settings
                       </button>
                       <button onclick="toggleTheme(); closeMobileProfile()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgb(var(--border))] text-left text-sm" type="button">
-                        <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-4 h-4"></i> ${t('toggleTheme')}
+                        <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-4 h-4"></i> Toggle Theme
                       </button>
                       <button onclick="handleLogout(); closeMobileProfile()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-rose-500/10 text-rose-600 text-left text-sm" type="button">
-                        <i data-lucide="log-out" class="w-4 h-4"></i> ${t('logout')}
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Logout
                       </button>
                     </div>
                   </div>
@@ -1242,13 +866,13 @@
         </div>
         <div class="space-y-2">
           <button onclick="showView('profile'); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left" type="button">
-            <i data-lucide="user" class="w-5 h-5"></i> ${t('profileSettings')}
+            <i data-lucide="user" class="w-5 h-5"></i> Profile Settings
           </button>
           <button onclick="toggleTheme(); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left" type="button">
-            <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-5 h-5"></i> ${t('toggleTheme')}
+            <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-5 h-5"></i> Toggle Theme
           </button>
           <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-rose-500/10 text-rose-600 text-left" type="button">
-            <i data-lucide="log-out" class="w-5 h-5"></i> ${t('logout')}
+            <i data-lucide="log-out" class="w-5 h-5"></i> Logout
           </button>
         </div>
       </div>
@@ -1257,7 +881,7 @@
 
   const handleLogout = async () => {
     await signOut(auth);
-    showToast(t('loggedOut'), 'success');
+    showToast('Logged out successfully', 'success');
     closeModal();
   };
   window.handleLogout = handleLogout;
@@ -1297,22 +921,22 @@
     const totalSalaryRequests = pendingSalary.reduce((sum, s) => sum + (s.amount || 0), 0);
 
     const stats = currentRole === 'admin' ? [
-      { label: t('totalCustomers'), value: customers.length, icon: 'users', color: 'sky' },
-      { label: t('totalStaff'), value: staffList.length, icon: 'user-cog', color: 'indigo' },
-      { label: t('todayCollection'), value: formatCurrency(todayBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'wallet', color: 'emerald' },
-      { label: t('monthlyDue'), value: formatCurrency(monthBills.filter(b=>b.status==='unpaid').reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
-      { label: t('pendingDeposits'), value: formatCurrency(totalPendingDeposits), icon: 'arrow-down-circle', color: 'amber' },
-      { label: t('salaryRequests'), value: formatCurrency(totalSalaryRequests), icon: 'dollar-sign', color: 'purple' }
+      { label: 'Total Customers', value: customers.length, icon: 'users', color: 'sky' },
+      { label: 'Total Staff', value: staffList.length, icon: 'user-cog', color: 'indigo' },
+      { label: "Today's Collection", value: formatCurrency(todayBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'wallet', color: 'emerald' },
+      { label: 'Monthly Due', value: formatCurrency(monthBills.filter(b=>b.status==='unpaid').reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
+      { label: 'Pending Deposits', value: formatCurrency(totalPendingDeposits), icon: 'arrow-down-circle', color: 'amber' },
+      { label: 'Salary Requests', value: formatCurrency(totalSalaryRequests), icon: 'dollar-sign', color: 'purple' }
     ] : currentRole === 'staff' ? [
-      { label: t('assignedCustomers'), value: customers.length, icon: 'users', color: 'sky' },
-      { label: t('todayPromise'), value: todayPromise.length, icon: 'calendar', color: 'amber' },
-      { label: t('monthPaid'), value: formatCurrency(monthBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'trending-up', color: 'emerald' },
-      { label: t('unpaidDue'), value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' }
+      { label: 'Assigned Customers', value: customers.length, icon: 'users', color: 'sky' },
+      { label: "Today's Promise", value: todayPromise.length, icon: 'calendar', color: 'amber' },
+      { label: 'Month Paid', value: formatCurrency(monthBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'trending-up', color: 'emerald' },
+      { label: 'Unpaid Due', value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' }
     ] : [
-      { label: t('currentDue'), value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
-      { label: t('lastPayment'), value: paidBills[0] ? formatDate(paidBills[0].createdAt) : '-', icon: 'calendar', color: 'emerald' },
-      { label: t('package'), value: currentUserData?.packageName || '-', icon: 'package', color: 'sky' },
-      { label: t('speed'), value: currentUserData?.packageSpeed || '-', icon: 'zap', color: 'indigo' }
+      { label: 'Current Due', value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
+      { label: 'Last Payment', value: paidBills[0] ? formatDate(paidBills[0].createdAt) : '-', icon: 'calendar', color: 'emerald' },
+      { label: 'Package', value: currentUserData?.packageName || '-', icon: 'package', color: 'sky' },
+      { label: 'Speed', value: currentUserData?.packageSpeed || '-', icon: 'zap', color: 'indigo' }
     ];
 
     const dashboardHTML = `
@@ -1341,7 +965,7 @@
         <div class="grid lg:grid-cols-2 gap-3">
           <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
             <h3 class="font-bold mb-2 flex items-center gap-2 text-sm">
-              <i data-lucide="pie-chart" class="w-4 h-4 text-sky-600"></i> ${t('paymentStatus')}
+              <i data-lucide="pie-chart" class="w-4 h-4 text-sky-600"></i> Payment Status
             </h3>
             <div class="h-[250px] md:h-[280px]">
               <canvas id="paymentChart"></canvas>
@@ -1349,7 +973,7 @@
           </div>
           <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
             <h3 class="font-bold mb-2 flex items-center gap-2 text-sm">
-              <i data-lucide="bar-chart" class="w-4 h-4 text-indigo-600"></i> ${t('monthlyCollection')}
+              <i data-lucide="bar-chart" class="w-4 h-4 text-indigo-600"></i> Monthly Collection
             </h3>
             <div class="h-[250px] md:h-[280px]">
               <canvas id="collectionChart"></canvas>
@@ -1359,7 +983,7 @@
 
         <div class="glass rounded-xl p-4 border border-[rgb(var(--border))] overflow-hidden">
           <h3 class="font-bold mb-3 flex items-center gap-2 text-sm">
-            <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-600"></i> ${t('promiseToday')} (${todayPromise.length})
+            <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-600"></i> Today's Promise (${todayPromise.length})
           </h3>
           <div class="space-y-2 overflow-y-auto max-h-[200px]">
             ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading...</span></div>' : todayPromise.length ? todayPromise.map(c => `
@@ -1372,27 +996,27 @@
                   <i data-lucide="message-circle" class="w-4 h-4"></i>
                 </button>
               </div>
-            `).join('') : `<p class="text-sm text-slate-500 text-center py-6">${t('noPromiseToday')}</p>`}
+            `).join('') : '<p class="text-sm text-slate-500 text-center py-6">No promises for today</p>'}
           </div>
         </div>
         ` : `
         <div class="glass rounded-xl p-4 border border-[rgb(var(--border))]">
-          <h3 class="font-bold mb-3 text-sm">${t('connectionDetails')}</h3>
+          <h3 class="font-bold mb-3 text-sm">Connection Details</h3>
           <div class="space-y-2">
             <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
-              <span class="text-slate-500 text-sm">${t('pppoeUser')}</span>
+              <span class="text-slate-500 text-sm">PPPoE Username</span>
               <span class="font-mono font-semibold text-sm">${currentUserData?.pppoeUser || '-'}</span>
             </div>
             <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
-              <span class="text-slate-500 text-sm">${t('pppoePass')}</span>
+              <span class="text-slate-500 text-sm">PPPoE Password</span>
               <span class="font-mono font-semibold text-sm">${currentUserData?.pppoePass || '-'}</span>
             </div>
             <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
-              <span class="text-slate-500 text-sm">${t('package')}</span>
+              <span class="text-slate-500 text-sm">Package</span>
               <span class="font-semibold text-sm">${currentUserData?.packageName || '-'}</span>
             </div>
             <div class="flex justify-between py-2">
-              <span class="text-slate-500 text-sm">${t('speed')}</span>
+              <span class="text-slate-500 text-sm">Speed</span>
               <span class="font-semibold text-sky-600 text-sm">${currentUserData?.packageSpeed || '-'}</span>
             </div>
           </div>
@@ -1409,6 +1033,7 @@
   };
 
   const renderCharts = () => {
+    // Destroy existing charts before creating new ones
     if (paymentChart) {
       paymentChart.destroy();
       paymentChart = null;
@@ -1426,7 +1051,7 @@
       paymentChart = new Chart(paymentCanvas, {
         type: 'doughnut',
         data: {
-          labels: [t('paid'), t('unpaid')],
+          labels: ['Paid', 'Unpaid'],
           datasets: [{ data: [paid, unpaid], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } }
@@ -1438,7 +1063,7 @@
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
       d.setMonth(d.getMonth() - i);
-      months.push(d.toLocaleDateString(currentLang === 'bn' ? 'bn-BD' : 'en', { month: 'short' }));
+      months.push(d.toLocaleDateString('en', { month: 'short' }));
       const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
       const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
       const amount = appState.bills
@@ -1456,7 +1081,7 @@
         type: 'bar',
         data: {
           labels: months,
-          datasets: [{ label: currentLang === 'bn' ? 'আদায়' : 'Collection', data, backgroundColor: '#0ea5e9', borderRadius: 6 }]
+          datasets: [{ label: 'Collection', data, backgroundColor: '#0ea5e9', borderRadius: 6 }]
         },
         options: { 
           responsive: true, 
@@ -1491,11 +1116,11 @@
         <div class="flex flex-col sm:flex-row gap-3 justify-between">
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-customer" type="text" placeholder="${t('searchCustomers')}" class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none">
+            <input id="search-customer" type="text" placeholder="Search customers..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none">
           </div>
           ${(currentRole === 'admin' || currentRole === 'staff') ? `
           <button onclick="showCustomerForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:shadow-lg flex items-center gap-2 whitespace-nowrap" type="button">
-            <i data-lucide="user-plus" class="w-5 h-5"></i> ${t('addCustomer')}
+            <i data-lucide="user-plus" class="w-5 h-5"></i> Add Customer
           </button>
           ` : ''}
         </div>
@@ -1505,13 +1130,13 @@
             <table class="w-full">
               <thead class="bg-[rgb(var(--border))] text-sm">
                 <tr>
-                  <th class="text-left p-4 font-semibold">${t('name')}</th>
-                  <th class="text-left p-4 font-semibold">${t('contact')}</th>
-                  <th class="text-left p-4 font-semibold">${t('package')}</th>
-                  <th class="text-left p-4 font-semibold">${t('area')}</th>
-                  <th class="text-left p-4 font-semibold">${t('due')}</th>
-                  ${currentRole === 'staff' ? `<th class="text-left p-4 font-semibold">${t('status')}</th>` : ''}
-                  <th class="text-right p-4 font-semibold">${t('actions')}</th>
+                  <th class="text-left p-4 font-semibold">Name</th>
+                  <th class="text-left p-4 font-semibold">Contact</th>
+                  <th class="text-left p-4 font-semibold">Package</th>
+                  <th class="text-left p-4 font-semibold">Area</th>
+                  <th class="text-left p-4 font-semibold">Due</th>
+                  ${currentRole === 'staff' ? '<th class="text-left p-4 font-semibold">Status</th>' : ''}
+                  <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody id="customers-tbody">
@@ -1538,13 +1163,13 @@
   };
 
   const renderCustomersRows = (list) => {
-    if (!list.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">${t('noCustomersFound')}</td></tr>`;
+    if (!list.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No customers found</td></tr>`;
     return list.map(c => {
       const due = appState.bills.filter(b => b.customerId === c.id && b.status === 'unpaid').reduce((s,b)=>s+b.amount,0);
       const statusBadge = currentRole === 'staff' ? `
         <td class="p-4">
           <span class="badge ${c.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : c.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
-            ${t(c.status || 'approved')}
+            ${c.status || 'approved'}
           </span>
         </td>
       ` : '';
@@ -1571,19 +1196,19 @@
         ${statusBadge}
         <td class="p-4">
           <div class="flex items-center justify-end gap-2">
-            <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="${t('view')}" type="button">
+            <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
             ${currentRole !== 'customer' ? `
-            <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="${t('createInvoice')}" type="button">
+            <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="Create Invoice" type="button">
               <i data-lucide="file-text" class="w-4 h-4"></i>
             </button>
-            <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="${t('whatsapp')}" type="button">
+            <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="WhatsApp" type="button">
               <i data-lucide="message-circle" class="w-4 h-4"></i>
             </button>
             ` : ''}
             ${(currentRole === 'admin' || (currentRole === 'staff' && c.addedBy === currentUser.uid)) ? `
-            <button onclick="showCustomerForm('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="${t('edit')}" type="button">
+            <button onclick="showCustomerForm('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="Edit" type="button">
               <i data-lucide="edit" class="w-4 h-4"></i>
             </button>
             ` : ''}
@@ -1601,26 +1226,26 @@
     
     showModal(`
       <form id="customer-form" class="p-6 max-h-[80vh] overflow-y-auto">
-        <h3 class="text-xl font-bold mb-6">${id ? t('editCustomer') : t('addCustomer')} ${currentRole === 'staff' ? (currentLang === 'bn' ? '(অনুমোদনের অপেক্ষায়)' : '(Pending Approval)') : ''}</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
         <div class="grid md:grid-cols-2 gap-4">
-          <div><label class="text-sm font-medium mb-2 block">${t('name')} *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('email')} *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('mobile')} *</label><input type="tel" name="mobile" value="${customer?.mobile||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('whatsapp')} *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('imo')}</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('nid')}</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('zone')} *</label><select name="zone" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">${t('selectZone')}</option>${zoneOptions}</select></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('area')} *</label><select name="area" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">${t('selectArea')}</option>${areaOptions}</select></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('pppoeUser')}</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('pppoePass')}</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('package')}</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">${t('selectPackage')}</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('assignedStaff')}</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">${t('selectStaff')}</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
-          <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">${t('address')}</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
-          ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">${t('password')} *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+          <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${customer?.mobile||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
+          <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
+          <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
+          <div><label class="text-sm font-medium mb-2 block">Assigned Staff</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Staff</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+          <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
+          ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
         </div>
         <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${t('saveCustomer')}</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">${t('cancel')}</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1643,13 +1268,13 @@
         if (id) {
           await updateDoc(doc(db, 'users', id), data);
           await logActivity('Update Customer', `Updated customer: ${data.name}`);
-          showToast(t('customerUpdated'), 'success');
+          showToast('Customer updated successfully', 'success');
         } else {
           const userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
           delete data.password;
           await setDoc(doc(db, 'users', userCred.user.uid), { ...data, createdAt: serverTimestamp() });
           await logActivity('Add Customer', `Added customer: ${data.name} (${data.status})`);
-          showToast(t('customerAdded'), 'success');
+          showToast(`Customer added ${data.status === 'pending' ? 'and pending approval' : 'successfully'}`, 'success');
         }
         closeModal();
       } catch (err) {
@@ -1663,17 +1288,17 @@
     const bills = appState.bills.filter(b => b.customerId === id);
     showModal(`
       <div class="p-6 max-h-[80vh] overflow-y-auto">
-        <h3 class="text-xl font-bold mb-6">${currentLang === 'bn' ? 'গ্রাহক বিবরণ' : 'Customer Details'}</h3>
+        <h3 class="text-xl font-bold mb-6">Customer Details</h3>
         <div class="space-y-4">
           ${Object.entries(c).filter(([k,v])=>!['id','role','createdAt','password'].includes(k)&&v).map(([k,v])=>`
             <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
-              <span class="text-slate-500 capitalize">${t(k) || k.replace(/([A-Z])/g,' $1')}</span>
+              <span class="text-slate-500 capitalize">${k.replace(/([A-Z])/g,' $1')}</span>
               <span class="font-semibold">${v}</span>
             </div>
           `).join('')}
         </div>
         ${bills.length ? `
-        <h4 class="font-bold mt-6 mb-3">${currentLang === 'bn' ? 'সাম্প্রতিক বিল' : 'Recent Bills'}</h4>
+        <h4 class="font-bold mt-6 mb-3">Recent Bills</h4>
         <div class="space-y-2">${bills.slice(0,5).map(b=>`
           <div class="flex justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
             <span>${formatDate(b.createdAt)}</span>
@@ -1681,7 +1306,7 @@
           </div>
         `).join('')}</div>
         ` : ''}
-        <button onclick="closeModal()" class="w-full mt-6 py-3 rounded-xl border border-[rgb(var(--border))]" type="button">${t('cancel')}</button>
+        <button onclick="closeModal()" class="w-full mt-6 py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
       </div>
     `);
   };
@@ -1694,7 +1319,7 @@
     container.innerHTML = `
       <div class="space-y-4 fade-in">
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading approvals...</span></div>' : `
-        <h3 class="font-bold text-lg">${t('pendingApprovals')} (${pendingUsers.length})</h3>
+        <h3 class="font-bold text-lg">Pending Approvals (${pendingUsers.length})</h3>
         <div class="space-y-3">
           ${pendingUsers.length ? pendingUsers.map(u => `
             <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
@@ -1702,22 +1327,22 @@
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
                     <h4 class="font-bold">${u.name}</h4>
-                    <span class="badge ${u.role === 'staff' ? 'bg-indigo-500/20 text-indigo-600' : 'bg-sky-500/20 text-sky-600'}">${t(u.role)}</span>
+                    <span class="badge ${u.role === 'staff' ? 'bg-indigo-500/20 text-indigo-600' : 'bg-sky-500/20 text-sky-600'}">${u.role}</span>
                   </div>
                   <p class="text-sm text-slate-600 dark:text-slate-400">${u.email} • ${u.mobile}</p>
                   <p class="text-xs text-slate-500 mt-1">Added by: ${u.addedBy} • ${formatDateTime(u.createdAt)}</p>
                 </div>
                 <div class="flex gap-2">
                   <button onclick="approveUser('${u.id}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 font-semibold text-sm" type="button">
-                    <i data-lucide="check" class="w-4 h-4"></i> ${t('approve')}
+                    <i data-lucide="check" class="w-4 h-4"></i> Approve
                   </button>
                   <button onclick="rejectUser('${u.id}')" class="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-600 font-semibold text-sm" type="button">
-                    <i data-lucide="x" class="w-4 h-4"></i> ${t('reject')}
+                    <i data-lucide="x" class="w-4 h-4"></i> Reject
                   </button>
                 </div>
               </div>
             </div>
-          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">${t('noPendingApprovals')}</div>'}
+          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No pending approvals</div>'}
         </div>
         `}
       </div>
@@ -1728,18 +1353,18 @@
     try {
       await updateDoc(doc(db, 'users', id), { status: 'approved', approvedAt: serverTimestamp(), approvedBy: currentUser.uid });
       await logActivity('Approve User', `Approved user account`);
-      showToast(currentLang === 'bn' ? 'ব্যবহারকারী অনুমোদিত' : 'User approved successfully', 'success');
+      showToast('User approved successfully', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
   };
 
   window.rejectUser = async (id) => {
-    if (!confirm(currentLang === 'bn' ? 'এই ব্যবহারকারীকে বাতিল করবেন?' : 'Reject this user? They will not be able to login.')) return;
+    if (!confirm('Reject this user? They will not be able to login.')) return;
     try {
       await updateDoc(doc(db, 'users', id), { status: 'rejected', rejectedAt: serverTimestamp(), rejectedBy: currentUser.uid });
       await logActivity('Reject User', `Rejected user account`);
-      showToast(currentLang === 'bn' ? 'ব্যবহারকারী বাতিল' : 'User rejected', 'warning');
+      showToast('User rejected', 'warning');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -1765,19 +1390,19 @@
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading wallet data...</span></div>' : `
         <div class="grid md:grid-cols-4 gap-4">
           <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-            <p class="text-sm text-slate-500 mb-1">${t('totalCollected')}</p>
+            <p class="text-sm text-slate-500 mb-1">Total Collected</p>
             <p class="text-2xl font-bold text-sky-600">${formatCurrency(totalCollected)}</p>
           </div>
           <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-            <p class="text-sm text-slate-500 mb-1">${t('deposited')}</p>
+            <p class="text-sm text-slate-500 mb-1">Deposited</p>
             <p class="text-2xl font-bold text-emerald-600">${formatCurrency(totalDeposited)}</p>
           </div>
           <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-            <p class="text-sm text-slate-500 mb-1">${t('salaryPaid')}</p>
+            <p class="text-sm text-slate-500 mb-1">Salary Paid</p>
             <p class="text-2xl font-bold text-indigo-600">${formatCurrency(totalSalaryPaid)}</p>
           </div>
           <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-            <p class="text-sm text-slate-500 mb-1">${t('balance')}</p>
+            <p class="text-sm text-slate-500 mb-1">Balance</p>
             <p class="text-2xl font-bold ${balance >= 0 ? 'text-amber-600' : 'text-rose-600'}">${formatCurrency(balance)}</p>
           </div>
         </div>
@@ -1789,8 +1414,8 @@
                 <i data-lucide="arrow-down-circle" class="w-6 h-6 text-emerald-600"></i>
               </div>
               <div>
-                <h3 class="font-bold">${t('depositToAdmin')}</h3>
-                <p class="text-sm text-slate-500">${t('pending')}: ${formatCurrency(pendingDeposit)}</p>
+                <h3 class="font-bold">Deposit to Admin</h3>
+                <p class="text-sm text-slate-500">Pending: ${formatCurrency(pendingDeposit)}</p>
               </div>
             </div>
           </button>
@@ -1800,15 +1425,15 @@
                 <i data-lucide="dollar-sign" class="w-6 h-6 text-indigo-600"></i>
               </div>
               <div>
-                <h3 class="font-bold">${t('requestSalary')}</h3>
-                <p class="text-sm text-slate-500">${t('pending')}: ${formatCurrency(pendingSalary)}</p>
+                <h3 class="font-bold">Request Salary</h3>
+                <p class="text-sm text-slate-500">Pending: ${formatCurrency(pendingSalary)}</p>
               </div>
             </div>
           </button>
         </div>
 
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold mb-4">${t('recentDeposits')}</h3>
+          <h3 class="font-bold mb-4">Recent Deposits</h3>
           <div class="space-y-2">
             ${myDeposits.slice(0, 5).map(d => `
               <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
@@ -1816,14 +1441,14 @@
                   <p class="font-semibold">${formatCurrency(d.amount)} - ${d.method}</p>
                   <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
                 </div>
-                <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${t(d.status)}</span>
+                <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
               </div>
-            `).join('') || `<p class="text-center text-slate-500 py-4">${t('noDeposits')}</p>`}
+            `).join('') || '<p class="text-center text-slate-500 py-4">No deposits yet</p>'}
           </div>
         </div>
 
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold mb-4">${t('salaryRequests')}</h3>
+          <h3 class="font-bold mb-4">Salary Requests</h3>
           <div class="space-y-2">
             ${mySalary.slice(0, 5).map(s => `
               <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
@@ -1831,9 +1456,9 @@
                   <p class="font-semibold">${formatCurrency(s.amount)}</p>
                   <p class="text-xs text-slate-500">Requested: ${formatDate(s.requestDate)}</p>
                 </div>
-                <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${t(s.status)}</span>
+                <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
               </div>
-            `).join('') || `<p class="text-center text-slate-500 py-4">${t('noSalaryRequests')}</p>`}
+            `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
           </div>
         </div>
         `}
@@ -1844,15 +1469,15 @@
   window.showDepositForm = () => {
     showModal(`
       <form id="deposit-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${t('depositToAdmin')}</h3>
+        <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
         <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">${t('amount')} *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('paymentMethod')} *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">${currentLang === 'bn' ? 'পদ্ধতি নির্বাচন' : 'Select Method'}</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('transactionId')}</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
+          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
         </div>
         <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${t('submit')}</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">${t('cancel')}</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1872,7 +1497,7 @@
           status: 'pending'
         });
         await logActivity('Staff Deposit', `Deposit request: ${formatCurrency(data.amount)} via ${data.method}`);
-        showToast(t('depositSubmitted'), 'success');
+        showToast('Deposit request submitted', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -1883,14 +1508,14 @@
   window.showSalaryRequestForm = () => {
     showModal(`
       <form id="salary-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${t('requestSalary')}</h3>
+        <h3 class="text-xl font-bold mb-6">Request Salary</h3>
         <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">${t('amount')} *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${currentLang === 'bn' ? 'কারণ (ঐচ্ছিক)' : 'Reason (Optional)'}</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
         </div>
         <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${t('submit')}</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">${t('cancel')}</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1909,7 +1534,7 @@
           status: 'pending'
         });
         await logActivity('Salary Request', `Salary request: ${formatCurrency(data.amount)}`);
-        showToast(t('salaryRequestSubmitted'), 'success');
+        showToast('Salary request submitted', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -1945,13 +1570,13 @@
             <table class="w-full">
               <thead class="bg-[rgb(var(--border))] text-sm">
                 <tr>
-                  <th class="text-left p-4 font-semibold">${t('name')}</th>
-                  <th class="text-left p-4 font-semibold">${currentLang === 'bn' ? 'আদায়' : 'Collected'}</th>
-                  <th class="text-left p-4 font-semibold">${currentLang === 'bn' ? 'জমা' : 'Deposited'}</th>
-                  <th class="text-left p-4 font-semibold">${currentLang === 'bn' ? 'বেতন' : 'Salary Paid'}</th>
-                  <th class="text-left p-4 font-semibold">${t('balance')}</th>
-                  <th class="text-left p-4 font-semibold">${t('pending')}</th>
-                  <th class="text-right p-4 font-semibold">${t('actions')}</th>
+                  <th class="text-left p-4 font-semibold">Staff Name</th>
+                  <th class="text-left p-4 font-semibold">Collected</th>
+                  <th class="text-left p-4 font-semibold">Deposited</th>
+                  <th class="text-left p-4 font-semibold">Salary Paid</th>
+                  <th class="text-left p-4 font-semibold">Balance</th>
+                  <th class="text-left p-4 font-semibold">Pending</th>
+                  <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1969,17 +1594,17 @@
                     </td>
                     <td class="p-4">
                       <div class="text-xs">
-                        <div class="text-amber-600">${currentLang === 'bn' ? 'জমা' : 'Deposit'}: ${formatCurrency(data.pendingDeposit)}</div>
-                        <div class="text-purple-600">${currentLang === 'bn' ? 'বেতন' : 'Salary'}: ${formatCurrency(data.pendingSalary)}</div>
+                        <div class="text-amber-600">Deposit: ${formatCurrency(data.pendingDeposit)}</div>
+                        <div class="text-purple-600">Salary: ${formatCurrency(data.pendingSalary)}</div>
                       </div>
                     </td>
                     <td class="p-4">
                       <button onclick="viewStaffDetails('${data.staff.id}')" class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">
-                        ${currentLang === 'bn' ? 'বিবরণ দেখুন' : 'View Details'}
+                        View Details
                       </button>
                     </td>
                   </tr>
-                `).join('') || `<tr><td colspan="7" class="p-8 text-center text-slate-500">${currentLang === 'bn' ? 'কোনো স্টাফ অ্যাকাউন্ট নেই' : 'No staff accounts'}</td></tr>`}
+                `).join('') || '<tr><td colspan="7" class="p-8 text-center text-slate-500">No staff accounts</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -1996,10 +1621,10 @@
     
     showModal(`
       <div class="p-6 max-h-[80vh] overflow-y-auto">
-        <h3 class="text-xl font-bold mb-6">${currentLang === 'bn' ? 'স্টাফ অ্যাকাউন্ট' : 'Staff Account'}: ${staff?.name || '-'}</h3>
+        <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'}</h3>
         
         <div class="mb-6">
-          <h4 class="font-bold mb-3">${currentLang === 'bn' ? 'জমা' : 'Deposits'}</h4>
+          <h4 class="font-bold mb-3">Deposits</h4>
           <div class="space-y-2">
             ${deposits.map(d => `
               <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
@@ -2008,16 +1633,16 @@
                   <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${t(d.status)}</span>
+                  <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
                   ${d.status === 'pending' ? `<button onclick="approveDeposit('${d.id}')" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-600" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
                 </div>
               </div>
-            `).join('') || `<p class="text-center text-slate-500 py-4">${currentLang === 'bn' ? 'কোনো জমা নেই' : 'No deposits'}</p>`}
+            `).join('') || '<p class="text-center text-slate-500 py-4">No deposits</p>'}
           </div>
         </div>
 
         <div class="mb-6">
-          <h4 class="font-bold mb-3">${currentLang === 'bn' ? 'বেতন অনুরোধ' : 'Salary Requests'}</h4>
+          <h4 class="font-bold mb-3">Salary Requests</h4>
           <div class="space-y-2">
             ${salaries.map(s => `
               <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
@@ -2027,15 +1652,15 @@
                   ${s.reason ? `<p class="text-xs text-slate-500">Reason: ${s.reason}</p>` : ''}
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${t(s.status)}</span>
+                  <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
                   ${s.status === 'pending' ? `<button onclick="paySalary('${s.id}')" class="p-2 rounded-lg bg-indigo-500/20 text-indigo-600" type="button"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>` : ''}
                 </div>
               </div>
-            `).join('') || `<p class="text-center text-slate-500 py-4">${currentLang === 'bn' ? 'কোনো বেতন অনুরোধ নেই' : 'No salary requests'}</p>`}
+            `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
           </div>
         </div>
 
-        <button onclick="closeModal()" class="w-full py-3 rounded-xl border border-[rgb(var(--border))]" type="button">${t('cancel')}</button>
+        <button onclick="closeModal()" class="w-full py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
       </div>
     `);
     lucide.createIcons();
@@ -2049,7 +1674,7 @@
         approvedAt: serverTimestamp()
       });
       await logActivity('Approve Deposit', `Approved staff deposit`);
-      showToast(currentLang === 'bn' ? 'জমা অনুমোদিত' : 'Deposit approved', 'success');
+      showToast('Deposit approved', 'success');
       closeModal();
     } catch (err) {
       showToast(err.message, 'error');
@@ -2059,14 +1684,14 @@
   window.paySalary = (id) => {
     showModal(`
       <form id="pay-salary-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${currentLang === 'bn' ? 'বেতন পরিশোধ' : 'Pay Salary'}</h3>
+        <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
         <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">${t('paymentMethod')} *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">${currentLang === 'bn' ? 'পদ্ধতি নির্বাচন' : 'Select Method'}</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('transactionId')}</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
+          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
         </div>
         <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${currentLang === 'bn' ? 'পেমেন্ট নিশ্চিত করুন' : 'Confirm Payment'}</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">${t('cancel')}</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -2084,7 +1709,7 @@
           trxId: data.trxId
         });
         await logActivity('Pay Salary', `Paid salary via ${data.method}`);
-        showToast(currentLang === 'bn' ? 'বেতন সফলভাবে পরিশোধিত' : 'Salary paid successfully', 'success');
+        showToast('Salary paid successfully', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -2100,7 +1725,7 @@
     container.innerHTML = `
       <div class="space-y-4 fade-in">
         <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="user-plus" class="w-5 h-5"></i> ${t('addStaff')}
+          <i data-lucide="user-plus" class="w-5 h-5"></i> Add Staff
         </button>
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff...</span></div>' : `
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
@@ -2108,10 +1733,10 @@
             <table class="w-full">
               <thead class="bg-[rgb(var(--border))] text-sm">
                 <tr>
-                  <th class="text-left p-4 font-semibold">${t('name')}</th>
-                  <th class="text-left p-4 font-semibold">${t('contact')}</th>
-                  <th class="text-left p-4 font-semibold">${currentLang === 'bn' ? 'নির্ধারিত গ্রাহক' : 'Assigned Customers'}</th>
-                  <th class="text-right p-4 font-semibold">${t('actions')}</th>
+                  <th class="text-left p-4 font-semibold">Name</th>
+                  <th class="text-left p-4 font-semibold">Contact</th>
+                  <th class="text-left p-4 font-semibold">Assigned Customers</th>
+                  <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -2121,13 +1746,13 @@
                   <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
                     <td class="p-4"><div class="font-semibold">${s.name || '-'}</div><div class="text-xs text-slate-500">${s.email || '-'}</div></td>
                     <td class="p-4 text-sm">${s.mobile || '-'}<br><span class="text-xs text-slate-500">${s.whatsapp || '-'}</span></td>
-                    <td class="p-4"><span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-600 text-xs font-semibold">${assignedCount} ${currentLang === 'bn' ? 'গ্রাহক' : 'customers'}</span></td>
+                    <td class="p-4"><span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-600 text-xs font-semibold">${assignedCount} customers</span></td>
                     <td class="p-4"><div class="flex items-center justify-end gap-2">
                       <button onclick="showStaffForm('${s.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="edit" class="w-4 h-4"></i></button>
                       <button onclick="deleteStaff('${s.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div></td>
                   </tr>
-                `}).join('') : `<tr><td colspan="4" class="p-8 text-center text-slate-500">${currentLang === 'bn' ? 'কোনো স্টাফ পাওয়া যায়নি' : 'No staff found'}</td></tr>`}
+                `}).join('') : `<tr><td colspan="4" class="p-8 text-center text-slate-500">No staff found</td></tr>`}
               </tbody>
             </table>
           </div>
@@ -2140,18 +1765,18 @@
     const staff = id ? appState.users.find(u => u.id === id) : null;
     showModal(`
       <form id="staff-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? (currentLang === 'bn' ? 'স্টাফ সম্পাদনা' : 'Edit Staff') : (currentLang === 'bn' ? 'স্টাফ যোগ করুন' : 'Add Staff')} ${currentRole === 'staff' ? (currentLang === 'bn' ? '(অনুমোদনের অপেক্ষায়)' : '(Pending Approval)') : ''}</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
         <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">${t('name')} *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('email')} *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('mobile')} *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('whatsapp')} *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('address')}</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
-          ${!id ? `<div><label class="text-sm font-medium mb-2 block">${t('password')} *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+          <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
+          ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
         </div>
         <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${currentLang === 'bn' ? 'স্টাফ সংরক্ষণ' : 'Save Staff'}</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">${t('cancel')}</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -2167,13 +1792,13 @@
         if (id) {
           await updateDoc(doc(db, 'users', id), data);
           await logActivity('Update Staff', `Updated staff: ${data.name}`);
-          showToast(t('staffUpdated'), 'success');
+          showToast('Staff updated', 'success');
         } else {
           const userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
           delete data.password;
           await setDoc(doc(db, 'users', userCred.user.uid), { ...data, createdAt: serverTimestamp() });
           await logActivity('Add Staff', `Added staff: ${data.name} (${data.status})`);
-          showToast(t('staffAdded'), 'success');
+          showToast(`Staff added ${data.status === 'pending' ? 'and pending approval' : 'successfully'}`, 'success');
         }
         closeModal();
       } catch (err) {
@@ -2183,11 +1808,11 @@
   };
 
   window.deleteStaff = async (id) => {
-    if (!confirm(currentLang === 'bn' ? 'এই স্টাফ সদস্যকে মুছবেন?' : 'Delete this staff member?')) return;
+    if (!confirm('Delete this staff member?')) return;
     try {
       await deleteDoc(doc(db, 'users', id));
       await logActivity('Delete Staff', `Deleted staff`);
-      showToast(currentLang === 'bn' ? 'স্টাফ মুছে ফেলা হয়েছে' : 'Staff deleted', 'success');
+      showToast('Staff deleted', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -2200,7 +1825,7 @@
     container.innerHTML = `
       <div class="space-y-4 fade-in">
         <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="plus" class="w-5 h-5"></i> ${t('addPackage')}
+          <i data-lucide="plus" class="w-5 h-5"></i> Add Package
         </button>
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading packages...</span></div>' : `
         <div class="grid md:grid-cols-3 gap-4">
@@ -2220,11 +1845,11 @@
                 <span class="text-sm font-medium">${p.speed || '-'}</span>
               </div>
               <div class="flex gap-2">
-                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">${t('edit')}</button>
+                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">Edit</button>
                 <button onclick="deletePackage('${p.id}')" class="px-4 py-2 rounded-xl hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
               </div>
             </div>
-          `).join('') || `<div class="col-span-3 glass rounded-2xl p-8 text-center text-slate-500">${t('noPackages')}</div>`}
+          `).join('') || '<div class="col-span-3 glass rounded-2xl p-8 text-center text-slate-500">No packages found</div>'}
         </div>
         `}
       </div>
@@ -2235,15 +1860,15 @@
     const pkg = id ? appState.packages.find(p => p.id === id) : null;
     showModal(`
       <form id="package-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? (currentLang === 'bn' ? 'প্যাকেজ সম্পাদনা' : 'Edit Package') : (currentLang === 'bn' ? 'প্যাকেজ যোগ করুন' : 'Add Package')}</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
         <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">${currentLang === 'bn' ? 'প্যাকেজের নাম' : 'Package Name'} *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="${currentLang === 'bn' ? 'যেমন Basic Plan' : 'e.g. Basic Plan'}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('speed')} *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="${currentLang === 'bn' ? 'যেমন 10 Mbps' : 'e.g. 10 Mbps'}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${currentLang === 'bn' ? 'মূল্য (৳)' : 'Price (৳)'} *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Package Name *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Speed *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="e.g. 10 Mbps" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
         </div>
         <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${currentLang === 'bn' ? 'প্যাকেজ সংরক্ষণ' : 'Save Package'}</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">${t('cancel')}</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -2261,7 +1886,7 @@
           await addDoc(collection(db, 'packages'), { ...data, createdAt: serverTimestamp() });
           await logActivity('Add Package', `Added package: ${data.name}`);
         }
-        showToast(t('packageSaved'), 'success');
+        showToast('Package saved', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -2270,11 +1895,11 @@
   };
 
   window.deletePackage = async (id) => {
-    if (!confirm(currentLang === 'bn' ? 'এই প্যাকেজ মুছবেন?' : 'Delete this package?')) return;
+    if (!confirm('Delete this package?')) return;
     try {
       await deleteDoc(doc(db, 'packages', id));
       await logActivity('Delete Package', `Deleted package`);
-      showToast(t('packageDeleted'), 'success');
+      showToast('Package deleted', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -2293,17 +1918,17 @@
     container.innerHTML = `
       <div class="space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold text-lg mb-4">${t('filterReports')}</h3>
+          <h3 class="font-bold text-lg mb-4">Filter Reports</h3>
           <div class="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div><label class="text-sm font-medium mb-2 block">${t('fromDate')}</label><input type="date" id="report-from" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
-            <div><label class="text-sm font-medium mb-2 block">${t('toDate')}</label><input type="date" id="report-to" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
-            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">${t('staff')}</label><select id="report-staff" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">${currentLang === 'bn' ? 'সব স্টাফ' : 'All Staff'}</option>${staffOptions}</select></div>` : ''}
-            <div><label class="text-sm font-medium mb-2 block">${t('area')}</label><select id="report-area" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">${currentLang === 'bn' ? 'সব এলাকা' : 'All Areas'}</option>${areaOptions}</select></div>
-            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">${t('zone')}</label><select id="report-zone" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">${currentLang === 'bn' ? 'সব জোন' : 'All Zones'}</option>${zoneOptions}</select></div>` : ''}
-            <div><label class="text-sm font-medium mb-2 block">${t('status')}</label><select id="report-status" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">${currentLang === 'bn' ? 'সব' : 'All'}</option><option value="paid">${t('paid')}</option><option value="unpaid">${t('unpaid')}</option></select></div>
-            <div class="md:col-span-3 lg:col-span-6"><label class="text-sm font-medium mb-2 block">${currentLang === 'bn' ? 'গ্রাহক খুঁজুন' : 'Customer Search'}</label><input type="text" id="report-customer" placeholder="${currentLang === 'bn' ? 'নাম বা মোবাইল দিয়ে খুঁজুন...' : 'Search by name or mobile...'}" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
+            <div><label class="text-sm font-medium mb-2 block">From Date</label><input type="date" id="report-from" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
+            <div><label class="text-sm font-medium mb-2 block">To Date</label><input type="date" id="report-to" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
+            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">Staff</label><select id="report-staff" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Staff</option>${staffOptions}</select></div>` : ''}
+            <div><label class="text-sm font-medium mb-2 block">Area</label><select id="report-area" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Areas</option>${areaOptions}</select></div>
+            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">Zone</label><select id="report-zone" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Zones</option>${zoneOptions}</select></div>` : ''}
+            <div><label class="text-sm font-medium mb-2 block">Status</label><select id="report-status" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div>
+            <div class="md:col-span-3 lg:col-span-6"><label class="text-sm font-medium mb-2 block">Customer Search</label><input type="text" id="report-customer" placeholder="Search by name or mobile..." class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
             <div class="md:col-span-3 lg:col-span-6 flex gap-3">
-              <button onclick="generateReport()" class="flex-1 py-2.5 rounded-xl bg-sky-500 text-white font-semibold" type="button">${t('generateReport')}</button>
+              <button onclick="generateReport()" class="flex-1 py-2.5 rounded-xl bg-sky-500 text-white font-semibold" type="button">Generate Report</button>
               <button onclick="exportBillsCSV()" class="px-6 py-2.5 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="download" class="w-4 h-4"></i></button>
             </div>
           </div>
@@ -2360,15 +1985,15 @@
     
     $('#report-results').innerHTML = `
       <div class="grid md:grid-cols-3 gap-4 mb-6">
-        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">${t('totalAmount')}</p><p class="text-2xl font-bold">${formatCurrency(total)}</p></div>
-        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">${t('paid')}</p><p class="text-2xl font-bold text-emerald-600">${formatCurrency(paid)}</p></div>
-        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">${t('unpaid')}</p><p class="text-2xl font-bold text-rose-600">${formatCurrency(unpaid)}</p></div>
+        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Total Amount</p><p class="text-2xl font-bold">${formatCurrency(total)}</p></div>
+        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Paid</p><p class="text-2xl font-bold text-emerald-600">${formatCurrency(paid)}</p></div>
+        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Unpaid</p><p class="text-2xl font-bold text-rose-600">${formatCurrency(unpaid)}</p></div>
       </div>
       <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
         <div class="table-container">
           <table class="w-full">
-            <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">${t('invoiceNo')}</th><th class="text-left p-4 text-sm">${currentLang === 'bn' ? 'গ্রাহক' : 'Customer'}</th><th class="text-left p-4 text-sm">${t('amount')}</th><th class="text-left p-4 text-sm">${t('status')}</th><th class="text-left p-4 text-sm">${t('date')}</th></tr></thead>
-            <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo || '-'}</td><td class="p-4 text-sm">${b.customerName || '-'}<br><span class="text-xs text-slate-500">${b.customerMobile || '-'}</span></td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${t(b.status)}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || `<tr><td colspan="5" class="p-8 text-center text-slate-500">${t('noData')}</td></tr>`}</tbody>
+            <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">Invoice</th><th class="text-left p-4 text-sm">Customer</th><th class="text-left p-4 text-sm">Amount</th><th class="text-left p-4 text-sm">Status</th><th class="text-left p-4 text-sm">Date</th></tr></thead>
+            <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo || '-'}</td><td class="p-4 text-sm">${b.customerName || '-'}<br><span class="text-xs text-slate-500">${b.customerMobile || '-'}</span></td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -2387,7 +2012,7 @@
     a.href = url;
     a.download = `bills-${Date.now()}.csv`;
     a.click();
-    showToast(currentLang === 'bn' ? 'CSV এক্সপোর্ট করা হয়েছে' : 'CSV exported', 'success');
+    showToast('CSV exported', 'success');
   };
 
   const renderActivities = () => {
@@ -2412,7 +2037,7 @@
               </div>
             </div>
           </div>
-        `).join('') : `<div class="glass rounded-2xl p-8 text-center text-slate-500">${currentLang === 'bn' ? 'এখনো কোনো কার্যকলাপ নেই' : 'No activities yet'}</div>`)}
+        `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No activities yet</div>')}
       </div>
     `;
   };
@@ -2425,20 +2050,20 @@
     container.innerHTML = `
       <div class="space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold text-lg mb-6">${t('companyInfo')}</h3>
+          <h3 class="font-bold text-lg mb-6">Company Information</h3>
           <form id="company-form" class="grid md:grid-cols-2 gap-4">
-            <div><label class="text-sm font-medium mb-2 block">${t('companyName')}</label><input type="text" name="companyName" value="${companySettings.companyName||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">${t('whatsapp')}</label><input type="tel" name="whatsapp" value="${companySettings.whatsapp||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">${t('address')}</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${companySettings.address||''}</textarea></div>
-            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">${t('logoUrl')}</label><input type="url" name="logo" value="${companySettings.logo||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div class="md:col-span-2"><button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${t('saveSettings')}</button></div>
+            <div><label class="text-sm font-medium mb-2 block">Company Name</label><input type="text" name="companyName" value="${companySettings.companyName||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">WhatsApp</label><input type="tel" name="whatsapp" value="${companySettings.whatsapp||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${companySettings.address||''}</textarea></div>
+            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Logo URL</label><input type="url" name="logo" value="${companySettings.logo||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div class="md:col-span-2"><button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Settings</button></div>
           </form>
         </div>
 
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="font-bold text-lg">${t('areaManagement')}</h3>
-            <button onclick="showAreaForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">${t('addArea')}</button>
+            <h3 class="font-bold text-lg">Area Management</h3>
+            <button onclick="showAreaForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Area</button>
           </div>
           <div class="space-y-2">
             ${appState.areas?.map(a => `
@@ -2449,14 +2074,14 @@
                   <button onclick="deleteArea('${a.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>
               </div>
-            `).join('') || `<p class="text-center text-slate-500 py-4">${t('noAreas')}</p>`}
+            `).join('') || '<p class="text-center text-slate-500 py-4">No areas added</p>'}
           </div>
         </div>
 
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="font-bold text-lg">${t('zoneManagement')}</h3>
-            <button onclick="showZoneForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">${t('addZone')}</button>
+            <h3 class="font-bold text-lg">Zone Management</h3>
+            <button onclick="showZoneForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Zone</button>
           </div>
           <div class="space-y-2">
             ${appState.zones?.map(z => `
@@ -2467,7 +2092,33 @@
                   <button onclick="deleteZone('${z.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>
               </div>
-            `).join('') || `<p class="text-center text-slate-500 py-4">${t('noZones')}</p>`}
+            `).join('') || '<p class="text-center text-slate-500 py-4">No zones added</p>'}
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold text-lg mb-4">Firebase Security Rules</h3>
+          <div class="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+            <p><strong>Add these to Firestore Rules for full functionality:</strong></p>
+            <pre class="bg-[rgb(var(--border))] p-3 rounded-lg text-xs overflow-x-auto">
+match /staff_deposits/{docId} {
+  allow read, write: if request.auth != null;
+}
+match /salary_requests/{docId} {
+  allow read, write: if request.auth != null;
+}
+match /areas/{docId} {
+  allow read: if true;
+  allow write: if request.auth != null;
+}
+match /zones/{docId} {
+  allow read: if true;
+  allow write: if request.auth != null;
+}
+match /packages/{docId} {
+  allow read: if true;
+  allow write: if request.auth != null;
+}</pre>
           </div>
         </div>
       </div>
@@ -2481,7 +2132,7 @@
         await setDoc(doc(db, 'settings', 'company'), data);
         companySettings = data;
         await logActivity('Settings Update', 'Updated company info');
-        showToast(t('settingsSaved'), 'success');
+        showToast('Settings saved', 'success');
       } catch (err) {
         showToast(err.message, 'error');
       }
@@ -2492,14 +2143,14 @@
     const area = id ? appState.areas.find(a => a.id === id) : null;
     showModal(`
       <form id="area-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? (currentLang === 'bn' ? 'এলাকা সম্পাদনা' : 'Edit Area') : (currentLang === 'bn' ? 'এলাকা যোগ করুন' : 'Add Area')}</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
         <div>
-          <label class="text-sm font-medium mb-2 block">${currentLang === 'bn' ? 'এলাকার নাম' : 'Area Name'} *</label>
+          <label class="text-sm font-medium mb-2 block">Area Name *</label>
           <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
         </div>
         <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${currentLang === 'bn' ? 'এলাকা সংরক্ষণ' : 'Save Area'}</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">${t('cancel')}</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -2516,7 +2167,7 @@
           await addDoc(collection(db, 'areas'), { ...data, createdAt: serverTimestamp() });
           await logActivity('Add Area', `Added area: ${data.name}`);
         }
-        showToast(currentLang === 'bn' ? 'এলাকা সংরক্ষণ করা হয়েছে' : 'Area saved', 'success');
+        showToast('Area saved', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -2525,11 +2176,11 @@
   };
 
   window.deleteArea = async (id) => {
-    if (!confirm(currentLang === 'bn' ? 'এই এলাকা মুছবেন?' : 'Delete this area?')) return;
+    if (!confirm('Delete this area?')) return;
     try {
       await deleteDoc(doc(db, 'areas', id));
       await logActivity('Delete Area', 'Deleted area');
-      showToast(currentLang === 'bn' ? 'এলাকা মুছে ফেলা হয়েছে' : 'Area deleted', 'success');
+      showToast('Area deleted', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -2539,13 +2190,13 @@
     const zone = id ? appState.zones.find(z => z.id === id) : null;
     showModal(`
       <form id="zone-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? (currentLang === 'bn' ? 'জোন সম্পাদনা' : 'Edit Zone') : (currentLang === 'bn' ? 'জোন যোগ করুন' : 'Add Zone')}</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Zone</h3>
         <div>
-          <label class="text-sm font-medium mb-2 block">${currentLang === 'bn' ? 'জোনের নাম' : 'Zone Name'} *</label>
+          <label class="text-sm font-medium mb-2 block">Zone Name *</label>
           <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
         <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${currentLang === 'bn' ? 'জোন সংরক্ষণ' : 'Save Zone'}</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">${t('cancel')}</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -2562,7 +2213,7 @@
           await addDoc(collection(db, 'zones'), { ...data, createdAt: serverTimestamp() });
           await logActivity('Add Zone', `Added zone: ${data.name}`);
         }
-        showToast(currentLang === 'bn' ? 'জোন সংরক্ষণ করা হয়েছে' : 'Zone saved', 'success');
+        showToast('Zone saved', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -2571,11 +2222,11 @@
   };
 
   window.deleteZone = async (id) => {
-    if (!confirm(currentLang === 'bn' ? 'এই জোন মুছবেন?' : 'Delete this zone?')) return;
+    if (!confirm('Delete this zone?')) return;
     try {
       await deleteDoc(doc(db, 'zones', id));
       await logActivity('Delete Zone', 'Deleted zone');
-      showToast(currentLang === 'bn' ? 'জোন মুছে ফেলা হয়েছে' : 'Zone deleted', 'success');
+      showToast('Zone deleted', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -2599,7 +2250,7 @@
           <div class="space-y-3">
             ${Object.entries(currentUserData || {}).filter(([k,v])=>!['role','createdAt','photo','status','addedBy','approvedAt'].includes(k)&&v).map(([k,v])=>`
               <div class="flex justify-between py-3 border-b border-[rgb(var(--border))]">
-                <span class="text-slate-500 capitalize">${t(k) || k.replace(/([A-Z])/g,' $1')}</span>
+                <span class="text-slate-500 capitalize">${k.replace(/([A-Z])/g,' $1')}</span>
                 <span class="font-semibold">${v}</span>
               </div>
             `).join('')}
@@ -2616,15 +2267,15 @@
     container.innerHTML = `
       <div class="glass rounded-2xl border border-[rgb(var(--border))] h-[calc(100vh-200px)] flex flex-col fade-in">
         <div class="p-4 border-b border-[rgb(var(--border))]">
-          <h3 class="font-bold">${currentLang === 'bn' ? 'সাপোর্ট চ্যাট' : 'Support Chat'}</h3>
-          <p class="text-xs text-slate-500">${currentRole === 'customer' ? (currentLang === 'bn' ? 'স্টাফ ও অ্যাডমিনের সাথে চ্যাট করুন' : 'Chat with Staff & Admin') : (currentLang === 'bn' ? 'গ্রাহকের সাথে চ্যাট করুন' : 'Chat with Customer')}</p>
+          <h3 class="font-bold">Support Chat</h3>
+          <p class="text-xs text-slate-500">Chat with ${currentRole === 'customer' ? 'Staff & Admin' : 'Customer'}</p>
         </div>
         <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
-          <div class="text-center text-slate-500 text-sm py-8">${currentLang === 'bn' ? 'কথোপকথন শুরু করুন' : 'Start a conversation'}</div>
+          <div class="text-center text-slate-500 text-sm py-8">Start a conversation</div>
         </div>
         <div class="p-4 border-t border-[rgb(var(--border))]">
           <form id="chat-form" class="flex gap-2">
-            <input type="text" id="chat-input" placeholder="${currentLang === 'bn' ? 'মেসেজ টাইপ করুন...' : 'Type a message...'}" class="flex-1 px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white"><i data-lucide="send" class="w-5 h-5"></i></button>
           </form>
         </div>
@@ -2644,24 +2295,24 @@
     container.innerHTML = `
       <div class="max-w-4xl mx-auto space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold text-lg mb-6">${currentLang === 'bn' ? 'ইনভয়েস তৈরি করুন' : 'Generate Invoice'}</h3>
+          <h3 class="font-bold text-lg mb-6">Generate Invoice</h3>
           <form id="invoice-form" class="space-y-4">
             <div class="grid md:grid-cols-2 gap-4">
               <div>
-                <label class="text-sm font-medium mb-2 block">${t('selectCustomer')} *</label>
+                <label class="text-sm font-medium mb-2 block">Select Customer *</label>
                 <select id="invoice-customer" name="customerId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">${t('chooseCustomer')}</option>
+                  <option value="">Choose customer</option>
                   ${customers.map(c => `<option value="${c.id}" data-customer='${JSON.stringify(c)}'>${c.name} - ${c.mobile}</option>`).join('')}
                 </select>
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block">${t('amount')} *</label>
+                <label class="text-sm font-medium mb-2 block">Amount *</label>
                 <input type="number" name="amount" id="invoice-amount" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block">${t('paymentMethod')} *</label>
+                <label class="text-sm font-medium mb-2 block">Payment Method *</label>
                 <select name="paymentMethod" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">${currentLang === 'bn' ? 'পদ্ধতি নির্বাচন' : 'Select method'}</option>
+                  <option value="">Select method</option>
                   <option value="bKash">bKash</option>
                   <option value="Nagad">Nagad</option>
                   <option value="Cash">Cash</option>
@@ -2669,25 +2320,28 @@
                 </select>
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block">${t('transactionId')}</label>
-                <input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+                <label class="text-sm font-medium mb-2 block">Transaction ID</label>
+                <input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              </div>
               <div>
-                <label class="text-sm font-medium mb-2 block">${t('status')} *</label>
+                <label class="text-sm font-medium mb-2 block">Status *</label>
                 <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="paid">${t('paid')}</option>
-                  <option value="unpaid">${t('unpaid')}</option>
+                  <option value="paid">Paid</option>
+                  <option value="unpaid">Unpaid</option>
                 </select>
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block">${t('promiseDate')}</label>
-                <input type="date" name="promiseDate" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+                <label class="text-sm font-medium mb-2 block">Promise Date</label>
+                <input type="date" name="promiseDate" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              </div>
               <div class="md:col-span-2">
-                <label class="text-sm font-medium mb-2 block">${t('notes')}</label>
+                <label class="text-sm font-medium mb-2 block">Notes</label>
                 <textarea name="notes" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea>
               </div>
+            </div>
             <div class="flex gap-3">
-              <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${t('createInvoice')}</button>
-              <button type="button" id="preview-invoice" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">${t('preview')}</button>
+              <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
+              <button type="button" id="preview-invoice" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
             </div>
           </form>
         </div>
@@ -2736,7 +2390,7 @@
         }
         
         await logActivity('Create Invoice', `Invoice for ${customer.name}: ${formatCurrency(data.amount)}`);
-        showToast(t('invoiceCreated'), 'success');
+        showToast('Invoice created successfully', 'success');
         
         showInvoicePreview({ ...billData, id: docRef.id });
         e.target.reset();
@@ -2749,7 +2403,7 @@
       const formData = new FormData($('#invoice-form'));
       const data = Object.fromEntries(formData);
       const customerOption = $('#invoice-customer').selectedOptions[0];
-      if (!customerOption.value) return showToast(currentLang === 'bn' ? 'অনুগ্রহ করে একজন গ্রাহক নির্বাচন করুন' : 'Please select a customer', 'warning');
+      if (!customerOption.value) return showToast('Please select a customer', 'warning');
       const customer = JSON.parse(customerOption.dataset.customer);
       showInvoicePreview({ ...data, customer, invoiceNo: `INV-${Date.now()}` });
     });
@@ -2765,16 +2419,16 @@
 
   const showInvoicePreview = (bill) => {
     const customer = bill.customer || appState.users.find(u => u.id === bill.customerId);
-    if (!customer) return showToast(currentLang === 'bn' ? 'গ্রাহক পাওয়া যায়নি' : 'Customer not found', 'error');
+    if (!customer) return showToast('Customer not found', 'error');
     
     const preview = `
       <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="font-bold text-lg">${currentLang === 'bn' ? 'ইনভয়েস প্রিভিউ' : 'Invoice Preview'}</h3>
+          <h3 class="font-bold text-lg">Invoice Preview</h3>
           <div class="flex gap-2 no-print">
-            <button onclick="printInvoice('a4')" class="px-4 py-2 rounded-xl bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">${currentLang === 'bn' ? 'A4 প্রিন্ট' : 'Print A4'}</button>
-            <button onclick="printInvoice('thermal')" class="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-600 text-sm font-semibold" type="button">${currentLang === 'bn' ? '58mm প্রিন্ট' : 'Print 58mm'}</button>
-            <button onclick="sendInvoiceWhatsApp('${customer.whatsapp}','${bill.invoiceNo}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 text-sm font-semibold" type="button">${t('whatsapp')}</button>
+            <button onclick="printInvoice('a4')" class="px-4 py-2 rounded-xl bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">Print A4</button>
+            <button onclick="printInvoice('thermal')" class="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-600 text-sm font-semibold" type="button">Print 58mm</button>
+            <button onclick="sendInvoiceWhatsApp('${customer.whatsapp}','${bill.invoiceNo}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 text-sm font-semibold" type="button">WhatsApp</button>
           </div>
         </div>
         
@@ -2782,63 +2436,63 @@
           <div class="text-center mb-6 border-b-2 border-black pb-4">
             ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-16 h-16 mx-auto mb-2">` : ''}
             <h1 class="text-2xl font-bold">${companySettings.companyName || "Own's Link"}</h1>
-            <p class="text-sm">${companySettings.address || (currentLang === 'bn' ? 'ইন্টারনেট সেবা প্রদানকারী' : 'Internet Service Provider')}</p>
+            <p class="text-sm">${companySettings.address || 'Internet Service Provider'}</p>
             <p class="text-sm">WhatsApp: ${companySettings.whatsapp || customer.whatsapp || ''}</p>
           </div>
           <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
             <div>
-              <p><strong>${currentLang === 'bn' ? 'ইনভয়েস নং' : 'Invoice No'}:</strong> ${bill.invoiceNo}</p>
-              <p><strong>${currentLang === 'bn' ? 'তারিখ' : 'Date'}:</strong> ${formatDate(bill.createdAt || new Date())}</p>
+              <p><strong>Invoice No:</strong> ${bill.invoiceNo}</p>
+              <p><strong>Date:</strong> ${formatDate(bill.createdAt || new Date())}</p>
             </div>
             <div class="text-right">
-              <p><strong>${currentLang === 'bn' ? 'গ্রাহক' : 'Customer'}:</strong> ${customer.name || '-'}</p>
-              <p><strong>${currentLang === 'bn' ? 'মোবাইল' : 'Mobile'}:</strong> ${customer.mobile || '-'}</p>
+              <p><strong>Customer:</strong> ${customer.name || '-'}</p>
+              <p><strong>Mobile:</strong> ${customer.mobile || '-'}</p>
             </div>
           </div>
           <table class="w-full border border-black mb-4 text-sm">
             <thead class="bg-gray-200">
-              <tr><th class="border border-black p-2 text-left">${currentLang === 'bn' ? 'বিবরণ' : 'Description'}</th><th class="border border-black p-2 text-right">${currentLang === 'bn' ? 'পরিমাণ' : 'Amount'}</th></tr>
+              <tr><th class="border border-black p-2 text-left">Description</th><th class="border border-black p-2 text-right">Amount</th></tr>
             </thead>
             <tbody>
-              <tr><td class="border border-black p-2">${customer.packageName || (currentLang === 'bn' ? 'ইন্টারনেট সেবা' : 'Internet Service')}</td><td class="border border-black p-2 text-right">${formatCurrency(bill.amount)}</td></tr>
+              <tr><td class="border border-black p-2">${customer.packageName || 'Internet Service'}</td><td class="border border-black p-2 text-right">${formatCurrency(bill.amount)}</td></tr>
             </tbody>
-            <tfoot><tr><td class="border border-black p-2 font-bold">${currentLang === 'bn' ? 'মোট' : 'Total'}</td><td class="border border-black p-2 text-right font-bold">${formatCurrency(bill.amount)}</td></tr></tfoot>
+            <tfoot><tr><td class="border border-black p-2 font-bold">Total</td><td class="border border-black p-2 text-right font-bold">${formatCurrency(bill.amount)}</td></tr></tfoot>
           </table>
           <div class="grid grid-cols-2 gap-4 text-sm">
-            <div><p><strong>${currentLang === 'bn' ? 'পেমেন্ট পদ্ধতি' : 'Payment Method'}:</strong> ${bill.paymentMethod || '-'}</p><p><strong>TrxID:</strong> ${bill.trxId || '-'}</p></div>
-            <div class="text-right"><p><strong>${currentLang === 'bn' ? 'স্ট্যাটাস' : 'Status'}:</strong> ${t(bill.status)?.toUpperCase() || '-'}</p></div>
+            <div><p><strong>Payment Method:</strong> ${bill.paymentMethod || '-'}</p><p><strong>TrxID:</strong> ${bill.trxId || '-'}</p></div>
+            <div class="text-right"><p><strong>Status:</strong> ${bill.status?.toUpperCase() || '-'}</p></div>
           </div>
-          <div class="text-center mt-8 text-xs">${currentLang === 'bn' ? 'আপনার ব্যবসার জন্য ধন্যবাদ!' : 'Thank you for your business!'}</div>
+          <div class="text-center mt-8 text-xs">Thank you for your business!</div>
         </div>
 
         <div id="invoice-thermal" class="print-area print-thermal hidden mx-auto">
           <div class="text-center">
             ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-12 h-12 mx-auto mb-1">` : ''}
             <h2 class="font-bold text-sm">${companySettings.companyName || "Own's Link"}</h2>
-            <p class="text-[10px]">${currentLang === 'bn' ? 'ইন্টারনেট বিল রসিদ' : 'Internet Bill Receipt'}</p>
+            <p class="text-[10px]">ইন্টারনেট বিল রসিদ</p>
             <p class="text-[10px]">WhatsApp: ${companySettings.whatsapp || ''}</p>
             <div class="border-t border-dashed my-1"></div>
           </div>
           <div class="text-[11px] space-y-0.5">
-            <div class="flex justify-between"><span>${currentLang === 'bn' ? 'ইনভয়েস' : 'Invoice'}:</span><span>${bill.invoiceNo}</span></div>
-            <div class="flex justify-between"><span>${currentLang === 'bn' ? 'তারিখ' : 'Date'}:</span><span>${formatDate(bill.createdAt || new Date())}</span></div>
-            <div class="flex justify-between"><span>${currentLang === 'bn' ? 'নাম' : 'Name'}:</span><span>${(customer.name || '-').substring(0,15)}</span></div>
-            <div class="flex justify-between"><span>${currentLang === 'bn' ? 'মোবাইল' : 'Mobile'}:</span><span>${customer.mobile || '-'}</span></div>
+            <div class="flex justify-between"><span>Invoice:</span><span>${bill.invoiceNo}</span></div>
+            <div class="flex justify-between"><span>Date:</span><span>${formatDate(bill.createdAt || new Date())}</span></div>
+            <div class="flex justify-between"><span>Name:</span><span>${(customer.name || '-').substring(0,15)}</span></div>
+            <div class="flex justify-between"><span>Mobile:</span><span>${customer.mobile || '-'}</span></div>
             <div class="flex justify-between"><span>PPPoE:</span><span>${customer.pppoeUser || '-'}</span></div>
             <div class="border-t border-dashed my-1"></div>
-            <div class="flex justify-between"><span>${currentLang === 'bn' ? 'প্যাকেজ' : 'Package'}:</span><span>${customer.packageName || '-'}</span></div>
-            <div class="flex justify-between font-bold"><span>${currentLang === 'bn' ? 'পরিমাণ' : 'Amount'}:</span><span>${formatCurrency(bill.amount)}</span></div>
-            <div class="flex justify-between"><span>${currentLang === 'bn' ? 'পদ্ধতি' : 'Method'}:</span><span>${bill.paymentMethod || '-'}</span></div>
+            <div class="flex justify-between"><span>Package:</span><span>${customer.packageName || '-'}</span></div>
+            <div class="flex justify-between font-bold"><span>Amount:</span><span>${formatCurrency(bill.amount)}</span></div>
+            <div class="flex justify-between"><span>Method:</span><span>${bill.paymentMethod || '-'}</span></div>
             <div class="flex justify-between"><span>TrxID:</span><span>${bill.trxId || '-'}</span></div>
-            <div class="flex justify-between"><span>${currentLang === 'bn' ? 'স্ট্যাটাস' : 'Status'}:</span><span>${t(bill.status)?.toUpperCase() || '-'}</span></div>
+            <div class="flex justify-between"><span>Status:</span><span>${bill.status?.toUpperCase() || '-'}</span></div>
             <div class="border-t border-dashed my-1"></div>
           </div>
-          <div class="text-center text-[10px] mt-2">${currentLang === 'bn' ? 'ধন্যবাদ | Thank You' : 'Thank You'}</div>
+          <div class="text-center text-[10px] mt-2">ধন্যবাদ | Thank You</div>
         </div>
 
         <div class="text-center py-8 text-slate-500 no-print">
           <i data-lucide="file-check" class="w-12 h-12 mx-auto mb-2 text-emerald-600"></i>
-          <p>${currentLang === 'bn' ? 'ইনভয়েস প্রস্তুত। উপরের বাটন ব্যবহার করে প্রিন্ট বা পাঠান।' : 'Invoice ready. Use buttons above to print or send.'}</p>
+          <p>Invoice ready. Use buttons above to print or send.</p>
         </div>
       </div>
     `;
@@ -2858,13 +2512,13 @@
   };
 
   window.sendInvoiceWhatsApp = (number, invoiceNo) => {
-    const msg = `${currentLang === 'bn' ? 'হ্যালো!' : 'Hello!'} ${currentLang === 'bn' ? 'আপনার ইনভয়েস' : 'Your invoice'} ${invoiceNo} ${currentLang === 'bn' ? 'তৈরি করা হয়েছে।' : 'has been generated.'} ${currentLang === 'bn' ? 'আপনার পেমেন্টের জন্য ধন্যবাদ।' : 'Thank you for your payment.'} - ${companySettings.companyName || 'OwnsBill'}`;
+    const msg = `Hello! Your invoice ${invoiceNo} has been generated. Thank you for your payment. - ${companySettings.companyName || 'OwnsBill'}`;
     sendWhatsApp(number, msg);
   };
 
   window.sendWhatsApp = (number, message) => {
     const clean = number?.replace(/\D/g, '');
-    if (!clean) return showToast(t('invalidWhatsApp'), 'error');
+    if (!clean) return showToast('Invalid WhatsApp number', 'error');
     const url = `https://wa.me/${clean}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
@@ -2883,10 +2537,10 @@
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-bill" type="text" placeholder="${currentLang === 'bn' ? 'বিল খুঁজুন...' : 'Search bills...'}" class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
           <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
-            <i data-lucide="download" class="w-5 h-5"></i> ${t('exportCSV')}
+            <i data-lucide="download" class="w-5 h-5"></i> Export CSV
           </button>
         </div>
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
@@ -2895,13 +2549,13 @@
             <table class="w-full">
               <thead class="bg-[rgb(var(--border))] text-sm">
                 <tr>
-                  <th class="text-left p-4 font-semibold">${t('invoiceNo')}</th>
-                  ${currentRole !== 'customer' ? `<th class="text-left p-4 font-semibold">${currentLang === 'bn' ? 'গ্রাহক' : 'Customer'}</th>` : ''}
-                  <th class="text-left p-4 font-semibold">${t('amount')}</th>
-                  <th class="text-left p-4 font-semibold">${t('paymentMethod')}</th>
-                  <th class="text-left p-4 font-semibold">${t('status')}</th>
-                  <th class="text-left p-4 font-semibold">${t('date')}</th>
-                  <th class="text-right p-4 font-semibold">${t('actions')}</th>
+                  <th class="text-left p-4 font-semibold">Invoice</th>
+                  ${currentRole !== 'customer' ? '<th class="text-left p-4 font-semibold">Customer</th>' : ''}
+                  <th class="text-left p-4 font-semibold">Amount</th>
+                  <th class="text-left p-4 font-semibold">Method</th>
+                  <th class="text-left p-4 font-semibold">Status</th>
+                  <th class="text-left p-4 font-semibold">Date</th>
+                  <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody id="bills-tbody">${renderBillsTable(list)}</tbody>
@@ -2924,18 +2578,18 @@
   };
 
   const renderBillsTable = (bills) => {
-    if (!bills.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">${currentLang === 'bn' ? 'কোনো বিল পাওয়া যায়নি' : 'No bills found'}</td></tr>`;
+    if (!bills.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
     return bills.map(b => `
       <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
         <td class="p-4"><div class="font-mono text-sm font-semibold">${b.invoiceNo || '-'}</div></td>
         ${currentRole !== 'customer' ? `<td class="p-4"><div class="font-medium">${b.customerName || '-'}</div><div class="text-xs text-slate-500">${b.customerMobile || '-'}</div></td>` : ''}
         <td class="p-4 font-bold text-sky-600">${formatCurrency(b.amount)}</td>
         <td class="p-4 text-sm">${b.paymentMethod || '-'}</td>
-        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${t(b.status)}</span></td>
+        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td>
         <td class="p-4 text-sm">${formatDate(b.createdAt)}</td>
         <td class="p-4"><div class="flex items-center justify-end gap-2">
-          <button onclick='window.showInvoicePreviewFromBill("${b.id}")' class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="${t('view')}" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
-          ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="${currentLang === 'bn' ? 'পরিশোধ চিহ্নিত করুন' : 'Mark Paid'}" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
+          <button onclick='window.showInvoicePreviewFromBill("${b.id}")' class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
+          ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="Mark Paid" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
         </div></td>
       </tr>
     `).join('');
@@ -2950,7 +2604,7 @@
     try {
       await updateDoc(doc(db, 'bills', id), { status: 'paid', paidAt: serverTimestamp() });
       await logActivity('Bill Update', `Marked bill as paid`);
-      showToast(currentLang === 'bn' ? 'বিল পরিশোধিত হিসেবে চিহ্নিত' : 'Bill marked as paid', 'success');
+      showToast('Bill marked as paid', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -2970,7 +2624,7 @@
       <div class="space-y-4 fade-in">
         ${currentRole === 'customer' ? `
         <button onclick="showComplaintForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="plus" class="w-5 h-5"></i> ${t('newComplaint')}
+          <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
         </button>
         ` : ''}
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading complaints...</span></div>' : `
@@ -2981,19 +2635,19 @@
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
                     <h4 class="font-bold">${c.subject || '-'}</h4>
-                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${t(c.status)}</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status || 'pending'}</span>
                   </div>
                   <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
                 </div>
               </div>
               <div class="flex items-center justify-between text-xs text-slate-500">
-                <span>${currentLang === 'bn' ? 'দ্বারা' : 'By'} ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
+                <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
                 ${currentRole !== 'customer' && c.status !== 'resolved' ? `
-                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">${t('markResolved')}</button>
+                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">Mark Resolved</button>
                 ` : ''}
               </div>
             </div>
-          `).join('') : `<div class="glass rounded-2xl p-8 text-center text-slate-500">${t('noComplaints')}</div>`}
+          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No complaints found</div>'}
         </div>
         `}
       </div>
@@ -3003,14 +2657,14 @@
   window.showComplaintForm = () => {
     showModal(`
       <form id="complaint-form" class="p-6">
-        <h3 class="text-xl font-bold mb-6">${currentLang === 'bn' ? 'অভিযোগ জমা দিন' : 'Submit Complaint'}</h3>
+        <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
         <div class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">${t('subject')} *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">${t('description')} *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
+          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
         </div>
         <div class="flex gap-3 mt-6">
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">${t('submit')}</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">${t('cancel')}</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -3029,7 +2683,7 @@
           createdAt: serverTimestamp()
         });
         await logActivity('Complaint', `New complaint: ${data.subject}`);
-        showToast(t('complaintSubmitted'), 'success');
+        showToast('Complaint submitted', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -3041,7 +2695,7 @@
     try {
       await updateDoc(doc(db, 'complaints', id), { status, updatedAt: serverTimestamp() });
       await logActivity('Complaint Update', `Status changed to ${status}`);
-      showToast(t('statusUpdated'), 'success');
+      showToast('Status updated', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -3065,28 +2719,28 @@
   const updateCommandPalette = () => {
     const commands = {
       admin: [
-        { label: t('dashboard'), action: () => showView('dashboard'), icon: 'layout-dashboard' },
-        { label: t('addCustomer'), action: () => showCustomerForm(), icon: 'user-plus' },
-        { label: t('addStaff'), action: () => showStaffForm(), icon: 'user-cog' },
-        { label: t('createInvoice'), action: () => showView('invoice'), icon: 'file-text' },
-        { label: currentLang === 'bn' ? 'রিপোর্ট দেখুন' : 'View Reports', action: () => showView('reports'), icon: 'bar-chart-3' },
-        { label: t('staffAccounts'), action: () => showView('staffaccounts'), icon: 'wallet' },
-        { label: t('approvals'), action: () => showView('approvals'), icon: 'check-circle' },
-        { label: t('settings'), action: () => showView('settings'), icon: 'settings' }
+        { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
+        { label: 'Add Customer', action: () => showCustomerForm(), icon: 'user-plus' },
+        { label: 'Add Staff', action: () => showStaffForm(), icon: 'user-cog' },
+        { label: 'Create Invoice', action: () => showView('invoice'), icon: 'file-text' },
+        { label: 'View Reports', action: () => showView('reports'), icon: 'bar-chart-3' },
+        { label: 'Staff Accounts', action: () => showView('staffaccounts'), icon: 'wallet' },
+        { label: 'Approvals', action: () => showView('approvals'), icon: 'check-circle' },
+        { label: 'Settings', action: () => showView('settings'), icon: 'settings' }
       ],
       staff: [
-        { label: t('dashboard'), action: () => showView('dashboard'), icon: 'layout-dashboard' },
-        { label: t('myCustomers'), action: () => showView('mycustomers'), icon: 'users' },
-        { label: t('addCustomer'), action: () => showCustomerForm(), icon: 'user-plus' },
-        { label: t('createInvoice'), action: () => showView('invoice'), icon: 'file-text' },
-        { label: t('myWallet'), action: () => showView('mywallet'), icon: 'wallet' },
-        { label: t('viewBills'), action: () => showView('bills'), icon: 'receipt' }
+        { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
+        { label: 'My Customers', action: () => showView('mycustomers'), icon: 'users' },
+        { label: 'Add Customer', action: () => showCustomerForm(), icon: 'user-plus' },
+        { label: 'Create Invoice', action: () => showView('invoice'), icon: 'file-text' },
+        { label: 'My Wallet', action: () => showView('mywallet'), icon: 'wallet' },
+        { label: 'View Bills', action: () => showView('bills'), icon: 'receipt' }
       ],
       customer: [
-        { label: t('dashboard'), action: () => showView('dashboard'), icon: 'layout-dashboard' },
-        { label: t('myBills'), action: () => showView('mybills'), icon: 'receipt' },
-        { label: t('submitComplaint'), action: () => showComplaintForm(), icon: 'message-circle-warning' },
-        { label: currentLang === 'bn' ? 'চ্যাট সাপোর্ট' : 'Chat Support', action: () => showView('chat'), icon: 'messages-square' }
+        { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
+        { label: 'My Bills', action: () => showView('mybills'), icon: 'receipt' },
+        { label: 'Submit Complaint', action: () => showComplaintForm(), icon: 'message-circle-warning' },
+        { label: 'Chat Support', action: () => showView('chat'), icon: 'messages-square' }
       ]
     };
 
@@ -3098,7 +2752,7 @@
           <i data-lucide="${cmd.icon}" class="w-5 h-5 text-sky-600"></i>
           <span class="font-medium">${cmd.label}</span>
         </button>
-      `).join('') || `<div class="p-4 text-center text-slate-500 text-sm">${currentLang === 'bn' ? 'কোনো ফলাফল নেই' : 'No results'}</div>`;
+      `).join('') || '<div class="p-4 text-center text-slate-500 text-sm">No results</div>';
       lucide.createIcons();
     };
 
@@ -3119,9 +2773,13 @@
     }
   });
 
+  // Service Worker removed - blob URLs not supported on GitHub Pages
+  // For production PWA, create a proper service-worker.js file
+
   window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
 </script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
