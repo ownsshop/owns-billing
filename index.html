@@ -111,21 +111,6 @@
     padding-top: 16px;
   }
 
-  /* Modal scroll fixes for PC 1366x768 */
-  .modal-backdrop {
-    padding: 1rem;
-    overflow-y: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .modal-content {
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
   @media (min-width: 768px) {
     .main-wrapper {
       padding-top: var(--header-h);
@@ -157,10 +142,6 @@
       z-index: 20;
     }
     .desktop-only { display: none !important; }
-    .modal-backdrop {
-      padding: 0.5rem;
-      align-items: flex-start;
-    }
   }
   
   @media print {
@@ -202,9 +183,33 @@
     font-size: 0.75rem;
     font-weight: 600;
   }
+
+  .auth-loading {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgb(var(--bg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .auth-loading.hidden {
+    display: none;
+  }
 </style>
 </head>
 <body class="antialiased">
+<div id="auth-loading" class="auth-loading">
+  <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center animate-pulse">
+    <span class="text-3xl font-bold text-white">O</span>
+  </div>
+  <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+    <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+    <span class="text-sm font-medium">Loading...</span>
+  </div>
+</div>
 <div id="app" class="min-h-screen flex flex-col"></div>
 <div id="sidebar-overlay" class="fixed inset-0 z-[45] bg-black/50 hidden opacity-0 md:hidden"></div>
 <div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2 px-4 md:px-0"></div>
@@ -250,6 +255,7 @@
   let touchEndX = 0;
   let mobileProfileOpen = false;
   let isLoadingData = true;
+  let authInitialized = false;
   
   let paymentChart = null;
   let collectionChart = null;
@@ -319,6 +325,11 @@
       clearTimeout(timeout);
       timeout = setTimeout(() => fn(...args), delay);
     };
+  };
+
+  const showAuthLoading = (show) => {
+    const el = $('#auth-loading');
+    if (el) el.classList.toggle('hidden', !show);
   };
 
   window.showToast = (msg, type = 'info') => {
@@ -411,6 +422,8 @@
         if (error.code === 'permission-denied') {
           console.warn(`${collectionName} collection not accessible. Using empty array.`);
           callback({ docs: [] });
+        } else {
+          callback({ docs: [] });
         }
       });
     } catch (err) {
@@ -420,48 +433,81 @@
     }
   };
 
-  onAuthStateChanged(auth, async (user) => {
-    appState.unsubscribers.forEach(unsub => unsub());
+  const cleanupListeners = () => {
+    appState.unsubscribers.forEach(unsub => {
+      try { unsub(); } catch (e) { console.warn('Unsubscribe error:', e); }
+    });
     appState.unsubscribers = [];
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!authInitialized) {
+      showAuthLoading(true);
+      authInitialized = true;
+    }
+
+    cleanupListeners();
     
     if (user) {
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          if (userData.status === 'pending') {
-            showToast('Your account is pending admin approval', 'warning');
-            signOut(auth);
-            return;
-          }
-          if (userData.status === 'rejected') {
-            showToast('Your account has been rejected', 'error');
-            signOut(auth);
-            return;
-          }
-          currentUser = user;
-          currentUserData = { id: user.uid, ...userData };
-          currentRole = currentUserData.role;
-          isLoadingData = true;
-          await loadSettings();
-          await initRealtimeListeners();
-          renderApp();
-          setTimeout(() => {
-            showView('dashboard');
-            isLoadingData = false;
-          }, 100);
-        } else {
-          showToast('User profile not found', 'error');
-          signOut(auth);
+        
+        if (!userDoc.exists()) {
+          showAuthLoading(false);
+          showToast('User profile not found. Contact admin to create your account.', 'error');
+          await signOut(auth);
+          return;
         }
+        
+        const userData = userDoc.data();
+        
+        if (userData.status === 'pending') {
+          showAuthLoading(false);
+          showToast('Your account is pending admin approval', 'warning');
+          await signOut(auth);
+          return;
+        }
+        
+        if (userData.status === 'rejected') {
+          showAuthLoading(false);
+          showToast('Your account has been rejected', 'error');
+          await signOut(auth);
+          return;
+        }
+
+        if (userData.status !== 'approved' && userData.status !== undefined) {
+          showAuthLoading(false);
+          showToast('Account not approved. Contact admin.', 'error');
+          await signOut(auth);
+          return;
+        }
+        
+        currentUser = user;
+        currentUserData = { id: user.uid, ...userData };
+        currentRole = currentUserData.role;
+        isLoadingData = true;
+        
+        await loadSettings();
+        await initRealtimeListeners();
+        
+        showAuthLoading(false);
+        renderApp();
+        setTimeout(() => {
+          showView('dashboard');
+          isLoadingData = false;
+        }, 100);
+        
       } catch (err) {
         console.error('Auth error:', err);
-        showToast('Authentication error', 'error');
-        signOut(auth);
+        showAuthLoading(false);
+        showToast('Authentication error: ' + err.message, 'error');
+        await signOut(auth);
       }
     } else {
       currentUser = null;
       currentRole = null;
+      currentUserData = null;
+      showAuthLoading(false);
       renderLogin();
     }
   });
@@ -477,20 +523,26 @@
   };
 
   const initRealtimeListeners = async () => {
+    // Users - Fix: All users including staff in single collection
     let usersQuery = collection(db, 'users');
-    if (currentRole === 'staff') usersQuery = query(usersQuery, where('assignedStaff', '==', currentUser.uid));
-    if (currentRole === 'customer') usersQuery = query(usersQuery, where('__name__', '==', currentUser.uid));
+    if (currentRole === 'staff') {
+      usersQuery = query(usersQuery, where('assignedStaff', '==', currentUser.uid));
+    } else if (currentRole === 'customer') {
+      usersQuery = query(usersQuery, where('__name__', '==', currentUser.uid));
+    }
     
     appState.unsubscribers.push(safeOnSnapshot(usersQuery, (snap) => {
       appState.users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       if (!isLoadingData && ['dashboard','customers','staff','approvals','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }, 'users'));
 
+    // Packages
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'packages'), (snap) => {
       appState.packages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       if (!isLoadingData && ['customers','packages'].includes(currentView)) reRenderCurrentView();
     }, 'packages'));
 
+    // Bills
     let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
     if (currentRole === 'staff') billsQuery = query(billsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
@@ -500,6 +552,7 @@
       if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }, 'bills'));
 
+    // Complaints
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
     if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
@@ -509,14 +562,17 @@
       if (!isLoadingData && currentView === 'complaints') reRenderCurrentView();
     }, 'complaints'));
 
+    // Zones
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'zones'), (snap) => {
       appState.zones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }, 'zones'));
 
+    // Areas
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'areas'), (snap) => {
       appState.areas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }, 'areas'));
 
+    // Staff Deposits
     let depositsQuery = query(collection(db, 'staff_deposits'), orderBy('date', 'desc'));
     if (currentRole === 'staff') depositsQuery = query(depositsQuery, where('staffId', '==', currentUser.uid));
     
@@ -525,6 +581,7 @@
       if (!isLoadingData && ['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }, 'staff_deposits'));
 
+    // Salary Requests
     let salaryQuery = query(collection(db, 'salary_requests'), orderBy('requestDate', 'desc'));
     if (currentRole === 'staff') salaryQuery = query(salaryQuery, where('staffId', '==', currentUser.uid));
     
@@ -625,12 +682,15 @@
     `;
     $('#login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      e.stopPropagation();
       const email = $('#email').value;
       const password = $('#password').value;
       try {
+        showAuthLoading(true);
         await signInWithEmailAndPassword(auth, email, password);
         showToast('Welcome back!', 'success');
       } catch (err) {
+        showAuthLoading(false);
         showToast(err.message, 'error');
       }
     });
@@ -884,6 +944,7 @@
   };
 
   const handleLogout = async () => {
+    cleanupListeners();
     await signOut(auth);
     showToast('Logged out successfully', 'success');
     closeModal();
@@ -892,10 +953,11 @@
 
   const renderDashboard = () => {
     const customers = currentRole === 'staff' 
-      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && u.status === 'approved')
-      : appState.users.filter(u => u.role === 'customer' && u.status === 'approved');
+      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && (u.status === 'approved' || !u.status))
+      : appState.users.filter(u => u.role === 'customer' && (u.status === 'approved' || !u.status));
     
-    const staffList = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
+    // Fix: Bug 1 - Staff list from users collection where role='staff'
+    const staffList = appState.users.filter(u => u.role === 'staff' && (u.status === 'approved' || !u.status));
     const bills = appState.bills;
     
     const today = new Date();
@@ -1171,7 +1233,7 @@
       const due = appState.bills.filter(b => b.customerId === c.id && b.status === 'unpaid').reduce((s,b)=>s+b.amount,0);
       const statusBadge = currentRole === 'staff' ? `
         <td class="p-4">
-          <span class="badge ${c.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : c.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
+          <span class="badge ${c.status === 'approved' || !c.status ? 'bg-emerald-500/20 text-emerald-600' : c.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
             ${c.status || 'approved'}
           </span>
         </td>
@@ -1223,34 +1285,33 @@
 
   window.showCustomerForm = (id = null) => {
     const customer = id ? appState.users.find(u => u.id === id) : null;
-    const staffList = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
+    // Fix: Bug 1 - Staff list from users collection where role='staff'
+    const staffList = appState.users.filter(u => u.role === 'staff' && (u.status === 'approved' || !u.status));
     const areaOptions = (appState.areas || []).map(a => `<option value="${a.name}" ${customer?.area===a.name?'selected':''}>${a.name}</option>`).join('');
     const zoneOptions = (appState.zones || []).map(z => `<option value="${z.name}" ${customer?.zone===z.name?'selected':''}>${z.name}</option>`).join('');
     
     showModal(`
-      <form id="customer-form" class="modal-content" id="customerModal">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
-          <div class="grid md:grid-cols-2 gap-4">
-            <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${customer?.mobile||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">Assigned Staff</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Staff</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
-            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
-            ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
+      <form id="customer-form" class="p-6 max-h-[80vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${customer?.mobile||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
+          <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
+          <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
+          <div><label class="text-sm font-medium mb-2 block">Assigned Staff</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Staff</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+          <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
+          ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1275,6 +1336,7 @@
           await logActivity('Update Customer', `Updated customer: ${data.name}`);
           showToast('Customer updated successfully', 'success');
         } else {
+          // Fix: Bug 1 - Create in users collection, not separate staff collection
           const userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
           delete data.password;
           await setDoc(doc(db, 'users', userCred.user.uid), { ...data, createdAt: serverTimestamp() });
@@ -1292,28 +1354,26 @@
     const c = appState.users.find(u => u.id === id);
     const bills = appState.bills.filter(b => b.customerId === id);
     showModal(`
-      <div class="modal-content">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">Customer Details</h3>
-          <div class="space-y-4">
-            ${Object.entries(c).filter(([k,v])=>!['id','role','createdAt','password'].includes(k)&&v).map(([k,v])=>`
-              <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
-                <span class="text-slate-500 capitalize">${k.replace(/([A-Z])/g,' $1')}</span>
-                <span class="font-semibold">${v}</span>
-              </div>
-            `).join('')}
-          </div>
-          ${bills.length ? `
-          <h4 class="font-bold mt-6 mb-3">Recent Bills</h4>
-          <div class="space-y-2">${bills.slice(0,5).map(b=>`
-            <div class="flex justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
-              <span>${formatDate(b.createdAt)}</span>
-              <span class="font-semibold ${b.status==='paid'?'text-emerald-600':'text-rose-600'}">${formatCurrency(b.amount)}</span>
+      <div class="p-6 max-h-[80vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-6">Customer Details</h3>
+        <div class="space-y-4">
+          ${Object.entries(c).filter(([k,v])=>!['id','role','createdAt','password','status'].includes(k)&&v).map(([k,v])=>`
+            <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
+              <span class="text-slate-500 capitalize">${k.replace(/([A-Z])/g,' $1')}</span>
+              <span class="font-semibold">${v}</span>
             </div>
-          `).join('')}</div>
-          ` : ''}
-          <button onclick="closeModal()" class="w-full mt-6 py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
+          `).join('')}
         </div>
+        ${bills.length ? `
+        <h4 class="font-bold mt-6 mb-3">Recent Bills</h4>
+        <div class="space-y-2">${bills.slice(0,5).map(b=>`
+          <div class="flex justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+            <span>${formatDate(b.createdAt)}</span>
+            <span class="font-semibold ${b.status==='paid'?'text-emerald-600':'text-rose-600'}">${formatCurrency(b.amount)}</span>
+          </div>
+        `).join('')}</div>
+        ` : ''}
+        <button onclick="closeModal()" class="w-full mt-6 py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
       </div>
     `);
   };
@@ -1475,18 +1535,16 @@
 
   window.showDepositForm = () => {
     showModal(`
-      <form id="deposit-form" class="modal-content" id="depositModal">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
-          <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
-            <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
+      <form id="deposit-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
+          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1516,17 +1574,15 @@
 
   window.showSalaryRequestForm = () => {
     showModal(`
-      <form id="salary-form" class="modal-content" id="salaryRequestModal">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">Request Salary</h3>
-          <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
+      <form id="salary-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">Request Salary</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1554,7 +1610,8 @@
   };
 
   const renderStaffAccounts = () => {
-    const staffList = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
+    // Fix: Bug 1 - Staff list from users collection where role='staff'
+    const staffList = appState.users.filter(u => u.role === 'staff' && (u.status === 'approved' || !u.status));
     const container = document.getElementById('view-staffaccounts');
     if (!container) return;
 
@@ -1631,49 +1688,47 @@
     const salaries = appState.salaryRequests.filter(s => s.staffId === staffId);
     
     showModal(`
-      <div class="modal-content">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'}</h3>
-          
-          <div class="mb-6">
-            <h4 class="font-bold mb-3">Deposits</h4>
-            <div class="space-y-2 max-h-[200px] overflow-y-auto">
-              ${deposits.map(d => `
-                <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
-                  <div>
-                    <p class="font-semibold">${formatCurrency(d.amount)} - ${d.method}</p>
-                    <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
-                    ${d.status === 'pending' ? `<button onclick="approveDeposit('${d.id}')" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-600" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
-                  </div>
+      <div class="p-6 max-h-[80vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'}</h3>
+        
+        <div class="mb-6">
+          <h4 class="font-bold mb-3">Deposits</h4>
+          <div class="space-y-2">
+            ${deposits.map(d => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(d.amount)} - ${d.method}</p>
+                  <p class="text-xs text-slate-500">TrxID: ${d.trxId || '-'} • ${formatDate(d.date)}</p>
                 </div>
-              `).join('') || '<p class="text-center text-slate-500 py-4">No deposits</p>'}
-            </div>
-          </div>
-
-          <div class="mb-6">
-            <h4 class="font-bold mb-3">Salary Requests</h4>
-            <div class="space-y-2 max-h-[200px] overflow-y-auto">
-              ${salaries.map(s => `
-                <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
-                  <div>
-                    <p class="font-semibold">${formatCurrency(s.amount)}</p>
-                    <p class="text-xs text-slate-500">Requested: ${formatDate(s.requestDate)}</p>
-                    ${s.reason ? `<p class="text-xs text-slate-500">Reason: ${s.reason}</p>` : ''}
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
-                    ${s.status === 'pending' ? `<button onclick="paySalary('${s.id}')" class="p-2 rounded-lg bg-indigo-500/20 text-indigo-600" type="button"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>` : ''}
-                  </div>
+                <div class="flex items-center gap-2">
+                  <span class="badge ${d.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${d.status}</span>
+                  ${d.status === 'pending' ? `<button onclick="approveDeposit('${d.id}')" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-600" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
                 </div>
-              `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
-            </div>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No deposits</p>'}
           </div>
-
-          <button onclick="closeModal()" class="w-full py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
         </div>
+
+        <div class="mb-6">
+          <h4 class="font-bold mb-3">Salary Requests</h4>
+          <div class="space-y-2">
+            ${salaries.map(s => `
+              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
+                <div>
+                  <p class="font-semibold">${formatCurrency(s.amount)}</p>
+                  <p class="text-xs text-slate-500">Requested: ${formatDate(s.requestDate)}</p>
+                  ${s.reason ? `<p class="text-xs text-slate-500">Reason: ${s.reason}</p>` : ''}
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="badge ${s.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}">${s.status}</span>
+                  ${s.status === 'pending' ? `<button onclick="paySalary('${s.id}')" class="p-2 rounded-lg bg-indigo-500/20 text-indigo-600" type="button"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>` : ''}
+                </div>
+              </div>
+            `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
+          </div>
+        </div>
+
+        <button onclick="closeModal()" class="w-full py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
       </div>
     `);
     lucide.createIcons();
@@ -1696,17 +1751,15 @@
 
   window.paySalary = (id) => {
     showModal(`
-      <form id="pay-salary-form" class="modal-content" id="confirmModal">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
-          <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
-            <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
+      <form id="pay-salary-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
+          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1733,7 +1786,8 @@
   };
 
   const renderStaff = () => {
-    const list = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
+    // Fix: Bug 1 - Staff list from users collection where role='staff'
+    const list = appState.users.filter(u => u.role === 'staff' && (u.status === 'approved' || !u.status));
     const container = document.getElementById('view-staff');
     if (!container) return;
 
@@ -1756,7 +1810,7 @@
               </thead>
               <tbody>
                 ${list.length ? list.map(s => {
-                  const assignedCount = appState.users.filter(u => u.assignedStaff === s.id && u.status === 'approved').length;
+                  const assignedCount = appState.users.filter(u => u.assignedStaff === s.id && (u.status === 'approved' || !u.status)).length;
                   return `
                   <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
                     <td class="p-4"><div class="font-semibold">${s.name || '-'}</div><div class="text-xs text-slate-500">${s.email || '-'}</div></td>
@@ -1779,21 +1833,19 @@
   window.showStaffForm = (id = null) => {
     const staff = id ? appState.users.find(u => u.id === id) : null;
     showModal(`
-      <form id="staff-form" class="modal-content" id="staffModal">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
-          <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
-            ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
+      <form id="staff-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
+          ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1876,18 +1928,16 @@
   window.showPackageForm = (id = null) => {
     const pkg = id ? appState.packages.find(p => p.id === id) : null;
     showModal(`
-      <form id="package-form" class="modal-content" id="packageModal">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
-          <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Package Name *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Speed *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="e.g. 10 Mbps" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
+      <form id="package-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Package Name *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Speed *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="e.g. 10 Mbps" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -2004,7 +2054,7 @@
     
     $('#report-results').innerHTML = `
       <div class="grid md:grid-cols-3 gap-4 mb-6">
-        <div class="glass rounded-2xl p-5 border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Total Amount</p><p class="text-2xl font-bold">${formatCurrency(total)}</p></div>
+        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Total Amount</p><p class="text-2xl font-bold">${formatCurrency(total)}</p></div>
         <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Paid</p><p class="text-2xl font-bold text-emerald-600">${formatCurrency(paid)}</p></div>
         <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Unpaid</p><p class="text-2xl font-bold text-rose-600">${formatCurrency(unpaid)}</p></div>
       </div>
@@ -2084,7 +2134,7 @@
             <h3 class="font-bold text-lg">Area Management</h3>
             <button onclick="showAreaForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Area</button>
           </div>
-          <div class="space-y-2 max-h-[300px] overflow-y-auto">
+          <div class="space-y-2">
             ${appState.areas?.map(a => `
               <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
                 <span class="font-medium">${a.name}</span>
@@ -2102,7 +2152,7 @@
             <h3 class="font-bold text-lg">Zone Management</h3>
             <button onclick="showZoneForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Zone</button>
           </div>
-          <div class="space-y-2 max-h-[300px] overflow-y-auto">
+          <div class="space-y-2">
             ${appState.zones?.map(z => `
               <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
                 <span class="font-medium">${z.name}</span>
@@ -2161,17 +2211,15 @@ match /packages/{docId} {
   window.showAreaForm = (id = null) => {
     const area = id ? appState.areas.find(a => a.id === id) : null;
     showModal(`
-      <form id="area-form" class="modal-content">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
-          <div>
-            <label class="text-sm font-medium mb-2 block">Area Name *</label>
-            <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
+      <form id="area-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
+        <div>
+          <label class="text-sm font-medium mb-2 block">Area Name *</label>
+          <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -2210,16 +2258,14 @@ match /packages/{docId} {
   window.showZoneForm = (id = null) => {
     const zone = id ? appState.zones.find(z => z.id === id) : null;
     showModal(`
-      <form id="zone-form" class="modal-content">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Zone</h3>
-          <div>
-            <label class="text-sm font-medium mb-2 block">Zone Name *</label>
-            <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
+      <form id="zone-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Zone</h3>
+        <div>
+          <label class="text-sm font-medium mb-2 block">Zone Name *</label>
+          <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -2309,8 +2355,8 @@ match /packages/{docId} {
 
   const renderInvoice = () => {
     const customers = currentRole === 'staff' 
-      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && u.status === 'approved')
-      : appState.users.filter(u => u.role === 'customer' && u.status === 'approved');
+      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && (u.status === 'approved' || !u.status))
+      : appState.users.filter(u => u.role === 'customer' && (u.status === 'approved' || !u.status));
 
     const container = document.getElementById('view-invoice');
     if (!container) return;
@@ -2361,6 +2407,7 @@ match /packages/{docId} {
                 <label class="text-sm font-medium mb-2 block">Notes</label>
                 <textarea name="notes" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea>
               </div>
+            </div>
             <div class="flex gap-3">
               <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
               <button type="button" id="preview-invoice" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
@@ -2661,7 +2708,6 @@ match /packages/{docId} {
                   </div>
                   <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
                 </div>
-              </div>
               <div class="flex items-center justify-between text-xs text-slate-500">
                 <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
                 ${currentRole !== 'customer' && c.status !== 'resolved' ? `
@@ -2678,17 +2724,15 @@ match /packages/{docId} {
 
   window.showComplaintForm = () => {
     showModal(`
-      <form id="complaint-form" class="modal-content" id="complaintModal">
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
-          <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
+      <form id="complaint-form" class="p-6">
+        <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
+        <div class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -2727,7 +2771,7 @@ match /packages/{docId} {
 
   const showModal = (content) => {
     $('#modal-container').innerHTML = `
-      <div class="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm modal-backdrop" onclick="closeModal()">
+      <div class="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeModal()">
         <div class="glass rounded-3xl shadow-2xl border border-[rgb(var(--border))] w-full max-w-2xl scale-in" onclick="event.stopPropagation()">
           ${content}
         </div>
@@ -2800,6 +2844,7 @@ match /packages/{docId} {
   window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
 </script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
