@@ -36,6 +36,7 @@
     --border: 51, 65, 85;
   }
   * { touch-action: manipulation; }
+  html, body { height: 100%; }
   body { 
     background: rgb(var(--bg)); 
     color: rgb(var(--text)); 
@@ -82,16 +83,49 @@
   }
   
   .main-wrapper {
-    padding-top: var(--header-h);
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
   }
   
+  #content {
+    flex: 1 1 auto;
+  }
+
+  .profile-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 240px;
+    z-index: 60;
+  }
+
+  /* Desktop: footer relative, pushes to bottom via flex */
   @media (min-width: 768px) {
     .main-wrapper {
-      padding-top: 0;
+      padding-top: var(--header-h);
     }
+    #footer-desktop {
+      position: relative;
+      margin-top: auto;
+    }
+    .mobile-only { display: none !important; }
+  }
+  
+  /* Mobile: fixed footer above bottom nav + content padding */
+  @media (max-width: 767px) {
+    .table-container table { min-width: 600px; }
+    #content {
+      padding-bottom: calc(var(--bottom-nav-h) + var(--footer-h) + 16px);
+    }
+    #footer-mobile {
+      position: fixed;
+      bottom: var(--bottom-nav-h);
+      left: 0;
+      right: 0;
+      z-index: 20;
+    }
+    .desktop-only { display: none !important; }
   }
   
   @media print {
@@ -101,14 +135,6 @@
     .print-a4 { width: 210mm; padding: 15mm; }
     .print-thermal { width: 58mm; padding: 2mm; font-size: 12px; }
     .no-print { display: none !important; }
-  }
-
-  @media (max-width: 768px) {
-    .table-container table { min-width: 600px; }
-    /* FIX: Bug 2 - Add padding for bottom nav + footer on mobile */
-    #content {
-      padding-bottom: calc(var(--bottom-nav-h) + var(--footer-h) + 16px);
-    }
   }
   
   .bottom-nav-item {
@@ -187,7 +213,7 @@
   let touchStartX = 0;
   let touchEndX = 0;
   let currentChartInstances = [];
-  let viewInitialized = false;
+  let mobileProfileOpen = false;
   
   const appState = {
     users: [],
@@ -201,7 +227,6 @@
     unsubscribers: []
   };
 
-  // FIX: Bug 1 - Global menu names for title updates
   const menuNames = {
     dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
     bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
@@ -310,6 +335,21 @@
 
   window.closeSidebar = () => toggleSidebar(false);
 
+  // Mobile Profile Dropdown
+  window.toggleMobileProfile = () => {
+    mobileProfileOpen = !mobileProfileOpen;
+    const dropdown = $('#mobile-profile-dropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('hidden', !mobileProfileOpen);
+    }
+  };
+
+  window.closeMobileProfile = () => {
+    mobileProfileOpen = false;
+    const dropdown = $('#mobile-profile-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+  };
+
   // Auth Handler
   onAuthStateChanged(auth, async (user) => {
     appState.unsubscribers.forEach(unsub => unsub());
@@ -389,47 +429,27 @@
   // Router Logic
   let currentView = 'dashboard';
   const showView = (viewId) => {
-    console.log('[Router] Switching to view:', viewId, 'from:', currentView);
-    
-    // 1. Clean up previous view
     currentChartInstances.forEach(chart => chart.destroy());
     currentChartInstances = [];
     
-    // 2. Hide all view sections
     const allViews = document.querySelectorAll('.view-section');
-    console.log('[Router] Found', allViews.length, 'view sections to hide');
-    allViews.forEach(view => {
-      view.classList.add('hidden');
-    });
+    allViews.forEach(view => view.classList.add('hidden'));
     
-    // 3. Show target view
     const targetView = document.getElementById(`view-${viewId}`);
-    if (!targetView) {
-      console.error('[Router] Target view not found:', viewId);
-      return;
-    }
+    if (!targetView) return;
     targetView.classList.remove('hidden');
     
-    // 4. Update state
     currentView = viewId;
     
-    // 5. FIX: Bug 1 - Update header title
     const titleEl = document.getElementById('page-title');
-    if (titleEl) {
-      titleEl.textContent = menuNames[viewId] || 'Dashboard';
-    }
+    if (titleEl) titleEl.textContent = menuNames[viewId] || 'Dashboard';
     
-    // 6. Force re-render content
     reRenderCurrentView();
-    
-    // 7. Update UI states
     updateBottomNavActive();
     updateSidebarActive();
+    closeMobileProfile();
     
-    // 8. Close sidebar on mobile
     if (window.innerWidth < 768 && sidebarOpen) closeSidebar();
-    
-    console.log('[Router] View switch complete:', viewId);
   };
 
   window.showView = showView;
@@ -554,6 +574,8 @@
       <section id="view-${item.id}" class="view-section ${item.id === 'dashboard' ? '' : 'hidden'}"></section>
     `).join('');
 
+    const userPhoto = currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`;
+
     $('#app').innerHTML = `
       <div class="flex h-screen overflow-hidden">
         <!-- Sidebar Desktop & Mobile -->
@@ -573,7 +595,7 @@
           <nav id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto">${sidebarItems}</nav>
           <div class="p-3 border-t border-[rgb(var(--border))]">
             <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
-              <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${currentUserData?.name}&background=0ea5e9&color=fff`}" class="w-8 h-8 rounded-full">
+              <img src="${userPhoto}" class="w-8 h-8 rounded-full">
               <div class="flex-1 text-left">
                 <p class="text-sm font-medium truncate">${currentUserData?.name}</p>
                 <p class="text-xs text-slate-500 truncate">${currentUser?.email}</p>
@@ -586,7 +608,7 @@
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden main-wrapper">
           <!-- Header -->
-          <header class="fixed md:relative top-0 left-0 right-0 glass border-b border-[rgb(var(--border))] px-4 md:px-6 h-16 flex items-center no-print z-40 md:z-30">
+          <header class="fixed top-0 left-0 right-0 md:left-64 glass border-b border-[rgb(var(--border))] px-4 md:px-6 h-16 flex items-center no-print z-40">
             <div class="flex items-center justify-between gap-4 w-full">
               <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
@@ -603,12 +625,40 @@
                 <button onclick="toggleTheme()" class="p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                   <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-5 h-5"></i>
                 </button>
+                <!-- Mobile Profile Button -->
+                <div class="md:hidden relative mobile-only">
+                  <button onclick="toggleMobileProfile()" class="p-1 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
+                    <img src="${userPhoto}" class="w-8 h-8 rounded-full">
+                  </button>
+                  <div id="mobile-profile-dropdown" class="profile-dropdown hidden glass rounded-xl shadow-2xl border border-[rgb(var(--border))] scale-in">
+                    <div class="p-3 border-b border-[rgb(var(--border))]">
+                      <div class="flex items-center gap-3">
+                        <img src="${userPhoto}" class="w-10 h-10 rounded-full">
+                        <div>
+                          <p class="text-sm font-semibold">${currentUserData?.name}</p>
+                          <p class="text-xs text-slate-500 truncate">${currentUser?.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="p-2 space-y-1">
+                      <button onclick="showView('profile'); closeMobileProfile()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgb(var(--border))] text-left text-sm" type="button">
+                        <i data-lucide="user" class="w-4 h-4"></i> Profile Settings
+                      </button>
+                      <button onclick="toggleTheme(); closeMobileProfile()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgb(var(--border))] text-left text-sm" type="button">
+                        <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-4 h-4"></i> Toggle Theme
+                      </button>
+                      <button onclick="handleLogout(); closeMobileProfile()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-rose-500/10 text-rose-600 text-left text-sm" type="button">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </header>
 
           <!-- Content Area -->
-          <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6 pb-20 md:pb-6">
+          <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6">
             ${viewSections}
           </main>
 
@@ -617,15 +667,19 @@
             ${mobileNavItems}
           </nav>
 
-          <!-- FIX: Bug 2 - Footer visible on mobile above bottom nav -->
-          <footer class="fixed md:relative bottom-0 md:bottom-auto left-0 right-0 glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] md:text-xs text-slate-500 no-print z-20 md:z-auto" style="bottom: var(--bottom-nav-h); md:bottom: auto;">
+          <!-- Desktop Footer -->
+          <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
+            Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
+          </footer>
+
+          <!-- Mobile Footer -->
+          <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
             Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
         </div>
       </div>
     `;
     
-    // Event delegation for sidebar
     $('#sidebar-nav').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-view]');
       if (btn) {
@@ -634,7 +688,6 @@
       }
     });
 
-    // Event delegation for bottom nav
     $('#bottom-nav').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-view]');
       if (btn) {
@@ -646,10 +699,17 @@
     lucide.createIcons();
     updateCommandPalette();
     
-    // Setup overlay click handler
     $('#sidebar-overlay')?.addEventListener('click', closeSidebar);
     
-    // Swipe to close sidebar
+    // Close mobile profile on outside click
+    document.addEventListener('click', (e) => {
+      const dropdown = $('#mobile-profile-dropdown');
+      const btn = e.target.closest('.mobile-only button');
+      if (dropdown && !dropdown.contains(e.target) && !btn) {
+        closeMobileProfile();
+      }
+    });
+    
     const sidebar = $('#sidebar');
     sidebar?.addEventListener('touchstart', (e) => {
       touchStartX = e.touches[0].clientX;
@@ -664,8 +724,6 @@
         closeSidebar();
       }
     });
-
-    viewInitialized = true;
   };
 
   window.updateBottomNavActive = () => {
@@ -681,13 +739,10 @@
     });
   };
 
-  // FIX: Bug 1 - Update sidebar active state properly
   window.updateSidebarActive = () => {
     $$('.sidebar-item').forEach(btn => {
       const viewId = btn.getAttribute('data-view');
-      // Remove active from all first
       btn.classList.remove('bg-sky-500/10', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
-      // Add to current
       if (viewId === currentView) {
         btn.classList.add('bg-sky-500/10', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
       }
@@ -695,10 +750,11 @@
   };
 
   window.showProfileMenu = () => {
+    const userPhoto = currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`;
     showModal(`
       <div class="p-6">
         <div class="flex items-center gap-4 mb-6">
-          <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${currentUserData?.name}&background=0ea5e9&color=fff`}" class="w-16 h-16 rounded-2xl">
+          <img src="${userPhoto}" class="w-16 h-16 rounded-2xl">
           <div>
             <h3 class="font-bold text-lg">${currentUserData?.name}</h3>
             <p class="text-sm text-slate-500">${currentUser?.email}</p>
@@ -750,12 +806,6 @@
       const pd = c.promiseDate?.toDate();
       return pd && pd >= today && pd < tomorrow;
     });
-    const tomorrowPromise = customers.filter(c => {
-      const pd = c.promiseDate?.toDate();
-      const ntomorrow = new Date(tomorrow);
-      ntomorrow.setDate(ntomorrow.getDate() + 1);
-      return pd && pd >= tomorrow && pd < ntomorrow;
-    });
 
     const stats = currentRole === 'admin' ? [
       { label: 'Total Customers', value: customers.length, icon: 'users', color: 'sky' },
@@ -776,7 +826,6 @@
 
     const dashboardHTML = `
       <div class="dashboard-grid space-y-0 fade-in">
-        <!-- Row 1: Stats Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
           ${stats.map(s => `
             <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))] hover:shadow-lg transition">
@@ -794,7 +843,6 @@
         </div>
 
         ${currentRole !== 'customer' ? `
-        <!-- Row 2: Charts -->
         <div class="grid lg:grid-cols-2 gap-3">
           <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
             <h3 class="font-bold mb-2 flex items-center gap-2 text-sm">
@@ -814,7 +862,6 @@
           </div>
         </div>
 
-        <!-- Row 3: Today's Promise -->
         <div class="glass rounded-xl p-4 border border-[rgb(var(--border))] overflow-hidden">
           <h3 class="font-bold mb-3 flex items-center gap-2 text-sm">
             <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-600"></i> Today's Promise (${todayPromise.length})
@@ -834,7 +881,6 @@
           </div>
         </div>
         ` : `
-        <!-- Customer Connection Details -->
         <div class="glass rounded-xl p-4 border border-[rgb(var(--border))]">
           <h3 class="font-bold mb-3 text-sm">Connection Details</h3>
           <div class="space-y-2">
@@ -1484,7 +1530,6 @@
                   </div>
                   <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
                 </div>
-              </div>
               <div class="flex items-center justify-between text-xs text-slate-500">
                 <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
                 ${currentRole !== 'customer' && c.status !== 'resolved' ? `
@@ -1854,7 +1899,7 @@
       <div class="max-w-2xl mx-auto space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <div class="flex items-center gap-4 mb-6">
-            <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${currentUserData?.name}&background=0ea5e9&color=fff`}" class="w-20 h-20 rounded-2xl">
+            <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`}" class="w-20 h-20 rounded-2xl">
             <div>
               <h3 class="text-xl font-bold">${currentUserData?.name || '-'}</h3>
               <p class="text-slate-500">${currentUser?.email || '-'}</p>
@@ -1966,6 +2011,7 @@
       toggleCommandPalette(false);
       closeModal();
       if (sidebarOpen && window.innerWidth < 768) closeSidebar();
+      closeMobileProfile();
     }
   });
 
