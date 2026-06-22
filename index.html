@@ -269,15 +269,30 @@
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
   
+  const toDate = (ts) => {
+    if (!ts) return null;
+    try {
+      if (ts?.toDate && typeof ts.toDate === 'function') return ts.toDate();
+      if (ts instanceof Date) return ts;
+      if (typeof ts === 'string' || typeof ts === 'number') {
+        const d = new Date(ts);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  };
+  
   const formatCurrency = (num) => `৳${Number(num || 0).toLocaleString('en-IN')}`;
   const formatDate = (ts) => {
-    if (!ts) return '-';
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    const d = toDate(ts);
+    if (!d) return '-';
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   };
   const formatDateTime = (ts) => {
-    if (!ts) return '-';
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    const d = toDate(ts);
+    if (!d) return '-';
     return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
   };
   const debounce = (fn, delay) => {
@@ -859,12 +874,18 @@
     tomorrow.setDate(tomorrow.getDate() + 1);
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     
-    const todayBills = bills.filter(b => b.createdAt?.toDate() >= today);
-    const monthBills = bills.filter(b => b.createdAt?.toDate() >= monthStart);
+    const todayBills = bills.filter(b => {
+      const d = toDate(b.createdAt);
+      return d && d >= today;
+    });
+    const monthBills = bills.filter(b => {
+      const d = toDate(b.createdAt);
+      return d && d >= monthStart;
+    });
     const paidBills = bills.filter(b => b.status === 'paid');
     const unpaidBills = bills.filter(b => b.status === 'unpaid');
     const todayPromise = customers.filter(c => {
-      const pd = c.promiseDate?.toDate();
+      const pd = toDate(c.promiseDate);
       return pd && pd >= today && pd < tomorrow;
     });
 
@@ -1007,7 +1028,10 @@
       const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
       const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
       const amount = appState.bills
-        .filter(b => b.status === 'paid' && b.createdAt?.toDate() >= monthStart && b.createdAt?.toDate() <= monthEnd)
+        .filter(b => {
+          const bd = toDate(b.createdAt);
+          return b.status === 'paid' && bd && bd >= monthStart && bd <= monthEnd;
+        })
         .reduce((sum, b) => sum + b.amount, 0);
       data.push(amount);
     }
@@ -1627,7 +1651,7 @@
         </div>
         <div class="flex gap-3 mt-6">
           <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1868,7 +1892,6 @@
               <button onclick="exportBillsCSV()" class="px-6 py-2.5 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="download" class="w-4 h-4"></i></button>
             </div>
           </div>
-        </div>
         <div id="report-results"></div>
       </div>
     `;
@@ -1884,8 +1907,18 @@
     const customerSearch = $('#report-customer').value.toLowerCase();
     
     let filtered = appState.bills;
-    if (from) filtered = filtered.filter(b => b.createdAt?.toDate() >= new Date(from));
-    if (to) filtered = filtered.filter(b => b.createdAt?.toDate() <= new Date(to));
+    if (from) filtered = filtered.filter(b => {
+      const d = toDate(b.createdAt);
+      return d && d >= new Date(from);
+    });
+    if (to) {
+      const toDateLimit = new Date(to);
+      toDateLimit.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(b => {
+        const d = toDate(b.createdAt);
+        return d && d <= toDateLimit;
+      });
+    }
     if (status) filtered = filtered.filter(b => b.status === status);
     if (staffId) filtered = filtered.filter(b => b.staffId === staffId);
     if (area) {
@@ -2697,6 +2730,7 @@
   window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
 </script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
