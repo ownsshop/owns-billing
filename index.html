@@ -26,6 +26,8 @@
     --text: 15, 23, 42;
     --border: 226, 232, 240;
     --header-h: 64px;
+    --bottom-nav-h: 64px;
+    --footer-h: 40px;
   }
   .dark {
     --bg: 15, 23, 42;
@@ -51,7 +53,6 @@
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { background: rgba(var(--primary), 0.5); border-radius: 3px; }
   
-  /* FIX: View section display rules */
   .view-section {
     display: block !important;
     opacity: 1 !important;
@@ -104,6 +105,10 @@
 
   @media (max-width: 768px) {
     .table-container table { min-width: 600px; }
+    /* FIX: Bug 2 - Add padding for bottom nav + footer on mobile */
+    #content {
+      padding-bottom: calc(var(--bottom-nav-h) + var(--footer-h) + 16px);
+    }
   }
   
   .bottom-nav-item {
@@ -194,6 +199,14 @@
     zones: [],
     chats: [],
     unsubscribers: []
+  };
+
+  // FIX: Bug 1 - Global menu names for title updates
+  const menuNames = {
+    dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
+    bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
+    activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
+    mybills: 'My Bills', profile: 'Profile', chat: 'Chat'
   };
 
   // Theme init
@@ -311,7 +324,6 @@
         await loadSettings();
         await initRealtimeListeners();
         renderApp();
-        // FIX: Explicitly call showView after app render
         setTimeout(() => showView('dashboard'), 100);
       } else {
         showToast('User profile not found', 'error');
@@ -374,7 +386,7 @@
     }
   };
 
-  // FIX: Rewritten Router Logic
+  // Router Logic
   let currentView = 'dashboard';
   const showView = (viewId) => {
     console.log('[Router] Switching to view:', viewId, 'from:', currentView);
@@ -401,15 +413,20 @@
     // 4. Update state
     currentView = viewId;
     
-    // 5. Force re-render content
+    // 5. FIX: Bug 1 - Update header title
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) {
+      titleEl.textContent = menuNames[viewId] || 'Dashboard';
+    }
+    
+    // 6. Force re-render content
     reRenderCurrentView();
     
-    // 6. Update UI states
+    // 7. Update UI states
     updateBottomNavActive();
     updateSidebarActive();
-    updatePageTitle();
     
-    // 7. Close sidebar on mobile
+    // 8. Close sidebar on mobile
     if (window.innerWidth < 768 && sidebarOpen) closeSidebar();
     
     console.log('[Router] View switch complete:', viewId);
@@ -441,17 +458,6 @@
   };
 
   window.reRenderCurrentView = reRenderCurrentView;
-
-  const updatePageTitle = () => {
-    const titles = {
-      dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
-      bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
-      activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
-      mybills: 'My Bills', profile: 'Profile', chat: 'Chat'
-    };
-    const titleEl = $('#page-title');
-    if (titleEl) titleEl.textContent = titles[currentView] || 'Dashboard';
-  };
 
   // Login UI
   const renderLogin = () => {
@@ -544,7 +550,6 @@
       </button>
     `).join('');
 
-    // FIX: Each view is a separate section at top level
     const viewSections = menus[currentRole].map(item => `
       <section id="view-${item.id}" class="view-section ${item.id === 'dashboard' ? '' : 'hidden'}"></section>
     `).join('');
@@ -602,7 +607,7 @@
             </div>
           </header>
 
-          <!-- Content Area - FIX: Multiple view sections -->
+          <!-- Content Area -->
           <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6 pb-20 md:pb-6">
             ${viewSections}
           </main>
@@ -612,15 +617,15 @@
             ${mobileNavItems}
           </nav>
 
-          <!-- Footer -->
-          <footer class="glass border-t border-[rgb(var(--border))] px-4 py-2 text-center text-[10px] md:text-xs text-slate-500 no-print hidden md:block">
+          <!-- FIX: Bug 2 - Footer visible on mobile above bottom nav -->
+          <footer class="fixed md:relative bottom-0 md:bottom-auto left-0 right-0 glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] md:text-xs text-slate-500 no-print z-20 md:z-auto" style="bottom: var(--bottom-nav-h); md:bottom: auto;">
             Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
         </div>
       </div>
     `;
     
-    // FIX: Event delegation for sidebar - single listener
+    // Event delegation for sidebar
     $('#sidebar-nav').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-view]');
       if (btn) {
@@ -629,7 +634,7 @@
       }
     });
 
-    // FIX: Event delegation for bottom nav
+    // Event delegation for bottom nav
     $('#bottom-nav').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-view]');
       if (btn) {
@@ -676,13 +681,15 @@
     });
   };
 
+  // FIX: Bug 1 - Update sidebar active state properly
   window.updateSidebarActive = () => {
     $$('.sidebar-item').forEach(btn => {
       const viewId = btn.getAttribute('data-view');
+      // Remove active from all first
+      btn.classList.remove('bg-sky-500/10', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
+      // Add to current
       if (viewId === currentView) {
         btn.classList.add('bg-sky-500/10', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
-      } else {
-        btn.classList.remove('bg-sky-500/10', 'text-sky-600', 'dark:text-sky-400', 'font-semibold');
       }
     });
   };
@@ -720,7 +727,7 @@
   };
   window.handleLogout = handleLogout;
 
-  // Dashboard - FIXED: Always render to view-dashboard
+  // Dashboard
   const renderDashboard = () => {
     const customers = currentRole === 'staff' 
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid)
@@ -769,7 +776,7 @@
 
     const dashboardHTML = `
       <div class="dashboard-grid space-y-0 fade-in">
-        <!-- Row 1: Stats Cards - Compact -->
+        <!-- Row 1: Stats Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
           ${stats.map(s => `
             <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))] hover:shadow-lg transition">
@@ -787,7 +794,7 @@
         </div>
 
         ${currentRole !== 'customer' ? `
-        <!-- Row 2: Charts - Fixed Height -->
+        <!-- Row 2: Charts -->
         <div class="grid lg:grid-cols-2 gap-3">
           <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
             <h3 class="font-bold mb-2 flex items-center gap-2 text-sm">
@@ -852,7 +859,6 @@
       </div>
     `;
 
-    // FIX: Always render to dashboard view section
     const dashboardView = document.getElementById('view-dashboard');
     if (dashboardView) {
       dashboardView.innerHTML = dashboardHTML;
@@ -1478,6 +1484,7 @@
                   </div>
                   <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
                 </div>
+              </div>
               <div class="flex items-center justify-between text-xs text-slate-500">
                 <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
                 ${currentRole !== 'customer' && c.status !== 'resolved' ? `
