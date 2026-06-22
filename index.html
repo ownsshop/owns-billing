@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OwnsBill - ISP Reseller Billing v1.8</title>
+<title>OwnsBill - ISP Reseller Billing v2.1</title>
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiT3duc0JpbGwiLCJzaG9ydF9uYW1lIjoiT3duc0JpbGwiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzBlYTVlOSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEyOCAxMjgnPjxyZWN0IHdpZHRoPScxMjgnIGhlaWdodD0nMTI4JyBmaWxsPScjMGVhNWU5Jy8+PHRleHQgeD0nNTAlJyB5PSc1MCUnIGZvbnQtc2l6ZT0nNjQnIGZpbGw9JyNmZmYnIGRvbWluYW50LWJhc2VsaW5lPSdtaWRkbGUnIHRleHQtYW5jaG9yPSdtaWRkbGUnPk88L3RleHQ+PC9zdmc+Iiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
+<!-- Manifest removed: blob URL causes errors on GitHub Pages. Uncomment for production with valid PNG -->
+<!-- <link rel="manifest" href="manifest.json"> -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
+<!-- Tailwind CDN for development. For production, use Tailwind CLI to avoid warning -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-  tailwind.config = {
-    darkMode: 'class'
-  }
+  tailwind.config = { darkMode: 'class' }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -67,6 +67,16 @@
     overflow: hidden !important;
   }
   
+  .loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: rgb(var(--text), 0.5);
+  }
+  .loading-state i { animation: spin 1s linear infinite; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  
   #sidebar { 
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     top: 0;
@@ -100,7 +110,6 @@
     z-index: 60;
   }
 
-  /* Fix: Dashboard overlap with header */
   #view-dashboard {
     padding-top: 16px;
   }
@@ -181,14 +190,8 @@
 </head>
 <body class="antialiased">
 <div id="app" class="min-h-screen flex flex-col"></div>
-
-<!-- Mobile Sidebar Overlay -->
 <div id="sidebar-overlay" class="fixed inset-0 z-[45] bg-black/50 hidden opacity-0 md:hidden"></div>
-
-<!-- Toast Container -->
 <div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2 px-4 md:px-0"></div>
-
-<!-- Command Palette -->
 <div id="command-palette" class="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm hidden items-start justify-center pt-[10vh]" onclick="window.toggleCommandPalette(false)">
   <div class="w-full max-w-2xl mx-4 glass rounded-2xl shadow-2xl border border-[rgb(var(--border))] scale-in" onclick="event.stopPropagation()">
     <div class="p-4 border-b border-[rgb(var(--border))] flex items-center gap-3">
@@ -199,8 +202,6 @@
     <div id="cmd-results" class="max-h-80 overflow-y-auto p-2"></div>
   </div>
 </div>
-
-<!-- Modals Container -->
 <div id="modal-container"></div>
 
 <script type="module">
@@ -231,8 +232,12 @@
   let sidebarOpen = false;
   let touchStartX = 0;
   let touchEndX = 0;
-  let currentChartInstances = [];
   let mobileProfileOpen = false;
+  let isLoadingData = true;
+  
+  // Chart instances stored globally to prevent "already in use" errors
+  let paymentChart = null;
+  let collectionChart = null;
   
   const appState = {
     users: [],
@@ -257,7 +262,6 @@
     mywallet: 'My Wallet', staffaccounts: 'Staff Accounts'
   };
 
-  // Theme init
   const applyTheme = () => {
     document.documentElement.classList.toggle('dark', darkMode);
     document.querySelector('meta[name="theme-color"]').setAttribute('content', darkMode ? '#1e293b' : '#0ea5e9');
@@ -265,7 +269,6 @@
   };
   applyTheme();
 
-  // Utils
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
   
@@ -326,7 +329,7 @@
         action, details,
         timestamp: serverTimestamp()
       });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error('Activity log error:', e); }
   };
 
   window.toggleTheme = () => {
@@ -344,7 +347,6 @@
     if (show) setTimeout(() => $('#cmd-search')?.focus(), 50);
   };
 
-  // Sidebar Management
   window.toggleSidebar = (show = null) => {
     const sidebar = $('#sidebar');
     const overlay = $('#sidebar-overlay');
@@ -373,7 +375,6 @@
 
   window.closeSidebar = () => toggleSidebar(false);
 
-  // Mobile Profile Dropdown
   window.toggleMobileProfile = () => {
     mobileProfileOpen = !mobileProfileOpen;
     const dropdown = $('#mobile-profile-dropdown');
@@ -388,34 +389,60 @@
     if (dropdown) dropdown.classList.add('hidden');
   };
 
-  // Auth Handler
+  // Safe onSnapshot wrapper with error handling
+  const safeOnSnapshot = (queryRef, callback, collectionName) => {
+    try {
+      return onSnapshot(queryRef, callback, (error) => {
+        console.error(`Firestore listener error for ${collectionName}:`, error);
+        if (error.code === 'permission-denied') {
+          console.warn(`${collectionName} collection not accessible. Using empty array.`);
+          callback({ docs: [] }); // Provide empty data to prevent UI break
+        }
+      });
+    } catch (err) {
+      console.error(`Failed to setup listener for ${collectionName}:`, err);
+      callback({ docs: [] });
+      return () => {};
+    }
+  };
+
   onAuthStateChanged(auth, async (user) => {
     appState.unsubscribers.forEach(unsub => unsub());
     appState.unsubscribers = [];
     
     if (user) {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        if (userData.status === 'pending') {
-          showToast('Your account is pending admin approval', 'warning');
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.status === 'pending') {
+            showToast('Your account is pending admin approval', 'warning');
+            signOut(auth);
+            return;
+          }
+          if (userData.status === 'rejected') {
+            showToast('Your account has been rejected', 'error');
+            signOut(auth);
+            return;
+          }
+          currentUser = user;
+          currentUserData = { id: user.uid, ...userData };
+          currentRole = currentUserData.role;
+          isLoadingData = true;
+          await loadSettings();
+          await initRealtimeListeners();
+          renderApp();
+          setTimeout(() => {
+            showView('dashboard');
+            isLoadingData = false;
+          }, 100);
+        } else {
+          showToast('User profile not found', 'error');
           signOut(auth);
-          return;
         }
-        if (userData.status === 'rejected') {
-          showToast('Your account has been rejected', 'error');
-          signOut(auth);
-          return;
-        }
-        currentUser = user;
-        currentUserData = { id: user.uid, ...userData };
-        currentRole = currentUserData.role;
-        await loadSettings();
-        await initRealtimeListeners();
-        renderApp();
-        setTimeout(() => showView('dashboard'), 100);
-      } else {
-        showToast('User profile not found', 'error');
+      } catch (err) {
+        console.error('Auth error:', err);
+        showToast('Authentication error', 'error');
         signOut(auth);
       }
     } else {
@@ -426,80 +453,91 @@
   });
 
   const loadSettings = async () => {
-    const snap = await getDoc(doc(db, 'settings', 'company'));
-    if (snap.exists()) companySettings = snap.data();
+    try {
+      const snap = await getDoc(doc(db, 'settings', 'company'));
+      if (snap.exists()) companySettings = snap.data();
+    } catch (err) {
+      console.warn('Settings load error:', err);
+      companySettings = {};
+    }
   };
 
   const initRealtimeListeners = async () => {
+    // Users
     let usersQuery = collection(db, 'users');
     if (currentRole === 'staff') usersQuery = query(usersQuery, where('assignedStaff', '==', currentUser.uid));
     if (currentRole === 'customer') usersQuery = query(usersQuery, where('__name__', '==', currentUser.uid));
     
-    appState.unsubscribers.push(onSnapshot(usersQuery, (snap) => {
+    appState.unsubscribers.push(safeOnSnapshot(usersQuery, (snap) => {
       appState.users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (['dashboard','customers','staff','approvals','staffaccounts'].includes(currentView)) reRenderCurrentView();
-    }));
+      if (!isLoadingData && ['dashboard','customers','staff','approvals','staffaccounts'].includes(currentView)) reRenderCurrentView();
+    }, 'users'));
 
-    appState.unsubscribers.push(onSnapshot(collection(db, 'packages'), (snap) => {
+    // Packages with error handling - collection might not exist
+    appState.unsubscribers.push(safeOnSnapshot(collection(db, 'packages'), (snap) => {
       appState.packages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (['customers','packages'].includes(currentView)) reRenderCurrentView();
-    }));
+      if (!isLoadingData && ['customers','packages'].includes(currentView)) reRenderCurrentView();
+    }, 'packages'));
 
+    // Bills
     let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
     if (currentRole === 'staff') billsQuery = query(billsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
     
-    appState.unsubscribers.push(onSnapshot(billsQuery, (snap) => {
+    appState.unsubscribers.push(safeOnSnapshot(billsQuery, (snap) => {
       appState.bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
-    }));
+      if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
+    }, 'bills'));
 
+    // Complaints
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
     if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
     
-    appState.unsubscribers.push(onSnapshot(complaintsQuery, (snap) => {
+    appState.unsubscribers.push(safeOnSnapshot(complaintsQuery, (snap) => {
       appState.complaints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (currentView === 'complaints') reRenderCurrentView();
-    }));
+      if (!isLoadingData && currentView === 'complaints') reRenderCurrentView();
+    }, 'complaints'));
 
-    appState.unsubscribers.push(onSnapshot(collection(db, 'zones'), (snap) => {
+    // Zones - might not exist
+    appState.unsubscribers.push(safeOnSnapshot(collection(db, 'zones'), (snap) => {
       appState.zones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    }));
+    }, 'zones'));
 
-    appState.unsubscribers.push(onSnapshot(collection(db, 'areas'), (snap) => {
+    // Areas - might not exist
+    appState.unsubscribers.push(safeOnSnapshot(collection(db, 'areas'), (snap) => {
       appState.areas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    }));
+    }, 'areas'));
 
+    // Staff Deposits - might not exist
     let depositsQuery = query(collection(db, 'staff_deposits'), orderBy('date', 'desc'));
     if (currentRole === 'staff') depositsQuery = query(depositsQuery, where('staffId', '==', currentUser.uid));
     
-    appState.unsubscribers.push(onSnapshot(depositsQuery, (snap) => {
+    appState.unsubscribers.push(safeOnSnapshot(depositsQuery, (snap) => {
       appState.staffDeposits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
-    }));
+      if (!isLoadingData && ['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
+    }, 'staff_deposits'));
 
+    // Salary Requests - might not exist
     let salaryQuery = query(collection(db, 'salary_requests'), orderBy('requestDate', 'desc'));
     if (currentRole === 'staff') salaryQuery = query(salaryQuery, where('staffId', '==', currentUser.uid));
     
-    appState.unsubscribers.push(onSnapshot(salaryQuery, (snap) => {
+    appState.unsubscribers.push(safeOnSnapshot(salaryQuery, (snap) => {
       appState.salaryRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
-    }));
+      if (!isLoadingData && ['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
+    }, 'salary_requests'));
 
     if (currentRole === 'admin') {
-      appState.unsubscribers.push(onSnapshot(query(collection(db, 'activities'), orderBy('timestamp', 'desc'), limit(100)), (snap) => {
+      appState.unsubscribers.push(safeOnSnapshot(query(collection(db, 'activities'), orderBy('timestamp', 'desc'), limit(100)), (snap) => {
         appState.activities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (currentView === 'activities') reRenderCurrentView();
-      }));
+        if (!isLoadingData && currentView === 'activities') reRenderCurrentView();
+      }, 'activities'));
     }
   };
 
-  // Router Logic
   let currentView = 'dashboard';
   const showView = (viewId) => {
-    currentChartInstances.forEach(chart => chart.destroy());
-    currentChartInstances = [];
+    // Charts will be destroyed in renderCharts before recreation
     
     const allViews = document.querySelectorAll('.view-section');
     allViews.forEach(view => view.classList.add('hidden'));
@@ -551,7 +589,6 @@
 
   window.reRenderCurrentView = reRenderCurrentView;
 
-  // Login UI
   const renderLogin = () => {
     $('#app').innerHTML = `
       <div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-sky-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
@@ -560,7 +597,7 @@
             <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
               <span class="text-3xl font-bold text-white">O</span>
             </div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill</h1>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.1</h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">ISP Reseller Management System</p>
           </div>
           <form id="login-form" class="space-y-4">
@@ -596,7 +633,6 @@
     lucide.createIcons();
   };
 
-  // Main App Layout
   const renderApp = () => {
     const menus = {
       admin: [
@@ -654,7 +690,6 @@
 
     $('#app').innerHTML = `
       <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar Desktop & Mobile -->
         <aside id="sidebar" class="fixed md:relative w-64 flex flex-col glass border-r border-[rgb(var(--border))] z-[50] -translate-x-full md:translate-x-0">
           <div class="h-16 px-4 border-b border-[rgb(var(--border))] flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -681,9 +716,7 @@
           </div>
         </aside>
 
-        <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden main-wrapper">
-          <!-- Header -->
           <header class="fixed top-0 left-0 right-0 md:left-64 glass border-b border-[rgb(var(--border))] px-4 md:px-6 h-16 flex items-center no-print z-40">
             <div class="flex items-center justify-between gap-4 w-full">
               <div class="flex items-center gap-3">
@@ -701,7 +734,6 @@
                 <button onclick="toggleTheme()" class="p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                   <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-5 h-5"></i>
                 </button>
-                <!-- Mobile Profile Button -->
                 <div class="md:hidden relative mobile-only">
                   <button onclick="toggleMobileProfile()" class="p-1 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                     <img src="${userPhoto}" class="w-8 h-8 rounded-full">
@@ -733,22 +765,18 @@
             </div>
           </header>
 
-          <!-- Content Area -->
           <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6">
             ${viewSections}
           </main>
 
-          <!-- Mobile Bottom Nav -->
           <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-[rgb(var(--border))] px-2 py-2 flex items-center justify-around no-print z-30">
             ${mobileNavItems}
           </nav>
 
-          <!-- Desktop Footer -->
           <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
             Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
 
-          <!-- Mobile Footer -->
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
             Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
@@ -777,7 +805,6 @@
     
     $('#sidebar-overlay')?.addEventListener('click', closeSidebar);
     
-    // Close mobile profile on outside click
     document.addEventListener('click', (e) => {
       const dropdown = $('#mobile-profile-dropdown');
       const btn = e.target.closest('.mobile-only button');
@@ -859,7 +886,6 @@
   };
   window.handleLogout = handleLogout;
 
-  // Dashboard
   const renderDashboard = () => {
     const customers = currentRole === 'staff' 
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && u.status === 'approved')
@@ -889,8 +915,8 @@
       return pd && pd >= today && pd < tomorrow;
     });
 
-    const pendingDeposits = appState.staffDeposits.filter(d => d.status === 'pending');
-    const pendingSalary = appState.salaryRequests.filter(s => s.status === 'pending');
+    const pendingDeposits = appState.staffDeposits?.filter(d => d.status === 'pending') || [];
+    const pendingSalary = appState.salaryRequests?.filter(s => s.status === 'pending') || [];
     const totalPendingDeposits = pendingDeposits.reduce((sum, d) => sum + (d.amount || 0), 0);
     const totalSalaryRequests = pendingSalary.reduce((sum, s) => sum + (s.amount || 0), 0);
 
@@ -916,7 +942,11 @@
     const dashboardHTML = `
       <div class="dashboard-grid space-y-0 fade-in">
         <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-          ${stats.map(s => `
+          ${isLoadingData ? stats.map(() => `
+            <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
+              <div class="skeleton h-16 rounded-lg"></div>
+            </div>
+          `).join('') : stats.map(s => `
             <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))] hover:shadow-lg transition">
               <div class="flex items-start justify-between">
                 <div class="flex-1 min-w-0">
@@ -956,7 +986,7 @@
             <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-600"></i> Today's Promise (${todayPromise.length})
           </h3>
           <div class="space-y-2 overflow-y-auto max-h-[200px]">
-            ${todayPromise.length ? todayPromise.map(c => `
+            ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading...</span></div>' : todayPromise.length ? todayPromise.map(c => `
               <div class="flex items-center justify-between p-2.5 rounded-lg bg-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/70">
                 <div class="flex-1 min-w-0">
                   <p class="font-semibold text-sm truncate">${c.name}</p>
@@ -1003,12 +1033,22 @@
   };
 
   const renderCharts = () => {
+    // Destroy existing charts before creating new ones
+    if (paymentChart) {
+      paymentChart.destroy();
+      paymentChart = null;
+    }
+    if (collectionChart) {
+      collectionChart.destroy();
+      collectionChart = null;
+    }
+
     const paid = appState.bills.filter(b => b.status === 'paid').length;
     const unpaid = appState.bills.filter(b => b.status === 'unpaid').length;
     
     const paymentCanvas = $('#paymentChart');
-    if (paymentCanvas) {
-      const chart = new Chart(paymentCanvas, {
+    if (paymentCanvas && (paid > 0 || unpaid > 0)) {
+      paymentChart = new Chart(paymentCanvas, {
         type: 'doughnut',
         data: {
           labels: ['Paid', 'Unpaid'],
@@ -1016,7 +1056,6 @@
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } }
       });
-      currentChartInstances.push(chart);
     }
 
     const months = [];
@@ -1038,7 +1077,7 @@
 
     const collectionCanvas = $('#collectionChart');
     if (collectionCanvas) {
-      const chart = new Chart(collectionCanvas, {
+      collectionChart = new Chart(collectionCanvas, {
         type: 'bar',
         data: {
           labels: months,
@@ -1056,11 +1095,9 @@
           } 
         }
       });
-      currentChartInstances.push(chart);
     }
   };
 
-  // Customers
   const renderCustomers = (myCustomers = false) => {
     let list = myCustomers 
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid)
@@ -1103,7 +1140,7 @@
                 </tr>
               </thead>
               <tbody id="customers-tbody">
-                ${renderCustomersRows(list)}
+                ${isLoadingData ? '<tr><td colspan="7" class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading customers...</span></td></tr>' : renderCustomersRows(list)}
               </tbody>
             </table>
           </div>
@@ -1184,8 +1221,8 @@
   window.showCustomerForm = (id = null) => {
     const customer = id ? appState.users.find(u => u.id === id) : null;
     const staffList = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
-    const areaOptions = appState.areas.map(a => `<option value="${a.name}" ${customer?.area===a.name?'selected':''}>${a.name}</option>`).join('');
-    const zoneOptions = appState.zones.map(z => `<option value="${z.name}" ${customer?.zone===z.name?'selected':''}>${z.name}</option>`).join('');
+    const areaOptions = (appState.areas || []).map(a => `<option value="${a.name}" ${customer?.area===a.name?'selected':''}>${a.name}</option>`).join('');
+    const zoneOptions = (appState.zones || []).map(z => `<option value="${z.name}" ${customer?.zone===z.name?'selected':''}>${z.name}</option>`).join('');
     
     showModal(`
       <form id="customer-form" class="p-6 max-h-[80vh] overflow-y-auto">
@@ -1274,7 +1311,6 @@
     `);
   };
 
-  // Approvals
   const renderApprovals = () => {
     const pendingUsers = appState.users.filter(u => u.status === 'pending');
     const container = document.getElementById('view-approvals');
@@ -1282,6 +1318,7 @@
 
     container.innerHTML = `
       <div class="space-y-4 fade-in">
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading approvals...</span></div>' : `
         <h3 class="font-bold text-lg">Pending Approvals (${pendingUsers.length})</h3>
         <div class="space-y-3">
           ${pendingUsers.length ? pendingUsers.map(u => `
@@ -1307,6 +1344,7 @@
             </div>
           `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No pending approvals</div>'}
         </div>
+        `}
       </div>
     `;
   };
@@ -1332,7 +1370,6 @@
     }
   };
 
-  // My Wallet - Staff
   const renderMyWallet = () => {
     const myDeposits = appState.staffDeposits.filter(d => d.staffId === currentUser.uid);
     const mySalary = appState.salaryRequests.filter(s => s.staffId === currentUser.uid);
@@ -1350,6 +1387,7 @@
 
     container.innerHTML = `
       <div class="space-y-6 fade-in">
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading wallet data...</span></div>' : `
         <div class="grid md:grid-cols-4 gap-4">
           <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
             <p class="text-sm text-slate-500 mb-1">Total Collected</p>
@@ -1423,6 +1461,7 @@
             `).join('') || '<p class="text-center text-slate-500 py-4">No salary requests</p>'}
           </div>
         </div>
+        `}
       </div>
     `;
   };
@@ -1503,7 +1542,6 @@
     });
   };
 
-  // Staff Accounts - Admin
   const renderStaffAccounts = () => {
     const staffList = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
     const container = document.getElementById('view-staffaccounts');
@@ -1526,6 +1564,7 @@
 
     container.innerHTML = `
       <div class="space-y-4 fade-in">
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff accounts...</span></div>' : `
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
           <div class="table-container">
             <table class="w-full">
@@ -1570,6 +1609,7 @@
             </table>
           </div>
         </div>
+        `}
       </div>
     `;
   };
@@ -1651,7 +1691,7 @@
         </div>
         <div class="flex gap-3 mt-6">
           <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
-          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
+          <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
         </div>
       </form>
     `);
@@ -1677,7 +1717,6 @@
     });
   };
 
-  // Staff
   const renderStaff = () => {
     const list = appState.users.filter(u => u.role === 'staff' && u.status === 'approved');
     const container = document.getElementById('view-staff');
@@ -1688,6 +1727,7 @@
         <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="user-plus" class="w-5 h-5"></i> Add Staff
         </button>
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff...</span></div>' : `
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
           <div class="table-container">
             <table class="w-full">
@@ -1716,7 +1756,7 @@
               </tbody>
             </table>
           </div>
-        </div>
+        `}
       </div>
     `;
   };
@@ -1778,7 +1818,6 @@
     }
   };
 
-  // Packages
   const renderPackages = () => {
     const container = document.getElementById('view-packages');
     if (!container) return;
@@ -1788,6 +1827,7 @@
         <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="plus" class="w-5 h-5"></i> Add Package
         </button>
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading packages...</span></div>' : `
         <div class="grid md:grid-cols-3 gap-4">
           ${appState.packages.map(p => `
             <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition">
@@ -1811,6 +1851,7 @@
             </div>
           `).join('') || '<div class="col-span-3 glass rounded-2xl p-8 text-center text-slate-500">No packages found</div>'}
         </div>
+        `}
       </div>
     `;
   };
@@ -1864,14 +1905,13 @@
     }
   };
 
-  // Reports
   const renderReports = () => {
     const container = document.getElementById('view-reports');
     if (!container) return;
 
     const staffOptions = appState.users.filter(u => u.role === 'staff').map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    const areaOptions = appState.areas.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
-    const zoneOptions = appState.zones.map(z => `<option value="${z.name}">${z.name}</option>`).join('');
+    const areaOptions = (appState.areas || []).map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+    const zoneOptions = (appState.zones || []).map(z => `<option value="${z.name}">${z.name}</option>`).join('');
 
     const isStaff = currentRole === 'staff';
 
@@ -1975,14 +2015,13 @@
     showToast('CSV exported', 'success');
   };
 
-  // Activities
   const renderActivities = () => {
     const container = document.getElementById('view-activities');
     if (!container) return;
 
     container.innerHTML = `
       <div class="space-y-3 fade-in">
-        ${appState.activities.length ? appState.activities.map(a => `
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading activities...</span></div>' : (appState.activities.length ? appState.activities.map(a => `
           <div class="glass rounded-2xl p-4 border border-[rgb(var(--border))]">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center flex-shrink-0">
@@ -1998,12 +2037,11 @@
               </div>
             </div>
           </div>
-        `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No activities yet</div>'}
+        `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No activities yet</div>')}
       </div>
     `;
   };
 
-  // Settings with Area/Zone Management
   const renderSettings = () => {
     if (currentRole !== 'admin') return showView('dashboard');
     const container = document.getElementById('view-settings');
@@ -2028,7 +2066,7 @@
             <button onclick="showAreaForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Area</button>
           </div>
           <div class="space-y-2">
-            ${appState.areas.map(a => `
+            ${appState.areas?.map(a => `
               <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
                 <span class="font-medium">${a.name}</span>
                 <div class="flex gap-2">
@@ -2046,7 +2084,7 @@
             <button onclick="showZoneForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Zone</button>
           </div>
           <div class="space-y-2">
-            ${appState.zones.map(z => `
+            ${appState.zones?.map(z => `
               <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
                 <span class="font-medium">${z.name}</span>
                 <div class="flex gap-2">
@@ -2055,6 +2093,32 @@
                 </div>
               </div>
             `).join('') || '<p class="text-center text-slate-500 py-4">No zones added</p>'}
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold text-lg mb-4">Firebase Security Rules</h3>
+          <div class="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+            <p><strong>Add these to Firestore Rules for full functionality:</strong></p>
+            <pre class="bg-[rgb(var(--border))] p-3 rounded-lg text-xs overflow-x-auto">
+match /staff_deposits/{docId} {
+  allow read, write: if request.auth != null;
+}
+match /salary_requests/{docId} {
+  allow read, write: if request.auth != null;
+}
+match /areas/{docId} {
+  allow read: if true;
+  allow write: if request.auth != null;
+}
+match /zones/{docId} {
+  allow read: if true;
+  allow write: if request.auth != null;
+}
+match /packages/{docId} {
+  allow read: if true;
+  allow write: if request.auth != null;
+}</pre>
           </div>
         </div>
       </div>
@@ -2168,7 +2232,6 @@
     }
   };
 
-  // Profile
   const renderProfile = () => {
     const container = document.getElementById('view-profile');
     if (!container) return;
@@ -2185,7 +2248,7 @@
             </div>
           </div>
           <div class="space-y-3">
-            ${Object.entries(currentUserData || {}).filter(([k,v])=>!['role','createdAt','photo','status','addedBy','approvedBy','approvedAt'].includes(k)&&v).map(([k,v])=>`
+            ${Object.entries(currentUserData || {}).filter(([k,v])=>!['role','createdAt','photo','status','addedBy','approvedAt'].includes(k)&&v).map(([k,v])=>`
               <div class="flex justify-between py-3 border-b border-[rgb(var(--border))]">
                 <span class="text-slate-500 capitalize">${k.replace(/([A-Z])/g,' $1')}</span>
                 <span class="font-semibold">${v}</span>
@@ -2197,7 +2260,6 @@
     `;
   };
 
-  // Chat
   const renderChat = () => {
     const container = document.getElementById('view-chat');
     if (!container) return;
@@ -2222,7 +2284,6 @@
     lucide.createIcons();
   };
 
-  // Invoice Generator
   const renderInvoice = () => {
     const customers = currentRole === 'staff' 
       ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && u.status === 'approved')
@@ -2462,7 +2523,6 @@
     window.open(url, '_blank');
   };
 
-  // Bills
   const renderBills = (myBills = false) => {
     const list = myBills && currentRole === 'customer'
       ? appState.bills.filter(b => b.customerId === currentUser.uid)
@@ -2483,6 +2543,7 @@
             <i data-lucide="download" class="w-5 h-5"></i> Export CSV
           </button>
         </div>
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
           <div class="table-container">
             <table class="w-full">
@@ -2500,7 +2561,7 @@
               <tbody id="bills-tbody">${renderBillsTable(list)}</tbody>
             </table>
           </div>
-        </div>
+        `}
       </div>
     `;
 
@@ -2549,7 +2610,6 @@
     }
   };
 
-  // Complaints
   const renderComplaints = () => {
     const list = currentRole === 'customer' 
       ? appState.complaints.filter(c => c.customerId === currentUser.uid)
@@ -2567,6 +2627,7 @@
           <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
         </button>
         ` : ''}
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading complaints...</span></div>' : `
         <div class="space-y-3">
           ${list.length ? list.map(c => `
             <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
@@ -2588,6 +2649,7 @@
             </div>
           `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No complaints found</div>'}
         </div>
+        `}
       </div>
     `;
   };
@@ -2639,7 +2701,6 @@
     }
   };
 
-  // Modal System
   const showModal = (content) => {
     $('#modal-container').innerHTML = `
       <div class="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeModal()">
@@ -2655,7 +2716,6 @@
     $('#modal-container').innerHTML = '';
   };
 
-  // Command Palette
   const updateCommandPalette = () => {
     const commands = {
       admin: [
@@ -2700,7 +2760,6 @@
     $('#cmd-search')?.addEventListener('input', (e) => renderCommands(e.target.value));
   };
 
-  // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
@@ -2714,19 +2773,9 @@
     }
   });
 
-  // PWA
-  if ('serviceWorker' in navigator) {
-    const swCode = `
-      self.addEventListener('install', e => self.skipWaiting());
-      self.addEventListener('activate', e => e.waitUntil(clients.claim()));
-      self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-    `;
-    const blob = new Blob([swCode], { type: 'application/javascript' });
-    const swUrl = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(swUrl).catch(console.error);
-  }
+  // Service Worker removed - blob URLs not supported on GitHub Pages
+  // For production PWA, create a proper service-worker.js file
 
-  // Expose functions to window
   window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
 </script>
