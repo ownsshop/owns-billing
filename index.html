@@ -9,6 +9,11 @@
 <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiT3duc0JpbGwiLCJzaG9ydF9uYW1lIjoiT3duc0JpbGwiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzBlYTVlOSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEyOCAxMjgnPjxyZWN0IHdpZHRoPScxMjgnIGhlaWdodD0nMTI4JyBmaWxsPScjMGVhNWU5Jy8+PHRleHQgeD0nNTAlJyB5PSc1MCUnIGZvbnQtc2l6ZT0nNjQnIGZpbGw9JyNmZmYnIGRvbWluYW50LWJhc2VsaW5lPSdtaWRkbGUnIHRleHQtYW5jaG9yPSdtaWRkbGUnPk88L3RleHQ+PC9zdmc+Iiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
 <script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class'
+  }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
@@ -27,7 +32,14 @@
     --text: 226, 232, 240;
     --border: 51, 65, 85;
   }
-  body { background: rgb(var(--bg)); color: rgb(var(--text)); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  * { touch-action: manipulation; }
+  body { 
+    background: rgb(var(--bg)); 
+    color: rgb(var(--text)); 
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overscroll-behavior: none;
+  }
+  body.no-scroll { overflow: hidden; }
   .glass { background: rgba(var(--card), 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   .skeleton { background: linear-gradient(90deg, rgba(var(--border),0.2) 25%, rgba(var(--border),0.4) 50%, rgba(var(--border),0.2) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -38,6 +50,19 @@
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { background: rgba(var(--primary), 0.5); border-radius: 3px; }
   
+  #sidebar { 
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #sidebar-overlay {
+    transition: opacity 0.3s ease-out;
+    backdrop-filter: blur(4px);
+  }
+  
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
   @media print {
     body * { visibility: hidden; }
     .print-area, .print-area * { visibility: visible; }
@@ -46,13 +71,20 @@
     .print-thermal { width: 58mm; padding: 2mm; font-size: 12px; }
     .no-print { display: none !important; }
   }
+
+  @media (max-width: 768px) {
+    .table-container table { min-width: 600px; }
+  }
 </style>
 </head>
 <body class="antialiased">
 <div id="app" class="min-h-screen flex flex-col"></div>
 
+<!-- Mobile Sidebar Overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 z-[45] bg-black/50 hidden opacity-0 md:hidden"></div>
+
 <!-- Toast Container -->
-<div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2"></div>
+<div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2 px-4 md:px-0"></div>
 
 <!-- Command Palette -->
 <div id="command-palette" class="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm hidden items-start justify-center pt-[10vh]" onclick="window.toggleCommandPalette(false)">
@@ -93,7 +125,10 @@
   let currentRole = null;
   let currentUserData = null;
   let companySettings = {};
-  let darkMode = localStorage.getItem('theme') === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let darkMode = localStorage.getItem('theme') === 'dark';
+  let sidebarOpen = false;
+  let touchStartX = 0;
+  let touchEndX = 0;
   
   const appState = {
     users: [],
@@ -106,6 +141,14 @@
     chats: [],
     unsubscribers: []
   };
+
+  // Theme init - apply immediately
+  const applyTheme = () => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', darkMode ? '#1e293b' : '#0ea5e9');
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+  };
+  applyTheme();
 
   // Utils
   const $ = (sel) => document.querySelector(sel);
@@ -134,11 +177,14 @@
     const colors = { success: 'bg-emerald-500', error: 'bg-rose-500', info: 'bg-sky-500', warning: 'bg-amber-500' };
     const icons = { success: 'check-circle', error: 'x-circle', info: 'info', warning: 'alert-triangle' };
     const toast = document.createElement('div');
-    toast.className = `${colors[type]} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 fade-in min-w-[300px]`;
-    toast.innerHTML = `<i data-lucide="${icons[type]}" class="w-5 h-5"></i><span class="flex-1 text-sm font-medium">${msg}</span>`;
+    toast.className = `${colors[type]} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 fade-in min-w-[280px] max-w-[calc(100vw-2rem)]`;
+    toast.innerHTML = `<i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i><span class="flex-1 text-sm font-medium">${msg}</span>`;
     $('#toast-container').appendChild(toast);
     lucide.createIcons();
-    setTimeout(() => toast.remove(), 4000);
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-y-[-10px]', 'transition-all', 'duration-300');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
   };
 
   const logActivity = async (action, details) => {
@@ -153,11 +199,11 @@
     } catch (e) { console.error(e); }
   };
 
-  const toggleTheme = () => {
+  window.toggleTheme = () => {
     darkMode = !darkMode;
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-    lucide.createIcons();
+    applyTheme();
+    setTimeout(() => lucide.createIcons(), 50);
+    showToast(darkMode ? 'Dark mode enabled' : 'Light mode enabled', 'info');
   };
 
   window.toggleCommandPalette = (show) => {
@@ -165,11 +211,37 @@
     if (show === undefined) show = el.classList.contains('hidden');
     el.classList.toggle('hidden', !show);
     el.classList.toggle('flex', show);
-    if (show) $('#cmd-search').focus();
+    if (show) setTimeout(() => $('#cmd-search')?.focus(), 50);
   };
 
-  // Theme init
-  document.documentElement.classList.toggle('dark', darkMode);
+  // Sidebar Management
+  window.toggleSidebar = (show = null) => {
+    const sidebar = $('#sidebar');
+    const overlay = $('#sidebar-overlay');
+    if (!sidebar || !overlay) return;
+    
+    if (show === null) show = !sidebarOpen;
+    sidebarOpen = show;
+    
+    if (window.innerWidth < 768) {
+      if (show) {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        overlay.classList.remove('hidden', 'opacity-0');
+        overlay.classList.add('opacity-100');
+        document.body.classList.add('no-scroll');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        sidebar.classList.remove('translate-x-0');
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+        document.body.classList.remove('no-scroll');
+      }
+    }
+  };
+
+  window.closeSidebar = () => toggleSidebar(false);
 
   // Auth Handler
   onAuthStateChanged(auth, async (user) => {
@@ -202,7 +274,6 @@
   };
 
   const initRealtimeListeners = async () => {
-    // Users
     let usersQuery = collection(db, 'users');
     if (currentRole === 'staff') usersQuery = query(usersQuery, where('assignedStaff', '==', currentUser.uid));
     if (currentRole === 'customer') usersQuery = query(usersQuery, where('__name__', '==', currentUser.uid));
@@ -212,12 +283,10 @@
       if (currentRoute.startsWith('customers') || currentRoute.startsWith('staff')) renderRoute();
     }));
 
-    // Packages
     appState.unsubscribers.push(onSnapshot(collection(db, 'packages'), (snap) => {
       appState.packages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }));
 
-    // Bills
     let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
     if (currentRole === 'staff') billsQuery = query(billsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
@@ -227,7 +296,6 @@
       if (currentRoute === 'dashboard' || currentRoute.includes('bills')) renderRoute();
     }));
 
-    // Complaints
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
     if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('staffId', '==', currentUser.uid));
     if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
@@ -237,12 +305,10 @@
       if (currentRoute.includes('complaints')) renderRoute();
     }));
 
-    // Zones
     appState.unsubscribers.push(onSnapshot(collection(db, 'zones'), (snap) => {
       appState.zones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }));
 
-    // Activities - admin only
     if (currentRole === 'admin') {
       appState.unsubscribers.push(onSnapshot(query(collection(db, 'activities'), orderBy('timestamp', 'desc'), limit(100)), (snap) => {
         appState.activities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -255,7 +321,7 @@
   const navigate = (route) => {
     currentRoute = route;
     renderRoute();
-    if (window.innerWidth < 768) toggleSidebar(false);
+    if (window.innerWidth < 768 && sidebarOpen) closeSidebar();
   };
 
   window.navigate = navigate;
@@ -345,7 +411,7 @@
     `).join('');
 
     const mobileNavItems = menus[currentRole].slice(0, 5).map(item => `
-      <button onclick="navigate('${item.id}')" class="flex flex-col items-center gap-1 px-3 py-2 rounded-xl ${currentRoute === item.id ? 'text-sky-600 dark:text-sky-400' : 'text-slate-500'}">
+      <button onclick="navigate('${item.id}'); if(sidebarOpen) closeSidebar()" class="flex flex-col items-center gap-1 px-3 py-2 rounded-xl ${currentRoute === item.id ? 'text-sky-600 dark:text-sky-400' : 'text-slate-500'}" type="button">
         <i data-lucide="${item.icon}" class="w-5 h-5"></i>
         <span class="text-[10px] font-medium">${item.label}</span>
       </button>
@@ -353,20 +419,24 @@
 
     $('#app').innerHTML = `
       <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar Desktop -->
-        <aside id="sidebar" class="hidden md:flex w-64 flex-col glass border-r border-[rgb(var(--border))] transition-all">
+        <!-- Sidebar Desktop & Mobile -->
+        <aside id="sidebar" class="fixed md:relative w-64 h-full flex flex-col glass border-r border-[rgb(var(--border))] z-[50] -translate-x-full md:translate-x-0">
           <div class="p-6 border-b border-[rgb(var(--border))]">
-            <div class="flex items-center gap-3">
-              ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-10 h-10 rounded-xl object-cover">` : `<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center"><span class="text-white font-bold">O</span></div>`}
-              <div>
-                <h2 class="font-bold text-lg">${companySettings.companyName || 'OwnsBill'}</h2>
-                <p class="text-xs text-slate-500 uppercase">${currentRole}</p>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-10 h-10 rounded-xl object-cover">` : `<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center"><span class="text-white font-bold">O</span></div>`}
+                <div>
+                  <h2 class="font-bold text-lg">${companySettings.companyName || 'OwnsBill'}</h2>
+                  <p class="text-xs text-slate-500 uppercase">${currentRole}</p>
+                </div>
               </div>
+              <button onclick="closeSidebar()" class="md:hidden p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
+                <i data-lucide="x" class="w-5 h-5"></i>
+              </button>
             </div>
-          </div>
           <nav class="flex-1 p-4 space-y-1 overflow-y-auto">${sidebarItems}</nav>
           <div class="p-4 border-t border-[rgb(var(--border))]">
-            <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] transition">
+            <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
               <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${currentUserData?.name}&background=0ea5e9&color=fff`}" class="w-8 h-8 rounded-full">
               <div class="flex-1 text-left">
                 <p class="text-sm font-medium truncate">${currentUserData?.name}</p>
@@ -383,18 +453,18 @@
           <header class="glass border-b border-[rgb(var(--border))] px-4 md:px-6 py-4 no-print">
             <div class="flex items-center justify-between gap-4">
               <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl hover:bg-[rgb(var(--border))]">
+                <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                   <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <h1 id="page-title" class="text-xl md:text-2xl font-bold"></h1>
               </div>
               <div class="flex items-center gap-2">
-                <button onclick="toggleCommandPalette(true)" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm">
+                <button onclick="toggleCommandPalette(true)" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm" type="button">
                   <i data-lucide="search" class="w-4 h-4"></i>
                   <span class="text-slate-500">Search</span>
                   <kbd class="text-xs px-1.5 py-0.5 rounded bg-[rgb(var(--border))]">⌘K</kbd>
                 </button>
-                <button onclick="toggleTheme()" class="p-2 rounded-xl hover:bg-[rgb(var(--border))]">
+                <button onclick="toggleTheme()" class="p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                   <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-5 h-5"></i>
                 </button>
               </div>
@@ -419,19 +489,26 @@
     lucide.createIcons();
     renderRoute();
     updateCommandPalette();
-  };
-
-  const toggleSidebar = (show) => {
+    
+    // Setup overlay click handler
+    $('#sidebar-overlay')?.addEventListener('click', closeSidebar);
+    
+    // Swipe to close sidebar
     const sidebar = $('#sidebar');
-    if (window.innerWidth < 768) {
-      sidebar.classList.toggle('hidden');
-      sidebar.classList.toggle('fixed');
-      sidebar.classList.toggle('inset-y-0');
-      sidebar.classList.toggle('left-0');
-      sidebar.classList.toggle('z-50');
-    }
+    sidebar?.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    
+    sidebar?.addEventListener('touchmove', (e) => {
+      touchEndX = e.touches[0].clientX;
+    }, { passive: true });
+    
+    sidebar?.addEventListener('touchend', () => {
+      if (touchStartX - touchEndX > 50) {
+        closeSidebar();
+      }
+    });
   };
-  window.toggleSidebar = toggleSidebar;
 
   window.showProfileMenu = () => {
     showModal(`
@@ -445,13 +522,13 @@
           </div>
         </div>
         <div class="space-y-2">
-          <button onclick="navigate('profile'); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left">
+          <button onclick="navigate('profile'); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left" type="button">
             <i data-lucide="user" class="w-5 h-5"></i> Profile Settings
           </button>
-          <button onclick="toggleTheme(); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left">
+          <button onclick="toggleTheme(); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left" type="button">
             <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-5 h-5"></i> Toggle Theme
           </button>
-          <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-rose-500/10 text-rose-600 text-left">
+          <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-rose-500/10 text-rose-600 text-left" type="button">
             <i data-lucide="log-out" class="w-5 h-5"></i> Logout
           </button>
         </div>
@@ -555,11 +632,11 @@
           ${stats.map(s => `
             <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))] hover:shadow-lg transition">
               <div class="flex items-start justify-between">
-                <div>
-                  <p class="text-xs text-slate-500 mb-1">${s.label}</p>
-                  <p class="text-2xl font-bold">${s.value}</p>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs text-slate-500 mb-1 truncate">${s.label}</p>
+                  <p class="text-xl md:text-2xl font-bold truncate">${s.value}</p>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-${s.color}-500/20 flex items-center justify-center">
+                <div class="w-10 h-10 rounded-xl bg-${s.color}-500/20 flex items-center justify-center flex-shrink-0 ml-2">
                   <i data-lucide="${s.icon}" class="w-5 h-5 text-${s.color}-600"></i>
                 </div>
               </div>
@@ -590,11 +667,11 @@
           <div class="space-y-2 max-h-80 overflow-y-auto">
             ${todayPromise.length ? todayPromise.map(c => `
               <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/70">
-                <div class="flex-1">
-                  <p class="font-semibold">${c.name}</p>
-                  <p class="text-xs text-slate-500">${c.mobile} • ${c.area}</p>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold truncate">${c.name}</p>
+                  <p class="text-xs text-slate-500 truncate">${c.mobile} • ${c.area}</p>
                 </div>
-                <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder for ${c.name}')" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30">
+                <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder for ${c.name}')" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 flex-shrink-0 ml-2" type="button">
                   <i data-lucide="message-circle" class="w-4 h-4"></i>
                 </button>
               </div>
@@ -622,7 +699,7 @@
               <span class="font-semibold text-sky-600">${currentUserData?.packageSpeed || '-'}</span>
             </div>
           </div>
-        `}
+        </div>`}
       </div>
     `;
 
@@ -633,14 +710,17 @@
     const paid = appState.bills.filter(b => b.status === 'paid').length;
     const unpaid = appState.bills.filter(b => b.status === 'unpaid').length;
     
-    new Chart($('#paymentChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Paid', 'Unpaid'],
-        datasets: [{ data: [paid, unpaid], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0 }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-    });
+    const paymentCanvas = $('#paymentChart');
+    if (paymentCanvas) {
+      new Chart(paymentCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Paid', 'Unpaid'],
+          datasets: [{ data: [paid, unpaid], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+    }
 
     const months = [];
     const data = [];
@@ -656,14 +736,17 @@
       data.push(amount);
     }
 
-    new Chart($('#collectionChart'), {
-      type: 'bar',
-      data: {
-        labels: months,
-        datasets: [{ label: 'Collection', data, backgroundColor: '#0ea5e9', borderRadius: 8 }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-    });
+    const collectionCanvas = $('#collectionChart');
+    if (collectionCanvas) {
+      new Chart(collectionCanvas, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [{ label: 'Collection', data, backgroundColor: '#0ea5e9', borderRadius: 8 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+    }
   };
 
   // Customers
@@ -680,14 +763,14 @@
             <input id="search-customer" type="text" placeholder="Search customers..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none">
           </div>
           ${currentRole === 'admin' ? `
-          <button onclick="showCustomerForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:shadow-lg flex items-center gap-2 whitespace-nowrap">
+          <button onclick="showCustomerForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:shadow-lg flex items-center gap-2 whitespace-nowrap" type="button">
             <i data-lucide="user-plus" class="w-5 h-5"></i> Add Customer
           </button>
           ` : ''}
         </div>
 
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-          <div class="overflow-x-auto">
+          <div class="table-container">
             <table class="w-full">
               <thead class="bg-[rgb(var(--border))] text-sm">
                 <tr>
@@ -724,14 +807,14 @@
                     </td>
                     <td class="p-4">
                       <div class="flex items-center justify-end gap-2">
-                        <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View">
+                        <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button">
                           <i data-lucide="eye" class="w-4 h-4"></i>
                         </button>
                         ${currentRole !== 'customer' ? `
-                        <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="Create Invoice">
+                        <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="Create Invoice" type="button">
                           <i data-lucide="file-text" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="WhatsApp">
+                        <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="WhatsApp" type="button">
                           <i data-lucide="message-circle" class="w-4 h-4"></i>
                         </button>
                         ` : ''}
@@ -765,10 +848,10 @@
             <td class="p-4 text-sm">${c.area || '-'}</td>
             <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${due > 0 ? 'bg-rose-500/20 text-rose-600' : 'bg-emerald-500/20 text-emerald-600'}">${formatCurrency(due)}</span></td>
             <td class="p-4"><div class="flex items-center justify-end gap-2">
-              <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]"><i data-lucide="eye" class="w-4 h-4"></i></button>
+              <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
               ${currentRole !== 'customer' ? `
-              <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600"><i data-lucide="file-text" class="w-4 h-4"></i></button>
-              <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600"><i data-lucide="message-circle" class="w-4 h-4"></i></button>
+              <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" type="button"><i data-lucide="file-text" class="w-4 h-4"></i></button>
+              <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" type="button"><i data-lucide="message-circle" class="w-4 h-4"></i></button>
               ` : ''}
             </div></td>
           </tr>
@@ -862,7 +945,7 @@
           </div>
         `).join('')}</div>
         ` : ''}
-        <button onclick="closeModal()" class="w-full mt-6 py-3 rounded-xl border border-[rgb(var(--border))]">Close</button>
+        <button onclick="closeModal()" class="w-full mt-6 py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
       </div>
     `);
   };
@@ -919,7 +1002,6 @@
                 <label class="text-sm font-medium mb-2 block">Notes</label>
                 <textarea name="notes" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea>
               </div>
-            </div>
             <div class="flex gap-3">
               <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
               <button type="button" id="preview-invoice" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
@@ -973,7 +1055,6 @@
         await logActivity('Create Invoice', `Invoice for ${customer.name}: ${formatCurrency(data.amount)}`);
         showToast('Invoice created successfully', 'success');
         
-        // Show preview with print options
         showInvoicePreview({ ...billData, id: docRef.id });
         e.target.reset();
       } catch (err) {
@@ -1006,13 +1087,12 @@
         <div class="flex items-center justify-between mb-6">
           <h3 class="font-bold text-lg">Invoice Preview</h3>
           <div class="flex gap-2 no-print">
-            <button onclick="printInvoice('a4')" class="px-4 py-2 rounded-xl bg-sky-500/20 text-sky-600 text-sm font-semibold">Print A4</button>
-            <button onclick="printInvoice('thermal')" class="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-600 text-sm font-semibold">Print 58mm</button>
-            <button onclick="sendInvoiceWhatsApp('${customer.whatsapp}','${bill.invoiceNo}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 text-sm font-semibold">WhatsApp</button>
+            <button onclick="printInvoice('a4')" class="px-4 py-2 rounded-xl bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">Print A4</button>
+            <button onclick="printInvoice('thermal')" class="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-600 text-sm font-semibold" type="button">Print 58mm</button>
+            <button onclick="sendInvoiceWhatsApp('${customer.whatsapp}','${bill.invoiceNo}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 text-sm font-semibold" type="button">WhatsApp</button>
           </div>
         </div>
         
-        <!-- A4 Template - Hidden but printable -->
         <div id="invoice-a4" class="print-area print-a4 hidden">
           <div class="text-center mb-6 border-b-2 border-black pb-4">
             ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-16 h-16 mx-auto mb-2">` : ''}
@@ -1045,7 +1125,6 @@
           <div class="text-center mt-8 text-xs">Thank you for your business!</div>
         </div>
 
-        <!-- Thermal 58mm Template -->
         <div id="invoice-thermal" class="print-area print-thermal hidden mx-auto">
           <div class="text-center">
             ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-12 h-12 mx-auto mb-1">` : ''}
@@ -1117,12 +1196,12 @@
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
             <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
-          <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2">
+          <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
             <i data-lucide="download" class="w-5 h-5"></i> Export CSV
           </button>
         </div>
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-          <div class="overflow-x-auto">
+          <div class="table-container">
             <table class="w-full">
               <thead class="bg-[rgb(var(--border))] text-sm">
                 <tr>
@@ -1165,8 +1244,8 @@
         <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status}</span></td>
         <td class="p-4 text-sm">${formatDate(b.createdAt)}</td>
         <td class="p-4"><div class="flex items-center justify-end gap-2">
-          <button onclick="showInvoicePreview(${JSON.stringify(b).replace(/"/g,'&quot;')})" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View"><i data-lucide="eye" class="w-4 h-4"></i></button>
-          ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="Mark Paid"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
+          <button onclick="showInvoicePreview(${JSON.stringify(b).replace(/"/g,'&quot;')})" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
+          ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="Mark Paid" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
         </div></td>
       </tr>
     `).join('');
@@ -1207,7 +1286,7 @@
     $('#content').innerHTML = `
       <div class="space-y-4 fade-in">
         ${currentRole === 'customer' ? `
-        <button onclick="showComplaintForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2">
+        <button onclick="showComplaintForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
         </button>
         ` : ''}
@@ -1222,10 +1301,11 @@
                   </div>
                   <p class="text-sm text-slate-600 dark:text-slate-400">${c.description}</p>
                 </div>
+              </div>
               <div class="flex items-center justify-between text-xs text-slate-500">
                 <span>By ${c.customerName} • ${formatDateTime(c.createdAt)}</span>
                 ${currentRole !== 'customer' && c.status !== 'resolved' ? `
-                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold">Mark Resolved</button>
+                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">Mark Resolved</button>
                 ` : ''}
               </div>
             </div>
@@ -1287,11 +1367,11 @@
     const list = appState.users.filter(u => u.role === 'staff');
     $('#content').innerHTML = `
       <div class="space-y-4 fade-in">
-        <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2">
+        <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="user-plus" class="w-5 h-5"></i> Add Staff
         </button>
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-          <div class="overflow-x-auto">
+          <div class="table-container">
             <table class="w-full">
               <thead class="bg-[rgb(var(--border))] text-sm">
                 <tr>
@@ -1310,8 +1390,8 @@
                     <td class="p-4 text-sm">${s.mobile}</td>
                     <td class="p-4"><span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-600 text-xs font-semibold">${assignedCount} customers</span></td>
                     <td class="p-4"><div class="flex items-center justify-end gap-2">
-                      <button onclick="showStaffForm('${s.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                      <button onclick="deleteStaff('${s.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                      <button onclick="showStaffForm('${s.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                      <button onclick="deleteStaff('${s.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div></td>
                   </tr>
                 `}).join('') : `<tr><td colspan="4" class="p-8 text-center text-slate-500">No staff found</td></tr>`}
@@ -1366,11 +1446,22 @@
     });
   };
 
+  window.deleteStaff = async (id) => {
+    if (!confirm('Delete this staff member?')) return;
+    try {
+      await deleteDoc(doc(db, 'users', id));
+      await logActivity('Delete Staff', `Deleted staff`);
+      showToast('Staff deleted', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
   // Packages
   const renderPackages = () => {
     $('#content').innerHTML = `
       <div class="space-y-4 fade-in">
-        <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2">
+        <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="plus" class="w-5 h-5"></i> Add Package
         </button>
         <div class="grid md:grid-cols-3 gap-4">
@@ -1384,13 +1475,14 @@
                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
                   <i data-lucide="zap" class="w-6 h-6 text-white"></i>
                 </div>
+              </div>
               <div class="flex items-center gap-2 mb-4 text-slate-600 dark:text-slate-400">
                 <i data-lucide="gauge" class="w-4 h-4"></i>
                 <span class="text-sm font-medium">${p.speed}</span>
               </div>
               <div class="flex gap-2">
-                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium">Edit</button>
-                <button onclick="deletePackage('${p.id}')" class="px-4 py-2 rounded-xl hover:bg-rose-500/20 text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">Edit</button>
+                <button onclick="deletePackage('${p.id}')" class="px-4 py-2 rounded-xl hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
               </div>
             </div>
           `).join('') || '<div class="col-span-3 glass rounded-2xl p-8 text-center text-slate-500">No packages found</div>'}
@@ -1458,7 +1550,7 @@
             <div><label class="text-sm font-medium mb-2 block">From Date</label><input type="date" id="report-from" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">To Date</label><input type="date" id="report-to" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Status</label><select id="report-status" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">All</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div>
-            <div class="flex items-end"><button onclick="generateReport()" class="w-full py-2 rounded-xl bg-sky-500 text-white font-semibold">Generate</button></div>
+            <div class="flex items-end"><button onclick="generateReport()" class="w-full py-2 rounded-xl bg-sky-500 text-white font-semibold" type="button">Generate</button></div>
           </div>
         </div>
         <div id="report-results"></div>
@@ -1487,10 +1579,12 @@
         <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Unpaid</p><p class="text-2xl font-bold text-rose-600">${formatCurrency(unpaid)}</p></div>
       </div>
       <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">Invoice</th><th class="text-left p-4 text-sm">Customer</th><th class="text-left p-4 text-sm">Amount</th><th class="text-left p-4 text-sm">Status</th><th class="text-left p-4 text-sm">Date</th></tr></thead>
-          <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo}</td><td class="p-4 text-sm">${b.customerName}</td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
-        </table>
+        <div class="table-container">
+          <table class="w-full">
+            <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">Invoice</th><th class="text-left p-4 text-sm">Customer</th><th class="text-left p-4 text-sm">Amount</th><th class="text-left p-4 text-sm">Status</th><th class="text-left p-4 text-sm">Date</th></tr></thead>
+            <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo}</td><td class="p-4 text-sm">${b.customerName}</td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
+          </table>
+        </div>
       </div>
     `;
   };
@@ -1593,7 +1687,7 @@
         <div class="p-4 border-t border-[rgb(var(--border))]">
           <form id="chat-form" class="flex gap-2">
             <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-            <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white"><i data-lucide="send" class="w-5 h-5"></i></button>
+            <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white" type="button"><i data-lucide="send" class="w-5 h-5"></i></button>
           </form>
         </div>
       </div>
@@ -1646,7 +1740,7 @@
     const renderCommands = (filter = '') => {
       const list = commands[currentRole].filter(c => c.label.toLowerCase().includes(filter.toLowerCase()));
       cmdResults.innerHTML = list.map((cmd, i) => `
-        <button onclick="(${cmd.action})(); toggleCommandPalette(false)" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left ${i===0?'bg-[rgb(var(--border))]':''}">
+        <button onclick="(${cmd.action})(); toggleCommandPalette(false)" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left ${i===0?'bg-[rgb(var(--border))]':''}" type="button">
           <i data-lucide="${cmd.icon}" class="w-5 h-5 text-sky-600"></i>
           <span class="font-medium">${cmd.label}</span>
         </button>
@@ -1667,6 +1761,7 @@
     if (e.key === 'Escape') {
       toggleCommandPalette(false);
       closeModal();
+      if (sidebarOpen && window.innerWidth < 768) closeSidebar();
     }
   });
 
