@@ -25,6 +25,7 @@
     --card: 255, 255, 255;
     --text: 15, 23, 42;
     --border: 226, 232, 240;
+    --header-h: 64px;
   }
   .dark {
     --bg: 15, 23, 42;
@@ -52,6 +53,8 @@
   
   #sidebar { 
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    top: 0;
+    height: 100vh;
   }
   #sidebar-overlay {
     transition: opacity 0.3s ease-out;
@@ -61,6 +64,16 @@
   .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+  
+  .main-wrapper {
+    padding-top: var(--header-h);
+  }
+  
+  @media (min-width: 768px) {
+    .main-wrapper {
+      padding-top: 0;
+    }
   }
   
   @media print {
@@ -74,6 +87,14 @@
 
   @media (max-width: 768px) {
     .table-container table { min-width: 600px; }
+  }
+  
+  .bottom-nav-item {
+    transition: all 0.2s;
+  }
+  .bottom-nav-item.active {
+    color: rgb(var(--primary));
+    transform: translateY(-2px);
   }
 </style>
 </head>
@@ -321,6 +342,7 @@
   const navigate = (route) => {
     currentRoute = route;
     renderRoute();
+    updateBottomNavActive();
     if (window.innerWidth < 768 && sidebarOpen) closeSidebar();
   };
 
@@ -404,14 +426,14 @@
     };
 
     const sidebarItems = menus[currentRole].map(item => `
-      <button onclick="navigate('${item.id}')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] transition ${currentRoute === item.id ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 font-semibold' : ''}">
+      <button onclick="navigate('${item.id}')" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition ${currentRoute === item.id ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 font-semibold' : ''}">
         <i data-lucide="${item.icon}" class="w-5 h-5"></i>
         <span>${item.label}</span>
       </button>
     `).join('');
 
     const mobileNavItems = menus[currentRole].slice(0, 5).map(item => `
-      <button onclick="navigate('${item.id}'); if(sidebarOpen) closeSidebar()" class="flex flex-col items-center gap-1 px-3 py-2 rounded-xl ${currentRoute === item.id ? 'text-sky-600 dark:text-sky-400' : 'text-slate-500'}" type="button">
+      <button data-nav="${item.id}" onclick="navigate('${item.id}')" class="bottom-nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl ${currentRoute === item.id ? 'active text-sky-600 dark:text-sky-400' : 'text-slate-500'}" type="button">
         <i data-lucide="${item.icon}" class="w-5 h-5"></i>
         <span class="text-[10px] font-medium">${item.label}</span>
       </button>
@@ -420,23 +442,22 @@
     $('#app').innerHTML = `
       <div class="flex h-screen overflow-hidden">
         <!-- Sidebar Desktop & Mobile -->
-        <aside id="sidebar" class="fixed md:relative w-64 h-full flex flex-col glass border-r border-[rgb(var(--border))] z-[50] -translate-x-full md:translate-x-0">
-          <div class="p-6 border-b border-[rgb(var(--border))]">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-10 h-10 rounded-xl object-cover">` : `<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center"><span class="text-white font-bold">O</span></div>`}
-                <div>
-                  <h2 class="font-bold text-lg">${companySettings.companyName || 'OwnsBill'}</h2>
-                  <p class="text-xs text-slate-500 uppercase">${currentRole}</p>
-                </div>
+        <aside id="sidebar" class="fixed md:relative w-64 flex flex-col glass border-r border-[rgb(var(--border))] z-[50] -translate-x-full md:translate-x-0">
+          <div class="h-16 px-4 border-b border-[rgb(var(--border))] flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-9 h-9 rounded-xl object-cover">` : `<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center"><span class="text-white font-bold">O</span></div>`}
+              <div>
+                <h2 class="font-bold text-base">${companySettings.companyName || 'OwnsBill'}</h2>
+                <p class="text-[10px] text-slate-500 uppercase">${currentRole}</p>
               </div>
-              <button onclick="closeSidebar()" class="md:hidden p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
-                <i data-lucide="x" class="w-5 h-5"></i>
-              </button>
             </div>
-          <nav class="flex-1 p-4 space-y-1 overflow-y-auto">${sidebarItems}</nav>
-          <div class="p-4 border-t border-[rgb(var(--border))]">
-            <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
+            <button onclick="closeSidebar()" class="md:hidden p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+          <nav class="flex-1 p-3 space-y-1 overflow-y-auto">${sidebarItems}</nav>
+          <div class="p-3 border-t border-[rgb(var(--border))]">
+            <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
               <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${currentUserData?.name}&background=0ea5e9&color=fff`}" class="w-8 h-8 rounded-full">
               <div class="flex-1 text-left">
                 <p class="text-sm font-medium truncate">${currentUserData?.name}</p>
@@ -448,15 +469,15 @@
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="flex-1 flex flex-col overflow-hidden main-wrapper">
           <!-- Header -->
-          <header class="glass border-b border-[rgb(var(--border))] px-4 md:px-6 py-4 no-print">
-            <div class="flex items-center justify-between gap-4">
+          <header class="fixed md:relative top-0 left-0 right-0 glass border-b border-[rgb(var(--border))] px-4 md:px-6 h-16 flex items-center no-print z-40 md:z-30">
+            <div class="flex items-center justify-between gap-4 w-full">
               <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                   <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
-                <h1 id="page-title" class="text-xl md:text-2xl font-bold"></h1>
+                <h1 id="page-title" class="text-lg md:text-xl font-bold truncate"></h1>
               </div>
               <div class="flex items-center gap-2">
                 <button onclick="toggleCommandPalette(true)" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm" type="button">
@@ -472,15 +493,15 @@
           </header>
 
           <!-- Content Area -->
-          <main id="content" class="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6"></main>
+          <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6 pb-20 md:pb-6"></main>
 
           <!-- Mobile Bottom Nav -->
-          <nav class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-[rgb(var(--border))] px-2 py-2 flex items-center justify-around no-print z-20">
+          <nav class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-[rgb(var(--border))] px-2 py-2 flex items-center justify-around no-print z-30">
             ${mobileNavItems}
           </nav>
 
           <!-- Footer -->
-          <footer class="glass border-t border-[rgb(var(--border))] px-4 py-3 text-center text-xs text-slate-500 no-print">
+          <footer class="glass border-t border-[rgb(var(--border))] px-4 py-2 text-center text-[10px] md:text-xs text-slate-500 no-print hidden md:block">
             Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
         </div>
@@ -506,6 +527,19 @@
     sidebar?.addEventListener('touchend', () => {
       if (touchStartX - touchEndX > 50) {
         closeSidebar();
+      }
+    });
+  };
+
+  window.updateBottomNavActive = () => {
+    $$('.bottom-nav-item').forEach(btn => {
+      const route = btn.getAttribute('data-nav');
+      if (route === currentRoute) {
+        btn.classList.add('active', 'text-sky-600', 'dark:text-sky-400');
+        btn.classList.remove('text-slate-500');
+      } else {
+        btn.classList.remove('active', 'text-sky-600', 'dark:text-sky-400');
+        btn.classList.add('text-slate-500');
       }
     });
   };
@@ -627,17 +661,17 @@
     ];
 
     $('#content').innerHTML = `
-      <div class="space-y-6 fade-in">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="space-y-4 md:space-y-6 fade-in">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           ${stats.map(s => `
-            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))] hover:shadow-lg transition">
+            <div class="glass rounded-xl md:rounded-2xl p-3 md:p-5 border border-[rgb(var(--border))] hover:shadow-lg transition">
               <div class="flex items-start justify-between">
                 <div class="flex-1 min-w-0">
-                  <p class="text-xs text-slate-500 mb-1 truncate">${s.label}</p>
-                  <p class="text-xl md:text-2xl font-bold truncate">${s.value}</p>
+                  <p class="text-[10px] md:text-xs text-slate-500 mb-0.5 md:mb-1 truncate">${s.label}</p>
+                  <p class="text-base md:text-2xl font-bold truncate">${s.value}</p>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-${s.color}-500/20 flex items-center justify-center flex-shrink-0 ml-2">
-                  <i data-lucide="${s.icon}" class="w-5 h-5 text-${s.color}-600"></i>
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-${s.color}-500/20 flex items-center justify-center flex-shrink-0 ml-2">
+                  <i data-lucide="${s.icon}" class="w-4 h-4 md:w-5 md:h-5 text-${s.color}-600"></i>
                 </div>
               </div>
             </div>
@@ -645,58 +679,58 @@
         </div>
 
         ${currentRole !== 'customer' ? `
-        <div class="grid lg:grid-cols-2 gap-6">
-          <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-            <h3 class="font-bold mb-4 flex items-center gap-2">
-              <i data-lucide="pie-chart" class="w-5 h-5 text-sky-600"></i> Payment Status
+        <div class="grid lg:grid-cols-2 gap-4 md:gap-6">
+          <div class="glass rounded-xl md:rounded-2xl p-4 md:p-6 border border-[rgb(var(--border))]">
+            <h3 class="font-bold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
+              <i data-lucide="pie-chart" class="w-4 h-4 md:w-5 md:h-5 text-sky-600"></i> Payment Status
             </h3>
-            <canvas id="paymentChart" height="200"></canvas>
+            <canvas id="paymentChart" height="180"></canvas>
           </div>
-          <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-            <h3 class="font-bold mb-4 flex items-center gap-2">
-              <i data-lucide="bar-chart" class="w-5 h-5 text-indigo-600"></i> Monthly Collection
+          <div class="glass rounded-xl md:rounded-2xl p-4 md:p-6 border border-[rgb(var(--border))]">
+            <h3 class="font-bold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
+              <i data-lucide="bar-chart" class="w-4 h-4 md:w-5 md:h-5 text-indigo-600"></i> Monthly Collection
             </h3>
-            <canvas id="collectionChart" height="200"></canvas>
+            <canvas id="collectionChart" height="180"></canvas>
           </div>
         </div>
 
-        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold mb-4 flex items-center gap-2">
-            <i data-lucide="calendar-clock" class="w-5 h-5 text-amber-600"></i> Today's Promise (${todayPromise.length})
+        <div class="glass rounded-xl md:rounded-2xl p-4 md:p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
+            <i data-lucide="calendar-clock" class="w-4 h-4 md:w-5 md:h-5 text-amber-600"></i> Today's Promise (${todayPromise.length})
           </h3>
-          <div class="space-y-2 max-h-80 overflow-y-auto">
+          <div class="space-y-2 max-h-64 md:max-h-80 overflow-y-auto">
             ${todayPromise.length ? todayPromise.map(c => `
-              <div class="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/70">
+              <div class="flex items-center justify-between p-2.5 md:p-3 rounded-lg md:rounded-xl bg-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/70">
                 <div class="flex-1 min-w-0">
-                  <p class="font-semibold truncate">${c.name}</p>
+                  <p class="font-semibold text-sm truncate">${c.name}</p>
                   <p class="text-xs text-slate-500 truncate">${c.mobile} • ${c.area}</p>
                 </div>
                 <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder for ${c.name}')" class="p-2 rounded-lg bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 flex-shrink-0 ml-2" type="button">
                   <i data-lucide="message-circle" class="w-4 h-4"></i>
                 </button>
               </div>
-            `).join('') : '<p class="text-sm text-slate-500 text-center py-8">No promises for today</p>'}
+            `).join('') : '<p class="text-sm text-slate-500 text-center py-6 md:py-8">No promises for today</p>'}
           </div>
         </div>
         ` : `
-        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="font-bold mb-4">Connection Details</h3>
-          <div class="space-y-3">
+        <div class="glass rounded-xl md:rounded-2xl p-4 md:p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold mb-4 text-sm md:text-base">Connection Details</h3>
+          <div class="space-y-2 md:space-y-3">
             <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
-              <span class="text-slate-500">PPPoE Username</span>
-              <span class="font-mono font-semibold">${currentUserData?.pppoeUser || '-'}</span>
+              <span class="text-slate-500 text-sm">PPPoE Username</span>
+              <span class="font-mono font-semibold text-sm">${currentUserData?.pppoeUser || '-'}</span>
             </div>
             <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
-              <span class="text-slate-500">PPPoE Password</span>
-              <span class="font-mono font-semibold">${currentUserData?.pppoePass || '-'}</span>
+              <span class="text-slate-500 text-sm">PPPoE Password</span>
+              <span class="font-mono font-semibold text-sm">${currentUserData?.pppoePass || '-'}</span>
             </div>
             <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
-              <span class="text-slate-500">Package</span>
-              <span class="font-semibold">${currentUserData?.packageName || '-'}</span>
+              <span class="text-slate-500 text-sm">Package</span>
+              <span class="font-semibold text-sm">${currentUserData?.packageName || '-'}</span>
             </div>
             <div class="flex justify-between py-2">
-              <span class="text-slate-500">Speed</span>
-              <span class="font-semibold text-sky-600">${currentUserData?.packageSpeed || '-'}</span>
+              <span class="text-slate-500 text-sm">Speed</span>
+              <span class="font-semibold text-sky-600 text-sm">${currentUserData?.packageSpeed || '-'}</span>
             </div>
           </div>
         </div>`}
@@ -718,7 +752,7 @@
           labels: ['Paid', 'Unpaid'],
           datasets: [{ data: [paid, unpaid], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0 }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
       });
     }
 
@@ -744,7 +778,17 @@
           labels: months,
           datasets: [{ label: 'Collection', data, backgroundColor: '#0ea5e9', borderRadius: 8 }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { 
+            legend: { display: false } 
+          }, 
+          scales: { 
+            y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+            x: { ticks: { font: { size: 10 } } }
+          } 
+        }
       });
     }
   };
@@ -788,12 +832,12 @@
                   return `
                   <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
                     <td class="p-4">
-                      <div class="font-semibold">${c.name}</div>
+                      <div class="font-semibold">${c.name || '-'}</div>
                       <div class="text-xs text-slate-500">${c.pppoeUser || '-'}</div>
                     </td>
                     <td class="p-4">
-                      <div class="text-sm">${c.mobile}</div>
-                      <div class="text-xs text-slate-500">${c.whatsapp}</div>
+                      <div class="text-sm">${c.mobile || '-'}</div>
+                      <div class="text-xs text-slate-500">${c.whatsapp || '-'}</div>
                     </td>
                     <td class="p-4">
                       <div class="text-sm font-medium text-sky-600">${c.packageName || '-'}</div>
@@ -842,8 +886,8 @@
         const due = appState.bills.filter(b => b.customerId === c.id && b.status === 'unpaid').reduce((s,b)=>s+b.amount,0);
         return `
           <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-            <td class="p-4"><div class="font-semibold">${c.name}</div><div class="text-xs text-slate-500">${c.pppoeUser || '-'}</div></td>
-            <td class="p-4"><div class="text-sm">${c.mobile}</div><div class="text-xs text-slate-500">${c.whatsapp}</div></td>
+            <td class="p-4"><div class="font-semibold">${c.name || '-'}</div><div class="text-xs text-slate-500">${c.pppoeUser || '-'}</div></td>
+            <td class="p-4"><div class="text-sm">${c.mobile || '-'}</div><div class="text-xs text-slate-500">${c.whatsapp || '-'}</div></td>
             <td class="p-4"><div class="text-sm font-medium text-sky-600">${c.packageName || '-'}</div><div class="text-xs text-slate-500">${c.packageSpeed || '-'}</div></td>
             <td class="p-4 text-sm">${c.area || '-'}</td>
             <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${due > 0 ? 'bg-rose-500/20 text-rose-600' : 'bg-emerald-500/20 text-emerald-600'}">${formatCurrency(due)}</span></td>
@@ -1002,6 +1046,7 @@
                 <label class="text-sm font-medium mb-2 block">Notes</label>
                 <textarea name="notes" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea>
               </div>
+            </div>
             <div class="flex gap-3">
               <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
               <button type="button" id="preview-invoice" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
@@ -1082,6 +1127,8 @@
 
   const showInvoicePreview = (bill) => {
     const customer = bill.customer || appState.users.find(u => u.id === bill.customerId);
+    if (!customer) return showToast('Customer not found', 'error');
+    
     const preview = `
       <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
         <div class="flex items-center justify-between mb-6">
@@ -1098,7 +1145,7 @@
             ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-16 h-16 mx-auto mb-2">` : ''}
             <h1 class="text-2xl font-bold">${companySettings.companyName || "Own's Link"}</h1>
             <p class="text-sm">${companySettings.address || 'Internet Service Provider'}</p>
-            <p class="text-sm">WhatsApp: ${companySettings.whatsapp || customer.whatsapp}</p>
+            <p class="text-sm">WhatsApp: ${companySettings.whatsapp || customer.whatsapp || ''}</p>
           </div>
           <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
             <div>
@@ -1106,10 +1153,11 @@
               <p><strong>Date:</strong> ${formatDate(bill.createdAt || new Date())}</p>
             </div>
             <div class="text-right">
-              <p><strong>Customer:</strong> ${customer.name}</p>
-              <p><strong>Mobile:</strong> ${customer.mobile}</p>
+              <p><strong>Customer:</strong> ${customer.name || '-'}</p>
+              <p><strong>Mobile:</strong> ${customer.mobile || '-'}</p>
             </div>
-          <table class="w-full border border-black mb-4">
+          </div>
+          <table class="w-full border border-black mb-4 text-sm">
             <thead class="bg-gray-200">
               <tr><th class="border border-black p-2 text-left">Description</th><th class="border border-black p-2 text-right">Amount</th></tr>
             </thead>
@@ -1119,8 +1167,8 @@
             <tfoot><tr><td class="border border-black p-2 font-bold">Total</td><td class="border border-black p-2 text-right font-bold">${formatCurrency(bill.amount)}</td></tr></tfoot>
           </table>
           <div class="grid grid-cols-2 gap-4 text-sm">
-            <div><p><strong>Payment Method:</strong> ${bill.paymentMethod}</p><p><strong>TrxID:</strong> ${bill.trxId || '-'}</p></div>
-            <div class="text-right"><p><strong>Status:</strong> ${bill.status?.toUpperCase()}</p></div>
+            <div><p><strong>Payment Method:</strong> ${bill.paymentMethod || '-'}</p><p><strong>TrxID:</strong> ${bill.trxId || '-'}</p></div>
+            <div class="text-right"><p><strong>Status:</strong> ${bill.status?.toUpperCase() || '-'}</p></div>
           </div>
           <div class="text-center mt-8 text-xs">Thank you for your business!</div>
         </div>
@@ -1136,15 +1184,15 @@
           <div class="text-[11px] space-y-0.5">
             <div class="flex justify-between"><span>Invoice:</span><span>${bill.invoiceNo}</span></div>
             <div class="flex justify-between"><span>Date:</span><span>${formatDate(bill.createdAt || new Date())}</span></div>
-            <div class="flex justify-between"><span>Name:</span><span>${customer.name.substring(0,15)}</span></div>
-            <div class="flex justify-between"><span>Mobile:</span><span>${customer.mobile}</span></div>
-            <div class="flex justify-between"><span>PPPoE:</span><span>${customer.pppoeUser}</span></div>
+            <div class="flex justify-between"><span>Name:</span><span>${(customer.name || '-').substring(0,15)}</span></div>
+            <div class="flex justify-between"><span>Mobile:</span><span>${customer.mobile || '-'}</span></div>
+            <div class="flex justify-between"><span>PPPoE:</span><span>${customer.pppoeUser || '-'}</span></div>
             <div class="border-t border-dashed my-1"></div>
-            <div class="flex justify-between"><span>Package:</span><span>${customer.packageName}</span></div>
+            <div class="flex justify-between"><span>Package:</span><span>${customer.packageName || '-'}</span></div>
             <div class="flex justify-between font-bold"><span>Amount:</span><span>${formatCurrency(bill.amount)}</span></div>
-            <div class="flex justify-between"><span>Method:</span><span>${bill.paymentMethod}</span></div>
+            <div class="flex justify-between"><span>Method:</span><span>${bill.paymentMethod || '-'}</span></div>
             <div class="flex justify-between"><span>TrxID:</span><span>${bill.trxId || '-'}</span></div>
-            <div class="flex justify-between"><span>Status:</span><span>${bill.status?.toUpperCase()}</span></div>
+            <div class="flex justify-between"><span>Status:</span><span>${bill.status?.toUpperCase() || '-'}</span></div>
             <div class="border-t border-dashed my-1"></div>
           </div>
           <div class="text-center text-[10px] mt-2">ধন্যবাদ | Thank You</div>
@@ -1237,14 +1285,14 @@
     if (!bills.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
     return bills.map(b => `
       <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-        <td class="p-4"><div class="font-mono text-sm font-semibold">${b.invoiceNo}</div></td>
-        ${currentRole !== 'customer' ? `<td class="p-4"><div class="font-medium">${b.customerName}</div><div class="text-xs text-slate-500">${b.customerMobile}</div></td>` : ''}
+        <td class="p-4"><div class="font-mono text-sm font-semibold">${b.invoiceNo || '-'}</div></td>
+        ${currentRole !== 'customer' ? `<td class="p-4"><div class="font-medium">${b.customerName || '-'}</div><div class="text-xs text-slate-500">${b.customerMobile || '-'}</div></td>` : ''}
         <td class="p-4 font-bold text-sky-600">${formatCurrency(b.amount)}</td>
-        <td class="p-4 text-sm">${b.paymentMethod}</td>
-        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status}</span></td>
+        <td class="p-4 text-sm">${b.paymentMethod || '-'}</td>
+        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td>
         <td class="p-4 text-sm">${formatDate(b.createdAt)}</td>
         <td class="p-4"><div class="flex items-center justify-end gap-2">
-          <button onclick="showInvoicePreview(${JSON.stringify(b).replace(/"/g,'&quot;')})" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
+          <button onclick='showInvoicePreview(${JSON.stringify(b).replace(/'/g,"&apos;")})' class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
           ${currentRole !== 'customer' && b.status === 'unpaid' ? `<button onclick="markPaid('${b.id}')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="Mark Paid" type="button"><i data-lucide="check" class="w-4 h-4"></i></button>` : ''}
         </div></td>
       </tr>
@@ -1296,14 +1344,14 @@
               <div class="flex items-start justify-between mb-3">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
-                    <h4 class="font-bold">${c.subject}</h4>
-                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status}</span>
+                    <h4 class="font-bold">${c.subject || '-'}</h4>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status || 'pending'}</span>
                   </div>
-                  <p class="text-sm text-slate-600 dark:text-slate-400">${c.description}</p>
+                  <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
                 </div>
               </div>
               <div class="flex items-center justify-between text-xs text-slate-500">
-                <span>By ${c.customerName} • ${formatDateTime(c.createdAt)}</span>
+                <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
                 ${currentRole !== 'customer' && c.status !== 'resolved' ? `
                 <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">Mark Resolved</button>
                 ` : ''}
@@ -1386,8 +1434,8 @@
                   const assignedCount = appState.users.filter(u => u.assignedStaff === s.id).length;
                   return `
                   <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-                    <td class="p-4"><div class="font-semibold">${s.name}</div><div class="text-xs text-slate-500">${s.email}</div></td>
-                    <td class="p-4 text-sm">${s.mobile}</td>
+                    <td class="p-4"><div class="font-semibold">${s.name || '-'}</div><div class="text-xs text-slate-500">${s.email || '-'}</div></td>
+                    <td class="p-4 text-sm">${s.mobile || '-'}</td>
                     <td class="p-4"><span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-600 text-xs font-semibold">${assignedCount} customers</span></td>
                     <td class="p-4"><div class="flex items-center justify-end gap-2">
                       <button onclick="showStaffForm('${s.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="edit" class="w-4 h-4"></i></button>
@@ -1469,7 +1517,7 @@
             <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition">
               <div class="flex items-start justify-between mb-4">
                 <div>
-                  <h4 class="font-bold text-lg">${p.name}</h4>
+                  <h4 class="font-bold text-lg">${p.name || '-'}</h4>
                   <p class="text-3xl font-bold text-sky-600 mt-2">${formatCurrency(p.price)}<span class="text-sm text-slate-500 font-normal">/mo</span></p>
                 </div>
                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
@@ -1478,7 +1526,7 @@
               </div>
               <div class="flex items-center gap-2 mb-4 text-slate-600 dark:text-slate-400">
                 <i data-lucide="gauge" class="w-4 h-4"></i>
-                <span class="text-sm font-medium">${p.speed}</span>
+                <span class="text-sm font-medium">${p.speed || '-'}</span>
               </div>
               <div class="flex gap-2">
                 <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">Edit</button>
@@ -1582,7 +1630,7 @@
         <div class="table-container">
           <table class="w-full">
             <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">Invoice</th><th class="text-left p-4 text-sm">Customer</th><th class="text-left p-4 text-sm">Amount</th><th class="text-left p-4 text-sm">Status</th><th class="text-left p-4 text-sm">Date</th></tr></thead>
-            <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo}</td><td class="p-4 text-sm">${b.customerName}</td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
+            <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo || '-'}</td><td class="p-4 text-sm">${b.customerName || '-'}</td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -1601,10 +1649,10 @@
               </div>
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="font-semibold">${a.userName}</span>
-                  <span class="px-2 py-0.5 rounded-full bg-[rgb(var(--border))] text-xs uppercase">${a.role}</span>
+                  <span class="font-semibold">${a.userName || '-'}</span>
+                  <span class="px-2 py-0.5 rounded-full bg-[rgb(var(--border))] text-xs uppercase">${a.role || '-'}</span>
                 </div>
-                <p class="text-sm text-slate-600 dark:text-slate-400">${a.action}: ${a.details}</p>
+                <p class="text-sm text-slate-600 dark:text-slate-400">${a.action || '-'}: ${a.details || '-'}</p>
                 <p class="text-xs text-slate-500 mt-1">${formatDateTime(a.timestamp)}</p>
               </div>
             </div>
@@ -1655,13 +1703,13 @@
           <div class="flex items-center gap-4 mb-6">
             <img src="${currentUserData?.photo || `https://ui-avatars.com/api/?name=${currentUserData?.name}&background=0ea5e9&color=fff`}" class="w-20 h-20 rounded-2xl">
             <div>
-              <h3 class="text-xl font-bold">${currentUserData?.name}</h3>
-              <p class="text-slate-500">${currentUser?.email}</p>
-              <span class="text-xs px-2 py-1 rounded-full bg-sky-500/20 text-sky-600 uppercase font-semibold mt-2 inline-block">${currentRole}</span>
+              <h3 class="text-xl font-bold">${currentUserData?.name || '-'}</h3>
+              <p class="text-slate-500">${currentUser?.email || '-'}</p>
+              <span class="text-xs px-2 py-1 rounded-full bg-sky-500/20 text-sky-600 uppercase font-semibold mt-2 inline-block">${currentRole || '-'}</span>
             </div>
           </div>
           <div class="space-y-3">
-            ${Object.entries(currentUserData).filter(([k,v])=>!['role','createdAt','photo'].includes(k)&&v).map(([k,v])=>`
+            ${Object.entries(currentUserData || {}).filter(([k,v])=>!['role','createdAt','photo'].includes(k)&&v).map(([k,v])=>`
               <div class="flex justify-between py-3 border-b border-[rgb(var(--border))]">
                 <span class="text-slate-500 capitalize">${k.replace(/([A-Z])/g,' $1')}</span>
                 <span class="font-semibold">${v}</span>
@@ -1779,6 +1827,7 @@
 
   // Expose functions
   window.appState = appState;
+  window.showInvoicePreview = showInvoicePreview;
 </script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
