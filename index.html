@@ -221,6 +221,23 @@
     overflow-y: auto;
   }
 </style>
+
+<style id="sidebar-fix">
+  .sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+  }
+  .sidebar > nav, .sidebar > ul, .sidebar .menu-wrapper {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+  }
+  .sidebar .sidebar-footer, .sidebar .user-profile {
+    flex-shrink: 0 !important;
+  }
+</style>
+
 </head>
 <body class="antialiased">
 <div id="auth-loading" class="auth-loading">
@@ -3176,5 +3193,20 @@ service cloud.firestore {
 </script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (user) {
+            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            console.log('[Debug] User:', user.email, 'Role:', userDoc.data()?.role, 'Status:', userDoc.data()?.status);
+            if (userDoc.data()?.role !== 'admin' || userDoc.data()?.status !== 'approved') {
+                console.error('[Debug] Not admin or not approved. Activity Log will be empty.');
+            }
+        }
+    });
+});
+</script>
+
 </body>
 </html>
