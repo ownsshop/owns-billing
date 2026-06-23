@@ -899,6 +899,9 @@
           </div>
           <nav id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto h-screen overflow-y-auto flex-shrink-0">${sidebarItems}
 
+
+    <!-- Profile Container - Populated by JS -->
+    <div id="sidebarUserProfile" class="mt-auto"></div>
 </aside>
           <div class="p-3 border-t border-[rgb(var(--border))]">
             <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
@@ -912,44 +915,7 @@
           </div>
         
 
-    <!-- User Profile Dropdown - Works on PC & Mobile -->
-    <div class="mt-auto border-t border-gray-700">
-        <div class="relative p-3">
-            <button id="userProfileBtn" class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700/50 transition-colors">
-                <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0">AD</div>
-                <div class="flex-1 text-left min-w-0">
-                    <div class="text-sm font-medium text-white truncate">Admin</div>
-                    <div class="text-xs text-gray-400 truncate">admin@owns.com</div>
-                </div>
-                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0" id="profileChevronIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </button>
-            
-            <!-- Dropdown - Same for PC & Mobile -->
-            <div id="userDropdownMenu" class="hidden absolute bottom-full left-0 right-0 mb-2 mx-3 bg-gray-800 rounded-lg shadow-2xl border border-gray-700 overflow-hidden z-50">
-                <div class="p-3 border-b border-gray-700">
-                    <div class="text-sm font-medium text-white">Admin</div>
-                    <div class="text-xs text-gray-400">admin@owns.com</div>
-                    <span class="inline-block mt-1 px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">ADMIN</span>
-                </div>
-                <div class="py-1">
-                    <a href="#profile" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        Profile Settings
-                    </a>
-                    <button type="button" data-theme-toggle="true" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                        Toggle Theme
-                    </button>
-                    <div class="border-t border-gray-700 my-1"></div>
-                    <button type="button" data-logout-btn="true" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-gray-700 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        Logout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</aside>
+    </aside>
 
         <div class="flex-1 flex flex-col overflow-hidden main-wrapper">
           <header class="fixed top-0 left-0 right-0 md:left-64 glass border-b border-[rgb(var(--border))] px-4 md:px-6 h-16 flex items-center no-print z-40">
@@ -3371,47 +3337,107 @@ if (typeof firebase !== 'undefined') {
 
 
 
+
+
+
 <script>
-// Unified Profile Dropdown Handler - PC & Mobile
-document.addEventListener('DOMContentLoaded', function() {
-    const profileBtn = document.getElementById('userProfileBtn');
-    const dropdown = document.getElementById('userDropdownMenu');
-    const chevron = document.getElementById('profileChevronIcon');
+// Dynamic User Profile Dropdown - Fixes layout issues
+firebase.auth().onAuthStateChanged(async (user) => {
+    const container = document.getElementById('sidebarUserProfile');
+    if (!container) return;
     
-    if (!profileBtn || !dropdown) return;
-    
-    // Toggle dropdown
-    profileBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const isHidden = dropdown.classList.contains('hidden');
+    if (user) {
+        // Get user data from Firestore
+        const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+        const userData = userDoc.data() || {};
+        const name = userData.name || user.displayName || 'Admin';
+        const email = user.email || '';
+        const role = (userData.role || 'user').toUpperCase();
+        const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         
-        // Close all other dropdowns first
-        document.querySelectorAll('#userDropdownMenu').forEach(d => {
-            if (d !== dropdown) d.classList.add('hidden');
-        });
+        // Create dropdown HTML
+        container.innerHTML = `
+            <div class="relative p-3 border-t border-gray-700">
+                <button id="userProfileBtnV11" class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-700/50 transition-colors">
+                    <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0">${initials}</div>
+                    <div class="flex-1 text-left min-w-0">
+                        <div class="text-sm font-medium text-white truncate">${name}</div>
+                        <div class="text-xs text-gray-400 truncate">${email}</div>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0" id="profileChevronV11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                
+                <div id="userDropdownV11" class="hidden absolute bottom-full left-0 right-0 mb-2 mx-3 bg-gray-800 rounded-lg shadow-2xl border border-gray-700 overflow-hidden z-[60]">
+                    <div class="p-3 border-b border-gray-700">
+                        <div class="text-sm font-medium text-white">${name}</div>
+                        <div class="text-xs text-gray-400">${email}</div>
+                        <span class="inline-block mt-1 px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">${role}</span>
+                    </div>
+                    <div class="py-1">
+                        <a href="#profile" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            Profile Settings
+                        </a>
+                        <button type="button" onclick="document.documentElement.classList.toggle('dark')" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                            Toggle Theme
+                        </button>
+                        <div class="border-t border-gray-700 my-1"></div>
+                        <button type="button" id="logoutBtnV11" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-gray-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
         
-        dropdown.classList.toggle('hidden');
-        if (chevron) {
-            chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-        }
-    });
-    
-    // Close on outside click
-    document.addEventListener('click', function(e) {
-        if (!profileBtn.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.add('hidden');
-            if (chevron) chevron.style.transform = 'rotate(0deg)';
-        }
-    });
-    
-    // Close dropdown on ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            dropdown.classList.add('hidden');
-            if (chevron) chevron.style.transform = 'rotate(0deg)';
-        }
-    });
+        // Attach event listeners
+        setTimeout(() => {
+            const btn = document.getElementById('userProfileBtnV11');
+            const dropdown = document.getElementById('userDropdownV11');
+            const chevron = document.getElementById('profileChevronV11');
+            const logoutBtn = document.getElementById('logoutBtnV11');
+            
+            if (btn && dropdown) {
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isHidden = dropdown.classList.contains('hidden');
+                    dropdown.classList.toggle('hidden');
+                    if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+                };
+            }
+            
+            if (logoutBtn) {
+                logoutBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('[Logout] Clicked');
+                    logoutBtn.disabled = true;
+                    logoutBtn.innerHTML = 'Logging out...';
+                    firebase.auth().signOut().then(() => {
+                        localStorage.clear();
+                        window.location.reload();
+                    }).catch(err => {
+                        alert('Logout failed: ' + err.message);
+                        logoutBtn.disabled = false;
+                    });
+                };
+            }
+            
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                    if (chevron) chevron.style.transform = 'rotate(0deg)';
+                }
+            });
+        }, 100);
+        
+    } else {
+        container.innerHTML = ''; // No user logged in
+    }
 });
 </script>
 
