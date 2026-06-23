@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OwnsBill - ISP Reseller Billing v2.2.6</title>
+<title>OwnsBill - ISP Reseller Billing v2.2.5</title>
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
@@ -63,16 +63,6 @@
     opacity: 0 !important;
     height: 0 !important;
     overflow: hidden !important;
-  }
-  
-  .error-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem;
-    text-align: center;
-    color: rgb(239, 68, 68);
   }
   
   .loading-state {
@@ -313,7 +303,6 @@
   let userDropdownOpen = false;
   let isLoadingData = true;
   let authInitialized = false;
-  let currentView = 'dashboard';
   
   let paymentChart = null;
   let collectionChart = null;
@@ -570,15 +559,8 @@
         showAuthLoading(false);
         renderApp();
         setTimeout(() => {
-          // v2.2.6 FIX: Ensure renderPage is called with error handling
-          try {
-            console.log('[Auth] Initial page render: dashboard');
-            showView('dashboard');
-            isLoadingData = false;
-          } catch (err) {
-            console.error('[Auth] Initial render failed:', err);
-            showToast('Page load error: ' + err.message, 'error');
-          }
+          showView('dashboard');
+          isLoadingData = false;
         }, 100);
         
       } catch (err) {
@@ -617,25 +599,13 @@
     appState.unsubscribers.push(safeOnSnapshot(usersQuery, (snap) => {
       appState.users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       console.log('[Listener] Users updated:', appState.users.length);
-      if (!isLoadingData && ['dashboard','customers','staff','approvals','staffaccounts'].includes(currentView)) {
-        try {
-          reRenderCurrentView();
-        } catch (err) {
-          console.error('[Listener] Render error:', err);
-        }
-      }
+      if (!isLoadingData && ['dashboard','customers','staff','approvals','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }, 'users'));
 
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'packages'), (snap) => {
       appState.packages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       console.log('[Listener] Packages updated:', appState.packages.length);
-      if (!isLoadingData && ['customers','packages'].includes(currentView)) {
-        try {
-          reRenderCurrentView();
-        } catch (err) {
-          console.error('[Listener] Render error:', err);
-        }
-      }
+      if (!isLoadingData && ['customers','packages'].includes(currentView)) reRenderCurrentView();
     }, 'packages'));
 
     let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
@@ -645,13 +615,7 @@
     appState.unsubscribers.push(safeOnSnapshot(billsQuery, (snap) => {
       appState.bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       console.log('[Listener] Bills updated:', appState.bills.length);
-      if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) {
-        try {
-          reRenderCurrentView();
-        } catch (err) {
-          console.error('[Listener] Render error:', err);
-        }
-      }
+      if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }, 'bills'));
 
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
@@ -660,13 +624,7 @@
     
     appState.unsubscribers.push(safeOnSnapshot(complaintsQuery, (snap) => {
       appState.complaints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (!isLoadingData && currentView === 'complaints') {
-        try {
-          reRenderCurrentView();
-        } catch (err) {
-          console.error('[Listener] Render error:', err);
-        }
-      }
+      if (!isLoadingData && currentView === 'complaints') reRenderCurrentView();
     }, 'complaints'));
 
     appState.unsubscribers.push(safeOnSnapshot(collection(db, 'zones'), (snap) => {
@@ -682,13 +640,7 @@
     
     appState.unsubscribers.push(safeOnSnapshot(depositsQuery, (snap) => {
       appState.staffDeposits = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (!isLoadingData && ['dashboard','mywallet','staffaccounts'].includes(currentView)) {
-        try {
-          reRenderCurrentView();
-        } catch (err) {
-          console.error('[Listener] Render error:', err);
-        }
-      }
+      if (!isLoadingData && ['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }, 'staff_deposits'));
 
     let salaryQuery = query(collection(db, 'salary_requests'), orderBy('requestDate', 'desc'));
@@ -696,88 +648,44 @@
     
     appState.unsubscribers.push(safeOnSnapshot(salaryQuery, (snap) => {
       appState.salaryRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (!isLoadingData && ['dashboard','mywallet','staffaccounts'].includes(currentView)) {
-        try {
-          reRenderCurrentView();
-        } catch (err) {
-          console.error('[Listener] Render error:', err);
-        }
-      }
+      if (!isLoadingData && ['dashboard','mywallet','staffaccounts'].includes(currentView)) reRenderCurrentView();
     }, 'salary_requests'));
 
     if (currentRole === 'admin') {
       appState.unsubscribers.push(safeOnSnapshot(query(collection(db, 'logs'), orderBy('timestamp', 'desc'), limit(100)), (snap) => {
         appState.activities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         console.log('[Listener] Activities from logs collection:', appState.activities.length);
-        if (!isLoadingData && currentView === 'activities') {
-          try {
-            reRenderCurrentView();
-          } catch (err) {
-            console.error('[Listener] Render error:', err);
-          }
-        }
+        if (!isLoadingData && currentView === 'activities') reRenderCurrentView();
       }, 'logs'));
     }
   };
 
-  // v2.2.6 FIX: Enhanced renderPage with proper error handling
+  let currentView = 'dashboard';
   const showView = (viewId) => {
-    console.log('[Render] Page:', viewId);
-    try {
-      const allViews = document.querySelectorAll('.view-section');
-      allViews.forEach(view => view.classList.add('hidden'));
-      
-      const targetView = document.getElementById(`view-${viewId}`);
-      if (!targetView) {
-        console.error('[Render] View not found: view-' + viewId);
-        const errorView = document.createElement('div');
-        errorView.className = 'error-state';
-        errorView.innerHTML = `
-          <i data-lucide="alert-triangle" class="w-12 h-12 mb-4"></i>
-          <h3 class="text-lg font-bold mb-2">Page Not Found</h3>
-          <p class="text-sm">View "${viewId}" could not be loaded.</p>
-          <button onclick="showView('dashboard')" class="mt-4 px-4 py-2 rounded-xl bg-sky-500 text-white" type="button">Go to Dashboard</button>
-        `;
-        $('#content')?.appendChild(errorView);
-        lucide.createIcons();
-        return;
-      }
-      targetView.classList.remove('hidden');
-      
-      currentView = viewId;
-      
-      const titleEl = document.getElementById('page-title');
-      if (titleEl) titleEl.textContent = menuNames[viewId] || 'Dashboard';
-      
-      reRenderCurrentView();
-      updateBottomNavActive();
-      updateSidebarActive();
-      closeMobileProfile();
-      closeUserDropdown();
-      
-      if (window.innerWidth < 768 && sidebarOpen) closeSidebar();
-    } catch (err) {
-      console.error('[Render] showView error:', err);
-      const container = document.getElementById(`view-${viewId}`);
-      if (container) {
-        container.innerHTML = `
-          <div class="error-state">
-            <i data-lucide="alert-circle" class="w-12 h-12 mb-4"></i>
-            <h3 class="text-lg font-bold mb-2">Render Error</h3>
-            <p class="text-sm mb-4">${err.message}</p>
-            <button onclick="location.reload()" class="px-4 py-2 rounded-xl bg-sky-500 text-white" type="button">Reload Page</button>
-          </div>
-        `;
-        lucide.createIcons();
-      }
-      showToast('Page render error: ' + err.message, 'error');
-    }
+    const allViews = document.querySelectorAll('.view-section');
+    allViews.forEach(view => view.classList.add('hidden'));
+    
+    const targetView = document.getElementById(`view-${viewId}`);
+    if (!targetView) return;
+    targetView.classList.remove('hidden');
+    
+    currentView = viewId;
+    
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) titleEl.textContent = menuNames[viewId] || 'Dashboard';
+    
+    reRenderCurrentView();
+    updateBottomNavActive();
+    updateSidebarActive();
+    closeMobileProfile();
+    closeUserDropdown();
+    
+    if (window.innerWidth < 768 && sidebarOpen) closeSidebar();
   };
 
   window.showView = showView;
 
   const reRenderCurrentView = () => {
-    console.log('[Render] Re-rendering current view:', currentView);
     const routes = {
       dashboard: renderDashboard,
       customers: renderCustomers,
@@ -798,18 +706,8 @@
       staffaccounts: renderStaffAccounts
     };
     
-    const renderFn = routes[currentView];
-    if (!renderFn) {
-      console.error('[Render] No render function for:', currentView);
-      routes.dashboard();
-    } else {
-      try {
-        renderFn();
-      } catch (err) {
-        console.error('[Render] Render function error:', err);
-        throw err;
-      }
-    }
+    const renderFn = routes[currentView] || routes.dashboard;
+    renderFn();
     lucide.createIcons();
   };
 
@@ -823,7 +721,7 @@
             <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
               <span class="text-3xl font-bold text-white">O</span>
             </div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.2.6</h1>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.2.5</h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">ISP Reseller Management System</p>
           </div>
           <form id="login-form" class="space-y-4">
@@ -2015,7 +1913,7 @@
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading complaints...</span></div>' : `
         <div class="space-y-3">
           ${list.length ? list.map(c => `
-            <div class="glass rounded-2xl p-5 border-[rgb(var(--border))]">
+            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
               <div class="flex items-start justify-between mb-3">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
@@ -2161,6 +2059,7 @@
               <button onclick="exportBillsCSV()" class="px-6 py-2.5 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="download" class="w-4 h-4"></i></button>
             </div>
           </div>
+        </div>
         <div id="report-results"></div>
       </div>
     `;
@@ -2328,7 +2227,7 @@
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-4">Firebase Security Rules</h3>
           <div class="text-sm text-slate-600 dark:text-slate-400 space-y-2">
-            <p><strong>Add these to Firestore Rules for full functionality (v2.2.6 uses logs collection):</strong></p>
+            <p><strong>Add these to Firestore Rules for full functionality (v2.2.5 uses logs collection):</strong></p>
             <pre class="bg-[rgb(var(--border))] p-3 rounded-lg text-xs overflow-x-auto">
 rules_version = '2';
 service cloud.firestore {
@@ -3069,7 +2968,6 @@ service cloud.firestore {
 
   window.showInvoicePreview = showInvoicePreview;
 </script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
