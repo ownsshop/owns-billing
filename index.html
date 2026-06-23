@@ -267,6 +267,24 @@
   }
 </style>
 
+
+<style id="mobile-fix">
+  @media (max-width: 767px) {
+    #main-sidebar {
+      z-index: 50 !important;
+      transform: translateX(0);
+      transition: transform 0.3s ease-in-out;
+    }
+    #main-sidebar.-translate-x-full {
+      transform: translateX(-100%) !important;
+    }
+    .sidebar-footer button {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+  }
+</style>
+
 </head>
 <body class="antialiased">
 <div id="auth-loading" class="auth-loading">
@@ -870,7 +888,7 @@
           </div>
           <nav id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto h-screen overflow-y-auto flex-shrink-0">${sidebarItems}
 <div class="sidebar-footer p-3 mt-auto">
-    <button onclick="firebase.auth().signOut().then(()=>{window.location.reload()})" 
+    <button onclick="appLogout()" 
             class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 rounded-lg transition-colors">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -3244,6 +3262,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+});
+</script>
+
+
+<script>
+// Global logout function - works on PC and mobile
+function appLogout() {
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        firebase.auth().signOut().then(() => {
+            console.log('Logout successful');
+            window.location.href = window.location.pathname; // Reload to login page
+        }).catch((error) => {
+            console.error('Logout error:', error);
+            alert('Logout failed: ' + error.message);
+        });
+    } else {
+        console.error('Firebase not loaded');
+        alert('Firebase not loaded. Please refresh.');
+    }
+}
+
+// Close mobile sidebar after clicking any menu item
+document.addEventListener('click', function(e) {
+    if (e.target.closest('#main-sidebar a') || e.target.closest('#main-sidebar button')) {
+        const sidebar = document.getElementById('main-sidebar');
+        if (window.innerWidth < 768 && sidebar) {
+            // If mobile, close sidebar after 300ms
+            setTimeout(() => {
+                sidebar.classList.add('-translate-x-full');
+            }, 300);
+        }
+    }
 });
 </script>
 
