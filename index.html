@@ -222,19 +222,48 @@
   }
 </style>
 
-<style id="sidebar-fix">
-  .sidebar {
+
+
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+
+<style id="sidebar-final-fix">
+  #main-sidebar, aside.sidebar, nav.sidebar {
     display: flex !important;
     flex-direction: column !important;
     height: 100vh !important;
+    height: 100dvh !important; /* For mobile browsers */
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 16rem !important; /* w-64 */
   }
-  .sidebar > nav, .sidebar > ul, .sidebar .menu-wrapper {
-    flex: 1 1 auto !important;
+  #main-sidebar > div:nth-child(2), 
+  #main-sidebar > nav,
+  #main-sidebar > ul,
+  #main-sidebar .sidebar-menu {
+    flex: 1 1 0% !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     min-height: 0 !important;
   }
-  .sidebar .sidebar-footer, .sidebar .user-profile {
+  #main-sidebar > div:last-child,
+  #main-sidebar .sidebar-footer,
+  #main-sidebar .user-profile-section {
     flex-shrink: 0 !important;
+    border-top: 1px solid rgb(55, 65, 81);
+  }
+  /* Scrollbar styling */
+  #main-sidebar > nav::-webkit-scrollbar {
+    width: 5px;
+  }
+  #main-sidebar > nav::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 3px;
   }
 </style>
 
@@ -839,7 +868,17 @@
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
-          <nav id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto h-screen overflow-y-auto flex-shrink-0">${sidebarItems}</nav>
+          <nav id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto h-screen overflow-y-auto flex-shrink-0">${sidebarItems}
+<div class="sidebar-footer p-3 mt-auto">
+    <button onclick="firebase.auth().signOut().then(()=>{window.location.reload()})" 
+            class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 rounded-lg transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        <span>Logout</span>
+    </button>
+</div>
+</nav>
           <div class="p-3 border-t border-[rgb(var(--border))]">
             <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
               <img src="${userPhoto}" class="w-8 h-8 rounded-full">
