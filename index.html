@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OwnsBill - ISP Reseller Billing v2.2.5</title>
+<title>OwnsBill - ISP Reseller Billing v2.2.4</title>
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
@@ -50,7 +50,6 @@
   @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { background: rgba(var(--primary), 0.5); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(var(--primary), 0.8); }
   
   .view-section {
     display: block !important;
@@ -78,19 +77,7 @@
   #sidebar { 
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     top: 0;
-  }
-  #sidebar::-webkit-scrollbar {
-    width: 4px;
-  }
-  #sidebar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  #sidebar::-webkit-scrollbar-thumb {
-    background: rgba(var(--primary), 0.3);
-    border-radius: 2px;
-  }
-  #sidebar::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--primary), 0.6);
+    height: 100vh;
   }
   #sidebar-overlay {
     transition: opacity 0.3s ease-out;
@@ -395,16 +382,14 @@
 
   const logActivity = async (action, details) => {
     try {
-      await addDoc(collection(db, 'logs'), {
+      await addDoc(collection(db, 'activities'), {
         userId: currentUser?.uid,
         userName: currentUserData?.name || currentUser?.email,
         role: currentRole,
         action, details,
         timestamp: serverTimestamp()
       });
-    } catch (e) { 
-      console.error('Activity log error:', e);
-    }
+    } catch (e) { console.error('Activity log error:', e); }
   };
 
   window.toggleTheme = () => {
@@ -652,11 +637,10 @@
     }, 'salary_requests'));
 
     if (currentRole === 'admin') {
-      appState.unsubscribers.push(safeOnSnapshot(query(collection(db, 'logs'), orderBy('timestamp', 'desc'), limit(100)), (snap) => {
+      appState.unsubscribers.push(safeOnSnapshot(query(collection(db, 'activities'), orderBy('timestamp', 'desc'), limit(100)), (snap) => {
         appState.activities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        console.log('[Listener] Activities from logs collection:', appState.activities.length);
         if (!isLoadingData && currentView === 'activities') reRenderCurrentView();
-      }, 'logs'));
+      }, 'activities'));
     }
   };
 
@@ -721,7 +705,7 @@
             <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
               <span class="text-3xl font-bold text-white">O</span>
             </div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.2.5</h1>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.2.4</h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">ISP Reseller Management System</p>
           </div>
           <form id="login-form" class="space-y-4">
@@ -825,7 +809,7 @@
 
     $('#app').innerHTML = `
       <div class="flex h-screen overflow-hidden">
-        <aside id="sidebar" class="fixed md:relative w-64 flex-col glass border-r border-[rgb(var(--border))] z-[50] -translate-x-full md:translate-x-0 h-screen overflow-y-auto">
+        <aside id="sidebar" class="fixed md:relative w-64 flex-col glass border-r border-[rgb(var(--border))] z-[50] -translate-x-full md:translate-x-0">
           <div class="h-16 px-4 border-b border-[rgb(var(--border))] flex items-center justify-between">
             <div class="flex items-center gap-3">
               ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-9 h-9 rounded-xl object-cover">` : `<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center"><span class="text-white font-bold">O</span></div>`}
@@ -838,7 +822,7 @@
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
-          <nav id="sidebar-nav" class="flex-1 p-3 space-y-1">${sidebarItems}</nav>
+          <nav id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto">${sidebarItems}</nav>
           <div class="p-3 border-t border-[rgb(var(--border))]">
             <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
               <img src="${userPhoto}" class="w-8 h-8 rounded-full">
@@ -902,7 +886,6 @@
                       </button>
                     </div>
                   </div>
-                </div>
                 <div class="md:hidden relative mobile-only">
                   <button onclick="toggleMobileProfile()" class="p-1 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
                     <img src="${userPhoto}" class="w-8 h-8 rounded-full">
@@ -1943,9 +1926,7 @@
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
         <form id="complaint-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
-          <div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
             <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
@@ -2227,7 +2208,7 @@
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-4">Firebase Security Rules</h3>
           <div class="text-sm text-slate-600 dark:text-slate-400 space-y-2">
-            <p><strong>Add these to Firestore Rules for full functionality (v2.2.5 uses logs collection):</strong></p>
+            <p><strong>Add these to Firestore Rules for full functionality (v2.2.4 requires status checks):</strong></p>
             <pre class="bg-[rgb(var(--border))] p-3 rounded-lg text-xs overflow-x-auto">
 rules_version = '2';
 service cloud.firestore {
@@ -2243,9 +2224,6 @@ service cloud.firestore {
     function isApproved() {
       return request.auth != null && 
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
-    }
-    function isSignedIn() {
-      return request.auth != null;
     }
     
     match /users/{userId} {
@@ -2289,9 +2267,9 @@ service cloud.firestore {
     match /settings/{docId} {
       allow read, write: if isAdmin();
     }
-    match /logs/{logId} {
+    match /activities/{docId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn();
+      allow create: if request.auth != null;
     }
   }
 }</pre>
@@ -2323,7 +2301,8 @@ service cloud.firestore {
         <form id="area-form">
           <div>
             <label class="text-sm font-medium mb-2 block">Area Name *</label>
-            <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+          </div>
           <div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
@@ -2657,10 +2636,7 @@ service cloud.firestore {
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
         <form id="deposit-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
-          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
@@ -2696,9 +2672,7 @@ service cloud.firestore {
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Request Salary</h3>
         <form id="salary-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
-          <div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
@@ -2877,9 +2851,7 @@ service cloud.firestore {
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
         <form id="pay-salary-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div>
-          <div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          <div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
@@ -2906,6 +2878,239 @@ service cloud.firestore {
         showToast(err.message, 'error');
       }
     });
+  };
+
+  const renderInvoice = () => {
+    const customers = currentRole === 'staff' 
+      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && (u.status === 'approved' || !u.status))
+      : appState.users.filter(u => u.role === 'customer' && (u.status === 'approved' || !u.status));
+
+    const container = document.getElementById('view-invoice');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="max-w-4xl mx-auto space-y-6 fade-in">
+        <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
+          <h3 class="font-bold text-lg mb-6">Generate Invoice</h3>
+          <form id="invoice-form" class="space-y-4">
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm font-medium mb-2 block">Select Customer *</label>
+                <select id="invoice-customer" name="customerId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+                  <option value="">Choose customer</option>
+                  ${customers.map(c => `<option value="${c.id}" data-customer='${JSON.stringify(c)}'>${c.name} - ${c.mobile}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="text-sm font-medium mb-2 block">Amount *</label>
+                <input type="number" name="amount" id="invoice-amount" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div>
+                <label class="text-sm font-medium mb-2 block">Payment Method *</label>
+                <select name="paymentMethod" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div>
+                <label class="text-sm font-medium mb-2 block">Transaction ID</label>
+                <input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div>
+                <label class="text-sm font-medium mb-2 block">Status *</label>
+                <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div><div>
+                <label class="text-sm font-medium mb-2 block">Promise Date</label>
+                <input type="date" name="promiseDate" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="md:col-span-2">
+                <label class="text-sm font-medium mb-2 block">Notes</label>
+                <textarea name="notes" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
+            </div>
+            <div class="flex gap-3">
+              <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
+              <button type="button" id="preview-invoice" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
+            </div>
+          </form>
+        </div>
+        <div id="invoice-preview" class="hidden"></div>
+      </div>
+    `;
+
+    $('#invoice-customer').addEventListener('change', (e) => {
+      const option = e.target.selectedOptions[0];
+      if (option.value) {
+        const customer = JSON.parse(option.dataset.customer);
+        $('#invoice-amount').value = customer.packagePrice || '';
+      }
+    });
+
+    $('#invoice-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      const customerOption = $('#invoice-customer').selectedOptions[0];
+      const customer = JSON.parse(customerOption.dataset.customer);
+      
+      try {
+        const billData = {
+          ...data,
+          amount: Number(data.amount),
+          customerId: data.customerId,
+          customerName: customer.name,
+          customerMobile: customer.mobile,
+          customerEmail: customer.email,
+          customerPPPoE: customer.pppoeUser,
+          packageName: customer.packageName,
+          staffId: customer.assignedStaff || currentUser.uid,
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp(),
+          promiseDate: data.promiseDate ? Timestamp.fromDate(new Date(data.promiseDate)) : null,
+          invoiceNo: `INV-${Date.now()}`
+        };
+        
+        const docRef = await addDoc(collection(db, 'bills'), billData);
+        
+        if (data.promiseDate) {
+          await updateDoc(doc(db, 'users', data.customerId), {
+            promiseDate: Timestamp.fromDate(new Date(data.promiseDate))
+          });
+        }
+        
+        await logActivity('Create Invoice', `Invoice for ${customer.name}: ${formatCurrency(data.amount)}`);
+        showToast('Invoice created successfully', 'success');
+        
+        showInvoicePreview({ ...billData, id: docRef.id });
+        e.target.reset();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    $('#preview-invoice').addEventListener('click', () => {
+      const formData = new FormData($('#invoice-form'));
+      const data = Object.fromEntries(formData);
+      const customerOption = $('#invoice-customer').selectedOptions[0];
+      if (!customerOption.value) return showToast('Please select a customer', 'warning');
+      const customer = JSON.parse(customerOption.dataset.customer);
+      showInvoicePreview({ ...data, customer, invoiceNo: `INV-${Date.now()}` });
+    });
+  };
+
+  window.createInvoiceFor = (customerId) => {
+    showView('invoice');
+    setTimeout(() => {
+      $('#invoice-customer').value = customerId;
+      $('#invoice-customer').dispatchEvent(new Event('change'));
+    }, 100);
+  };
+
+  const showInvoicePreview = (bill) => {
+    const customer = bill.customer || appState.users.find(u => u.id === bill.customerId);
+    if (!customer) return showToast('Customer not found', 'error');
+    
+    const preview = `
+      <div class="glass rounded-2xl p-6 border-[rgb(var(--border))]">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="font-bold text-lg">Invoice Preview</h3>
+          <div class="flex gap-2 no-print">
+            <button onclick="printInvoice('a4')" class="px-4 py-2 rounded-xl bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">Print A4</button>
+            <button onclick="printInvoice('thermal')" class="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-600 text-sm font-semibold" type="button">Print 58mm</button>
+            <button onclick="sendInvoiceWhatsApp('${customer.whatsapp}','${bill.invoiceNo}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 text-sm font-semibold" type="button">WhatsApp</button>
+          </div>
+        </div>
+        
+        <div id="invoice-a4" class="print-area print-a4 hidden">
+          <div class="text-center mb-6 border-b-2 border-black pb-4">
+            ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-16 h-16 mx-auto mb-2">` : ''}
+            <h1 class="text-2xl font-bold">${companySettings.companyName || "Own's Link"}</h1>
+            <p class="text-sm">${companySettings.address || 'Internet Service Provider'}</p>
+            <p class="text-sm">WhatsApp: ${companySettings.whatsapp || customer.whatsapp || ''}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
+            <div>
+              <p><strong>Invoice No:</strong> ${bill.invoiceNo}</p>
+              <p><strong>Date:</strong> ${formatDate(bill.createdAt || new Date())}</p>
+            </div>
+            <div class="text-right">
+              <p><strong>Customer:</strong> ${customer.name || '-'}</p>
+              <p><strong>Mobile:</strong> ${customer.mobile || '-'}</p>
+            </div>
+          <table class="w-full border border-black mb-4 text-sm">
+            <thead class="bg-gray-200">
+              <tr><th class="border border-black p-2 text-left">Description</th><th class="border border-black p-2 text-right">Amount</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="border border-black p-2">${customer.packageName || 'Internet Service'}</td><td class="border border-black p-2 text-right">${formatCurrency(bill.amount)}</td></tr>
+            </tbody>
+            <tfoot><tr><td class="border border-black p-2 font-bold">Total</td><td class="border border-black p-2 text-right font-bold">${formatCurrency(bill.amount)}</td></tr></tfoot>
+          </table>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div><p><strong>Payment Method:</strong> ${bill.paymentMethod || '-'}</p><p><strong>TrxID:</strong> ${bill.trxId || '-'}</p></div>
+            <div class="text-right"><p><strong>Status:</strong> ${bill.status?.toUpperCase() || '-'}</p></div>
+          </div>
+          <div class="text-center mt-8 text-xs">Thank you for your business!</div>
+        </div>
+
+        <div id="invoice-thermal" class="print-area print-thermal hidden mx-auto">
+          <div class="text-center">
+            ${companySettings.logo ? `<img src="${companySettings.logo}" class="w-12 h-12 mx-auto mb-1">` : ''}
+            <h2 class="font-bold text-sm">${companySettings.companyName || "Own's Link"}</h2>
+            <p class="text-[10px]">ইন্টারনেট বিল রসিদ</p>
+            <p class="text-[10px]">WhatsApp: ${companySettings.whatsapp || ''}</p>
+            <div class="border-t border-dashed my-1"></div>
+          </div>
+          <div class="text-[11px] space-y-0.5">
+            <div class="flex justify-between"><span>Invoice:</span><span>${bill.invoiceNo}</span></div>
+            <div class="flex justify-between"><span>Date:</span><span>${formatDate(bill.createdAt || new Date())}</span></div>
+            <div class="flex justify-between"><span>Name:</span><span>${(customer.name || '-').substring(0,15)}</span></div>
+            <div class="flex justify-between"><span>Mobile:</span><span>${customer.mobile || '-'}</span></div>
+            <div class="flex justify-between"><span>PPPoE:</span><span>${customer.pppoeUser || '-'}</span></div>
+            <div class="border-t border-dashed my-1"></div>
+            <div class="flex justify-between"><span>Package:</span><span>${customer.packageName || '-'}</span></div>
+            <div class="flex justify-between font-bold"><span>Amount:</span><span>${formatCurrency(bill.amount)}</span></div>
+            <div class="flex justify-between"><span>Method:</span><span>${bill.paymentMethod || '-'}</span></div>
+            <div class="flex justify-between"><span>TrxID:</span><span>${bill.trxId || '-'}</span></div>
+            <div class="flex justify-between"><span>Status:</span><span>${bill.status?.toUpperCase() || '-'}</span></div>
+            <div class="border-t border-dashed my-1"></div>
+          </div>
+          <div class="text-center text-[10px] mt-2">ধন্যবাদ | Thank You</div>
+        </div>
+
+        <div class="text-center py-8 text-slate-500 no-print">
+          <i data-lucide="file-check" class="w-12 h-12 mx-auto mb-2 text-emerald-600"></i>
+          <p>Invoice ready. Use buttons above to print or send.</p>
+        </div>
+      </div>
+    `;
+    $('#invoice-preview').innerHTML = preview;
+    $('#invoice-preview').classList.remove('hidden');
+    lucide.createIcons();
+  };
+
+  window.printInvoice = (type) => {
+    const a4 = $('#invoice-a4');
+    const thermal = $('#invoice-thermal');
+    a4.classList.add('hidden');
+    thermal.classList.add('hidden');
+    if (type === 'a4') a4.classList.remove('hidden');
+    else thermal.classList.remove('hidden');
+    window.print();
+  };
+
+  window.sendInvoiceWhatsApp = (number, invoiceNo) => {
+    const msg = `Hello! Your invoice ${invoiceNo} has been generated. Thank you for your payment. - ${companySettings.companyName || 'OwnsBill'}`;
+    sendWhatsApp(number, msg);
+  };
+
+  window.sendWhatsApp = (number, message) => {
+    const clean = number?.replace(/\D/g, '');
+    if (!clean) return showToast('Invalid WhatsApp number', 'error');
+    const url = `https://wa.me/${clean}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  const showModal = (content) => {
+    $('#modal-container').innerHTML = `
+      <div class="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeModal()">
+        <div class="glass rounded-3xl shadow-2xl border border-[rgb(var(--border))] w-full max-w-2xl scale-in" onclick="event.stopPropagation()">
+          ${content}
+        </div>
+      </div>
+    `;
+    lucide.createIcons();
+  };
+
+  window.closeModal = () => {
+    $('#modal-container').innerHTML = '';
   };
 
   const updateCommandPalette = () => {
@@ -2966,8 +3171,10 @@ service cloud.firestore {
     }
   });
 
+  window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
 </script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
 </body>
 </html>
