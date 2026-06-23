@@ -221,6 +221,50 @@
     overflow-y: auto;
   }
 </style>
+
+<style id="pc-sidebar-scroll-fix">
+  /* PC Only: md breakpoint 768px+ */
+  @media (min-width: 768px) {
+    /* Make sidebar a flex column */
+    aside, nav.sidebar, #sidebar {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 100vh !important;
+    }
+    
+    /* The menu list - usually first nav or ul after logo */
+    aside > nav:first-of-type,
+    aside > ul:first-of-type,
+    aside > div > nav,
+    #sidebar nav {
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      min-height: 0 !important;
+    }
+    
+    /* Keep the last child - profile section - fixed at bottom */
+    aside > div:last-child {
+      flex-shrink: 0 !important;
+    }
+    
+    /* Scrollbar style for PC */
+    aside nav::-webkit-scrollbar {
+      width: 6px;
+    }
+    aside nav::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    aside nav::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 3px;
+    }
+    aside nav::-webkit-scrollbar-thumb:hover {
+      background: #6b7280;
+    }
+  }
+</style>
+
 </head>
 <body class="antialiased">
 <div id="auth-loading" class="auth-loading">
