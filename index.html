@@ -2971,6 +2971,10 @@ service cloud.firestore {
                 </select>
               </div>
               <div>
+                <label class="text-sm font-medium mb-2 block">Package</label>
+                <input type="text" id="invoice-package" name="package" readonly class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-[rgb(var(--text))]/70" placeholder="Auto-filled from customer">
+              </div>
+              <div>
                 <label class="text-sm font-medium mb-2 block">Amount *</label>
                 <input type="number" name="amount" id="invoice-amount" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div>
                 <label class="text-sm font-medium mb-2 block">Payment Method *</label>
@@ -3413,7 +3417,35 @@ firebase.auth().onAuthStateChanged(async (user) => {
                 <body>
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
-                </body>
+                <script>
+// Auto-fill package when customer is selected in Invoice Generator
+document.addEventListener('DOMContentLoaded', function() {
+  const customerSelect = document.getElementById('invoice-customer');
+  const packageInput = document.getElementById('invoice-package');
+  const amountInput = document.querySelector('#invoice-form input[name="amount"]');
+  
+  if (customerSelect && packageInput) {
+    customerSelect.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      if (selectedOption && selectedOption.dataset.customer) {
+        try {
+          const customer = JSON.parse(selectedOption.dataset.customer);
+          packageInput.value = customer.package || customer.packageName || '';
+          // Also auto-fill amount if customer has a package price
+          if (customer.packagePrice && amountInput) {
+            amountInput.value = customer.packagePrice;
+          }
+        } catch(e) {
+          console.error('Error parsing customer data:', e);
+        }
+      } else {
+        packageInput.value = '';
+      }
+    });
+  }
+});
+</script>
+</body>
                 </html>
             `);
             printWindow.document.close();
@@ -3475,5 +3507,33 @@ firebase.auth().onAuthStateChanged(async (user) => {
 });
 </script>
 
+<script>
+// Auto-fill package when customer is selected in Invoice Generator
+document.addEventListener('DOMContentLoaded', function() {
+  const customerSelect = document.getElementById('invoice-customer');
+  const packageInput = document.getElementById('invoice-package');
+  const amountInput = document.querySelector('#invoice-form input[name="amount"]');
+  
+  if (customerSelect && packageInput) {
+    customerSelect.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      if (selectedOption && selectedOption.dataset.customer) {
+        try {
+          const customer = JSON.parse(selectedOption.dataset.customer);
+          packageInput.value = customer.package || customer.packageName || '';
+          // Also auto-fill amount if customer has a package price
+          if (customer.packagePrice && amountInput) {
+            amountInput.value = customer.packagePrice;
+          }
+        } catch(e) {
+          console.error('Error parsing customer data:', e);
+        }
+      } else {
+        packageInput.value = '';
+      }
+    });
+  }
+});
+</script>
 </body>
 </html>
