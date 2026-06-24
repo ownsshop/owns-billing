@@ -2831,6 +2831,18 @@ service cloud.firestore {
                         <div class="text-amber-600">Deposit: ${formatCurrency(data.pendingDeposit)}</div>
                         <div class="text-purple-600">Salary: ${formatCurrency(data.pendingSalary)}</div>
                       </div>
+<!-- Package Field for Invoice Generator -->
+<div id="invoicePackageRow" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+    <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Customer Package *</label>
+        <input type="text" id="invoicePackageDisplay" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white" readonly placeholder="Select customer first">
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Due Date *</label>
+        <input type="date" id="invoiceDueDateInput" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
+    </div>
+</div>
+
                     </td>
                     <td class="p-4">
                       <button onclick="viewStaffDetails('${data.staff.id}')" class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">
@@ -3413,7 +3425,145 @@ firebase.auth().onAuthStateChanged(async (user) => {
                 <body>
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
-                </body>
+                
+<script>
+// v14 Fixes - Invoice Package + Area Zone Dropdown
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. Invoice Generator - Package Auto-fill Fix
+    function setupInvoicePackage() {
+        const customerSelect = document.querySelector('#invoiceCustomer, select[name="customer"], #selectCustomer');
+        const packageInput = document.getElementById('invoicePackageDisplay');
+        const amountInput = document.querySelector('#invoiceAmount, input[name="amount"]');
+        const dueDateInput = document.getElementById('invoiceDueDateInput');
+        
+        if (!customerSelect || !packageInput) {
+            console.log('[Invoice] Elements not found, retrying...');
+            setTimeout(setupInvoicePackage, 500);
+            return;
+        }
+        
+        customerSelect.addEventListener('change', async function() {
+            const customerId = this.value;
+            if (!customerId || !window.db) return;
+            
+            try {
+                console.log('[Invoice] Loading customer:', customerId);
+                const doc = await db.collection('customers').doc(customerId).get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    console.log('[Invoice] Customer data:', data);
+                    
+                    // Set package
+                    if (data.package) {
+                        packageInput.value = data.package;
+                        
+                        // Get package price
+                        const pkgQuery = await db.collection('packages').where('name', '==', data.package).limit(1).get();
+                        if (!pkgQuery.empty && amountInput) {
+                            const pkgPrice = pkgQuery.docs[0].data().price;
+                            amountInput.value = pkgPrice || '';
+                            console.log('[Invoice] Package price:', pkgPrice);
+                        }
+                    } else {
+                        packageInput.value = 'No package assigned';
+                    }
+                    
+                    // Set due date to next month 10th
+                    if (dueDateInput) {
+                        const nextMonth = new Date();
+                        nextMonth.setMonth(nextMonth.getMonth() + 1);
+                        nextMonth.setDate(10);
+                        dueDateInput.value = nextMonth.toISOString().split('T')[0];
+                    }
+                }
+            } catch (err) {
+                console.error('[Invoice] Error:', err);
+                packageInput.value = 'Error loading package';
+            }
+        });
+    }
+    
+    // 2. Area Management - Load zones into dropdown
+    function setupAreaZoneDropdown() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect || !window.db) {
+            setTimeout(setupAreaZoneDropdown, 500);
+            return;
+        }
+        
+        // Clear existing options except first
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        
+        // Load zones from Firebase
+        db.collection('zones').orderBy('name').get().then(snapshot => {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = data.name || doc.id;
+                zoneSelect.appendChild(option);
+            });
+            console.log('[Area] Loaded', snapshot.size, 'zones');
+        }).catch(err => {
+            console.error('[Area] Error loading zones:', err);
+            // Fallback: load from ZONE_AREAS if Firebase fails
+            const ZONE_AREAS = {
+                'K. P. Bag': ['Biler Kani', 'Kola Bagan', 'Grameen Towar', 'Shahi Mosjid'],
+                'Uttara': ['Sector 1', 'Sector 3', 'Sector 7'],
+                'Mirpur': ['Mirpur 1', 'Mirpur 10', 'Mirpur 12'],
+                'Dhanmondi': ['Dhanmondi 27', 'Dhanmondi 32']
+            };
+            Object.keys(ZONE_AREAS).forEach(zone => {
+                const option = document.createElement('option');
+                option.value = zone;
+                option.textContent = zone;
+                zoneSelect.appendChild(option);
+            });
+        });
+    }
+    
+    // 3. Save Area with Zone reference
+    const saveAreaBtn = document.querySelector('button:contains("Save Area")') || document.querySelector('[onclick*="saveArea"]');
+    if (saveAreaBtn) {
+        saveAreaBtn.addEventListener('click', async function(e) {
+            const areaName = document.querySelector('input[placeholder*="Area"]')?.value;
+            const zoneId = document.getElementById('areaZoneSelect')?.value;
+            
+            if (!areaName || !zoneId) {
+                alert('Please enter area name and select zone');
+                e.preventDefault();
+                return false;
+            }
+            
+            // Save to Firebase with zone reference
+            if (window.db) {
+                try {
+                    await db.collection('areas').add({
+                        name: areaName,
+                        zoneId: zoneId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('[Area] Saved successfully');
+                } catch (err) {
+                    console.error('[Area] Save error:', err);
+                }
+            }
+        });
+    }
+    
+    // Initialize after Firebase loads
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            setupInvoicePackage();
+            setupAreaZoneDropdown();
+        }
+    });
+});
+</script>
+
+</body>
                 </html>
             `);
             printWindow.document.close();
@@ -3472,6 +3622,144 @@ firebase.auth().onAuthStateChanged(async (user) => {
             timeout = setTimeout(() => func.apply(this, args), wait);
         };
     }
+});
+</script>
+
+
+<script>
+// v14 Fixes - Invoice Package + Area Zone Dropdown
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. Invoice Generator - Package Auto-fill Fix
+    function setupInvoicePackage() {
+        const customerSelect = document.querySelector('#invoiceCustomer, select[name="customer"], #selectCustomer');
+        const packageInput = document.getElementById('invoicePackageDisplay');
+        const amountInput = document.querySelector('#invoiceAmount, input[name="amount"]');
+        const dueDateInput = document.getElementById('invoiceDueDateInput');
+        
+        if (!customerSelect || !packageInput) {
+            console.log('[Invoice] Elements not found, retrying...');
+            setTimeout(setupInvoicePackage, 500);
+            return;
+        }
+        
+        customerSelect.addEventListener('change', async function() {
+            const customerId = this.value;
+            if (!customerId || !window.db) return;
+            
+            try {
+                console.log('[Invoice] Loading customer:', customerId);
+                const doc = await db.collection('customers').doc(customerId).get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    console.log('[Invoice] Customer data:', data);
+                    
+                    // Set package
+                    if (data.package) {
+                        packageInput.value = data.package;
+                        
+                        // Get package price
+                        const pkgQuery = await db.collection('packages').where('name', '==', data.package).limit(1).get();
+                        if (!pkgQuery.empty && amountInput) {
+                            const pkgPrice = pkgQuery.docs[0].data().price;
+                            amountInput.value = pkgPrice || '';
+                            console.log('[Invoice] Package price:', pkgPrice);
+                        }
+                    } else {
+                        packageInput.value = 'No package assigned';
+                    }
+                    
+                    // Set due date to next month 10th
+                    if (dueDateInput) {
+                        const nextMonth = new Date();
+                        nextMonth.setMonth(nextMonth.getMonth() + 1);
+                        nextMonth.setDate(10);
+                        dueDateInput.value = nextMonth.toISOString().split('T')[0];
+                    }
+                }
+            } catch (err) {
+                console.error('[Invoice] Error:', err);
+                packageInput.value = 'Error loading package';
+            }
+        });
+    }
+    
+    // 2. Area Management - Load zones into dropdown
+    function setupAreaZoneDropdown() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect || !window.db) {
+            setTimeout(setupAreaZoneDropdown, 500);
+            return;
+        }
+        
+        // Clear existing options except first
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        
+        // Load zones from Firebase
+        db.collection('zones').orderBy('name').get().then(snapshot => {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = data.name || doc.id;
+                zoneSelect.appendChild(option);
+            });
+            console.log('[Area] Loaded', snapshot.size, 'zones');
+        }).catch(err => {
+            console.error('[Area] Error loading zones:', err);
+            // Fallback: load from ZONE_AREAS if Firebase fails
+            const ZONE_AREAS = {
+                'K. P. Bag': ['Biler Kani', 'Kola Bagan', 'Grameen Towar', 'Shahi Mosjid'],
+                'Uttara': ['Sector 1', 'Sector 3', 'Sector 7'],
+                'Mirpur': ['Mirpur 1', 'Mirpur 10', 'Mirpur 12'],
+                'Dhanmondi': ['Dhanmondi 27', 'Dhanmondi 32']
+            };
+            Object.keys(ZONE_AREAS).forEach(zone => {
+                const option = document.createElement('option');
+                option.value = zone;
+                option.textContent = zone;
+                zoneSelect.appendChild(option);
+            });
+        });
+    }
+    
+    // 3. Save Area with Zone reference
+    const saveAreaBtn = document.querySelector('button:contains("Save Area")') || document.querySelector('[onclick*="saveArea"]');
+    if (saveAreaBtn) {
+        saveAreaBtn.addEventListener('click', async function(e) {
+            const areaName = document.querySelector('input[placeholder*="Area"]')?.value;
+            const zoneId = document.getElementById('areaZoneSelect')?.value;
+            
+            if (!areaName || !zoneId) {
+                alert('Please enter area name and select zone');
+                e.preventDefault();
+                return false;
+            }
+            
+            // Save to Firebase with zone reference
+            if (window.db) {
+                try {
+                    await db.collection('areas').add({
+                        name: areaName,
+                        zoneId: zoneId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('[Area] Saved successfully');
+                } catch (err) {
+                    console.error('[Area] Save error:', err);
+                }
+            }
+        });
+    }
+    
+    // Initialize after Firebase loads
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            setupInvoicePackage();
+            setupAreaZoneDropdown();
+        }
+    });
 });
 </script>
 
