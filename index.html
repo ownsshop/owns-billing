@@ -3220,5 +3220,223 @@ service cloud.firestore {
 </script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+
+<script>
+// ISP Billing Features v12 - Zone/Area Cascade + Invoice Package Auto-fill
+
+// Zone -> Area mapping - Add your zones here
+const ZONE_AREA_MAP = {
+    'K. P. Bag': ['Biler Kani', 'Kola Bagan', 'Grameen Towar', 'Shahi Mosjid'],
+    'Uttara': ['Sector 1', 'Sector 3', 'Sector 7', 'Sector 10'],
+    'Mirpur': ['Mirpur 1', 'Mirpur 10', 'Mirpur 12', 'Kafrul'],
+    'Dhanmondi': ['Dhanmondi 27', 'Dhanmondi 32', 'Jigatola']
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Zone -> Area Cascading Dropdown for Add Customer
+    const zoneSelect = document.querySelector('select[name="zone"], #customerZone');
+    const areaSelect = document.querySelector('select[name="area"], #customerArea');
+    
+    if (zoneSelect && areaSelect) {
+        // Disable area initially
+        areaSelect.disabled = true;
+        areaSelect.innerHTML = '<option value="">Select Zone First</option>';
+        
+        zoneSelect.addEventListener('change', function() {
+            const selectedZone = this.value;
+            areaSelect.innerHTML = '<option value="">Select Area</option>';
+            
+            if (selectedZone && ZONE_AREA_MAP[selectedZone]) {
+                areaSelect.disabled = false;
+                ZONE_AREA_MAP[selectedZone].forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area;
+                    option.textContent = area;
+                    areaSelect.appendChild(option);
+                });
+            } else {
+                areaSelect.disabled = true;
+                areaSelect.innerHTML = '<option value="">No areas found</option>';
+            }
+        });
+    }
+    
+    // 2. Invoice Generator - Auto-fill Package & Amount from Customer
+    const customerSelect = document.getElementById('invoiceCustomer');
+    const packageInput = document.getElementById('invoicePackage');
+    const amountInput = document.getElementById('invoiceAmount');
+    
+    if (customerSelect) {
+        customerSelect.addEventListener('change', async function() {
+            const customerId = this.value;
+            if (!customerId || !window.db) return;
+            
+            try {
+                const customerDoc = await db.collection('customers').doc(customerId).get();
+                if (customerDoc.exists) {
+                    const data = customerDoc.data();
+                    
+                    // Auto-fill package
+                    if (packageInput && data.package) {
+                        packageInput.value = data.package;
+                        
+                        // Get package amount from packages collection
+                        const pkgDoc = await db.collection('packages').where('name', '==', data.package).limit(1).get();
+                        if (!pkgDoc.empty && amountInput) {
+                            amountInput.value = pkgDoc.docs[0].data().price || '';
+                        }
+                    }
+                    
+                    // Set due date to next month
+                    const dueDateInput = document.getElementById('invoiceDueDate');
+                    if (dueDateInput) {
+                        const nextMonth = new Date();
+                        nextMonth.setMonth(nextMonth.getMonth() + 1);
+                        nextMonth.setDate(10); // Due on 10th
+                        dueDateInput.value = nextMonth.toISOString().split('T')[0];
+                    }
+                }
+            } catch (err) {
+                console.error('[Invoice] Error loading customer:', err);
+            }
+        });
+    }
+    
+    // 3. Bills Page - Advanced Filters + Monthly Print
+    const billsFilterHTML = `
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-4" id="billsFilters">
+        <select id="filterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+            <option value="">All Zones</option>
+        </select>
+        <select id="filterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
+            <option value="">All Areas</option>
+        </select>
+        <select id="filterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+            <option value="">All Staff</option>
+        </select>
+        <input type="text" id="filterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+        <input type="month" id="filterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+        <button id="printMonthlyBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            Print Monthly
+        </button>
+    </div>
+    `;
+    
+    // Inject filters into Bills page
+    const billsSearchBox = document.querySelector('input[placeholder*="Search bills"]');
+    if (billsSearchBox && !document.getElementById('billsFilters')) {
+        billsSearchBox.parentElement.insertAdjacentHTML('afterend', billsFilterHTML);
+        
+        // Populate Zone dropdown
+        const filterZone = document.getElementById('filterZone');
+        Object.keys(ZONE_AREA_MAP).forEach(zone => {
+            const option = document.createElement('option');
+            option.value = zone;
+            option.textContent = zone;
+            filterZone.appendChild(option);
+        });
+        
+        // Zone -> Area cascade for filters
+        const filterArea = document.getElementById('filterArea');
+        filterZone.addEventListener('change', function() {
+            filterArea.innerHTML = '<option value="">All Areas</option>';
+            if (this.value && ZONE_AREA_MAP[this.value]) {
+                filterArea.disabled = false;
+                ZONE_AREA_MAP[this.value].forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area;
+                    option.textContent = area;
+                    filterArea.appendChild(option);
+                });
+            } else {
+                filterArea.disabled = true;
+            }
+            loadBills(); // Reload with filter
+        });
+        
+        // Load staff for filter
+        if (window.db) {
+            db.collection('staff').get().then(snapshot => {
+                const filterStaff = document.getElementById('filterStaff');
+                snapshot.forEach(doc => {
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = doc.data().name;
+                    filterStaff.appendChild(option);
+                });
+            });
+        }
+        
+        // Attach filter events
+        ['filterArea', 'filterStaff', 'filterCustomer', 'filterMonth'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', loadBills);
+        });
+        document.getElementById('filterCustomer')?.addEventListener('input', debounce(loadBills, 500));
+        
+        // Print Monthly button
+        document.getElementById('printMonthlyBtn')?.addEventListener('click', function() {
+            const month = document.getElementById('filterMonth').value;
+            if (!month) {
+                alert('Please select a month first');
+                return;
+            }
+            window.print(); // Use browser print, or implement PDF generation
+        });
+    }
+});
+
+// Helper: Debounce
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// Bills loader with filters
+async function loadBills() {
+    if (!window.db) return;
+    
+    const zone = document.getElementById('filterZone')?.value;
+    const area = document.getElementById('filterArea')?.value;
+    const staff = document.getElementById('filterStaff')?.value;
+    const customer = document.getElementById('filterCustomer')?.value.toLowerCase();
+    const month = document.getElementById('filterMonth')?.value;
+    
+    let query = db.collection('bills');
+    
+    if (zone) query = query.where('zone', '==', zone);
+    if (area) query = query.where('area', '==', area);
+    if (staff) query = query.where('staffId', '==', staff);
+    
+    // Add month filter
+    if (month) {
+        const startDate = new Date(month + '-01');
+        const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        query = query.where('date', '>=', startDate).where('date', '<=', endDate);
+    }
+    
+    // Render bills - adjust based on your existing render function
+    if (typeof renderBills === 'function') {
+        query.get().then(snapshot => {
+            let bills = [];
+            snapshot.forEach(doc => bills.push({id: doc.id, ...doc.data()}));
+            
+            // Client-side customer filter
+            if (customer) {
+                bills = bills.filter(b => 
+                    b.customerName?.toLowerCase().includes(customer) || 
+                    b.customerMobile?.includes(customer)
+                );
+            }
+            
+            renderBills(bills);
+        });
+    }
+}
+</script>
+
 </body>
 </html>
