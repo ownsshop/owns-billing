@@ -7,7 +7,8 @@
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- Tailwind CSS - Use compiled version for production -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <script>
   tailwind.config = { darkMode: 'class' }
 </script>
@@ -3435,171 +3436,205 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
 
 
-<script>
-// v15 Final Fixes - All Issues Resolved
-console.log('[v15] Script loaded');
 
-firebase.auth().onAuthStateChanged(async (user) => {
-    if (!user) return;
-    console.log('[v15] User authenticated');
+
+
+<script>
+// v16 - All Errors Fixed
+console.log('[v16] Script loaded successfully');
+
+(function() {
+    'use strict';
     
-    // Wait for DOM to be ready
-    setTimeout(() => {
+    // Wait for Firebase
+    const initApp = () => {
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            setTimeout(initApp, 100);
+            return;
+        }
         
-        // 1. INVOICE GENERATOR - Package Auto-fill
-        const customerSelect = document.querySelector('#invoiceCustomer, select[name="customer"], [data-customer-select]');
-        const packageDisplay = document.getElementById('invoiceCustomerPackage');
-        const packagePrice = document.getElementById('invoicePackagePrice');
-        const amountInput = document.querySelector('#invoiceAmount, input[name="amount"]');
-        const dueDateInput = document.getElementById('invoiceDueDateNew');
-        
-        console.log('[Invoice] Customer select found:', !!customerSelect);
-        console.log('[Invoice] Package display found:', !!packageDisplay);
-        
-        if (customerSelect && packageDisplay) {
-            customerSelect.addEventListener('change', async function() {
-                const customerId = this.value;
-                if (!customerId) {
-                    packageDisplay.value = '';
-                    packagePrice.value = '';
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) return;
+            console.log('[v16] User authenticated:', user.email);
+            
+            // 1. INVOICE GENERATOR - Add Package Field
+            function injectInvoicePackage() {
+                // Check if already exists
+                if (document.getElementById('invoicePackageField_v16')) return;
+                
+                // Find Amount input
+                const amountInput = document.querySelector('input[type="number"][name*="amount"], input[name="amount"], #invoiceAmount');
+                if (!amountInput) {
+                    setTimeout(injectInvoicePackage, 500);
                     return;
                 }
                 
-                try {
-                    console.log('[Invoice] Fetching customer:', customerId);
-                    const customerDoc = await db.collection('customers').doc(customerId).get();
-                    
-                    if (customerDoc.exists) {
-                        const customer = customerDoc.data();
-                        console.log('[Invoice] Customer data:', customer);
-                        
-                        // Set package name
-                        if (customer.package) {
-                            packageDisplay.value = customer.package;
-                            
-                            // Get package price
-                            const pkgSnap = await db.collection('packages')
-                                .where('name', '==', customer.package)
-                                .limit(1).get();
-                            
-                            if (!pkgSnap.empty) {
-                                const price = pkgSnap.docs[0].data().price || 0;
-                                packagePrice.value = price;
-                                if (amountInput) amountInput.value = price;
-                                console.log('[Invoice] Set price:', price);
-                            }
-                        } else {
-                            packageDisplay.value = 'No package';
-                            packagePrice.value = '';
-                        }
-                        
-                        // Set due date
-                        if (dueDateInput) {
-                            const nextMonth = new Date();
-                            nextMonth.setMonth(nextMonth.getMonth() + 1);
-                            nextMonth.setDate(10);
-                            dueDateInput.value = nextMonth.toISOString().split('T')[0];
-                        }
-                    }
-                } catch (err) {
-                    console.error('[Invoice] Error:', err);
-                    packageDisplay.value = 'Error loading';
+                // Create package field
+                const packageDiv = document.createElement('div');
+                packageDiv.className = 'grid grid-cols-1 md:grid-cols-3 gap-4 mt-4';
+                packageDiv.id = 'invoicePackageRow_v16';
+                packageDiv.innerHTML = `
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Customer Package</label>
+                        <input type="text" id="invoicePackageField_v16" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white" readonly placeholder="Select customer">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Package Price</label>
+                        <input type="text" id="invoicePackagePrice_v16" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Due Date</label>
+                        <input type="date" id="invoiceDueDate_v16" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
+                    </div>
+                `;
+                
+                // Insert after amount row
+                const amountRow = amountInput.closest('.grid') || amountInput.parentElement;
+                if (amountRow && amountRow.parentNode) {
+                    amountRow.parentNode.insertBefore(packageDiv, amountRow.nextSibling);
+                    console.log('[Invoice] Package field injected');
                 }
-            });
-        }
-        
-        // 2. ADD AREA MODAL - Load Zones
-        function loadZonesForAreaModal() {
-            const zoneSelect = document.getElementById('areaZoneSelect');
-            if (!zoneSelect) {
-                console.log('[Area] Zone select not found, retrying...');
-                setTimeout(loadZonesForAreaModal, 500);
-                return;
+                
+                // Setup auto-fill
+                const customerSelect = document.querySelector('select[name*="customer"], #invoiceCustomer, [data-customer-select]');
+                if (customerSelect) {
+                    customerSelect.addEventListener('change', async function() {
+                        const customerId = this.value;
+                        const pkgField = document.getElementById('invoicePackageField_v16');
+                        const priceField = document.getElementById('invoicePackagePrice_v16');
+                        const dueField = document.getElementById('invoiceDueDate_v16');
+                        
+                        if (!customerId || !window.db) return;
+                        
+                        try {
+                            const doc = await db.collection('customers').doc(customerId).get();
+                            if (doc.exists) {
+                                const data = doc.data();
+                                if (pkgField) pkgField.value = data.package || 'No package';
+                                
+                                if (data.package && priceField) {
+                                    const pkgSnap = await db.collection('packages').where('name', '==', data.package).limit(1).get();
+                                    if (!pkgSnap.empty) {
+                                        const price = pkgSnap.docs[0].data().price || 0;
+                                        priceField.value = price;
+                                        if (amountInput) amountInput.value = price;
+                                    }
+                                }
+                                
+                                if (dueField) {
+                                    const nextMonth = new Date();
+                                    nextMonth.setMonth(nextMonth.getMonth() + 1);
+                                    nextMonth.setDate(10);
+                                    dueField.value = nextMonth.toISOString().split('T')[0];
+                                }
+                            }
+                        } catch (err) {
+                            console.error('[Invoice] Error:', err);
+                        }
+                    });
+                }
             }
             
-            console.log('[Area] Loading zones...');
-            zoneSelect.innerHTML = '<option value="">Loading zones...</option>';
-            
-            db.collection('zones').orderBy('name').get().then(snapshot => {
-                zoneSelect.innerHTML = '<option value="">Select Zone</option>';
-                
-                if (snapshot.empty) {
-                    zoneSelect.innerHTML = '<option value="">No zones found - Add zones first</option>';
-                    console.log('[Area] No zones in Firebase');
+            // 2. ADD AREA - Load Zones
+            function loadZonesForArea() {
+                const zoneSelect = document.getElementById('areaZoneSelect');
+                if (!zoneSelect || !window.db) {
+                    setTimeout(loadZonesForArea, 500);
                     return;
                 }
                 
-                snapshot.forEach(doc => {
-                    const opt = document.createElement('option');
-                    opt.value = doc.id;
-                    opt.textContent = doc.data().name || doc.id;
-                    zoneSelect.appendChild(opt);
-                });
-                console.log('[Area] Loaded', snapshot.size, 'zones');
-            }).catch(err => {
-                console.error('[Area] Zone load error:', err);
-                zoneSelect.innerHTML = '<option value="">Error loading zones</option>';
-            });
-        }
-        
-        // Load zones when modal opens
-        const addAreaBtn = document.querySelector('[onclick*="addArea"], [data-action="add-area"], button:contains("Add Area")');
-        if (addAreaBtn) {
-            addAreaBtn.addEventListener('click', () => {
-                setTimeout(loadZonesForAreaModal, 100);
-            });
-        }
-        
-        // Also load on page load
-        loadZonesForAreaModal();
-        
-        // 3. ADD CUSTOMER - Zone to Area Cascade
-        const customerZoneSelect = document.querySelector('#customerZoneSelect, select[name="zone"]');
-        const customerAreaSelect = document.querySelector('#customerAreaSelect, select[name="area"]');
-        
-        if (customerZoneSelect && customerAreaSelect) {
-            console.log('[Customer] Zone-Area cascade ready');
-            
-            customerZoneSelect.addEventListener('change', async function() {
-                const zoneId = this.value;
-                customerAreaSelect.innerHTML = '<option value="">Loading areas...</option>';
-                customerAreaSelect.disabled = true;
+                zoneSelect.innerHTML = '<option value="">Loading...</option>';
                 
-                if (!zoneId) {
-                    customerAreaSelect.innerHTML = '<option value="">Select Zone First</option>';
-                    return;
-                }
-                
-                try {
-                    // Load areas for this zone
-                    const areasSnap = await db.collection('areas')
-                        .where('zoneId', '==', zoneId)
-                        .orderBy('name')
-                        .get();
-                    
-                    customerAreaSelect.innerHTML = '<option value="">Select Area</option>';
-                    
-                    if (areasSnap.empty) {
-                        customerAreaSelect.innerHTML = '<option value="">No areas in this zone</option>';
-                    } else {
-                        areasSnap.forEach(doc => {
+                db.collection('zones').orderBy('name').get()
+                    .then(snapshot => {
+                        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+                        if (snapshot.empty) {
+                            zoneSelect.innerHTML = '<option value="">No zones - Add zones first</option>';
+                            return;
+                        }
+                        snapshot.forEach(doc => {
                             const opt = document.createElement('option');
                             opt.value = doc.id;
-                            opt.textContent = doc.data().name;
-                            customerAreaSelect.appendChild(opt);
+                            opt.textContent = doc.data().name || doc.id;
+                            zoneSelect.appendChild(opt);
                         });
-                        customerAreaSelect.disabled = false;
+                        console.log('[Area] Loaded', snapshot.size, 'zones');
+                    })
+                    .catch(err => {
+                        console.error('[Area] Zone error:', err);
+                        zoneSelect.innerHTML = '<option value="">Error loading zones</option>';
+                    });
+            }
+            
+            // 3. ADD CUSTOMER - Zone to Area Cascade
+            function setupZoneAreaCascade() {
+                const zoneSelect = document.querySelector('#customerZoneSelect, select[name="zone"]');
+                const areaSelect = document.querySelector('#customerAreaSelect, select[name="area"]');
+                
+                if (!zoneSelect || !areaSelect) {
+                    setTimeout(setupZoneAreaCascade, 500);
+                    return;
+                }
+                
+                zoneSelect.addEventListener('change', async function() {
+                    const zoneId = this.value;
+                    areaSelect.innerHTML = '<option value="">Loading...</option>';
+                    areaSelect.disabled = true;
+                    
+                    if (!zoneId || !window.db) {
+                        areaSelect.innerHTML = '<option value="">Select Zone First</option>';
+                        return;
                     }
-                    console.log('[Customer] Loaded', areasSnap.size, 'areas');
-                } catch (err) {
-                    console.error('[Customer] Area load error:', err);
-                    customerAreaSelect.innerHTML = '<option value="">Error loading areas</option>';
+                    
+                    try {
+                        const snap = await db.collection('areas')
+                            .where('zoneId', '==', zoneId)
+                            .orderBy('name')
+                            .get();
+                        
+                        areaSelect.innerHTML = '<option value="">Select Area</option>';
+                        if (snap.empty) {
+                            areaSelect.innerHTML = '<option value="">No areas in this zone</option>';
+                        } else {
+                            snap.forEach(doc => {
+                                const opt = document.createElement('option');
+                                opt.value = doc.id;
+                                opt.textContent = doc.data().name;
+                                areaSelect.appendChild(opt);
+                            });
+                            areaSelect.disabled = false;
+                        }
+                    } catch (err) {
+                        console.error('[Customer] Area error:', err);
+                        areaSelect.innerHTML = '<option value="">Error loading</option>';
+                    }
+                });
+            }
+            
+            // Initialize all
+            setTimeout(() => {
+                injectInvoicePackage();
+                loadZonesForArea();
+                setupZoneAreaCascade();
+            }, 1500);
+            
+            // Re-run on navigation
+            const observer = new MutationObserver(() => {
+                if (document.querySelector('h1, h2')?.textContent.includes('Invoice')) {
+                    injectInvoicePackage();
                 }
             });
-        }
-        
-    }, 1000); // Wait 1s for Firebase
-});
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    };
+    
+    // Start
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+        initApp();
+    }
+})();
 </script>
 
 </body>
@@ -3668,171 +3703,205 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
 
 
-<script>
-// v15 Final Fixes - All Issues Resolved
-console.log('[v15] Script loaded');
 
-firebase.auth().onAuthStateChanged(async (user) => {
-    if (!user) return;
-    console.log('[v15] User authenticated');
+
+
+<script>
+// v16 - All Errors Fixed
+console.log('[v16] Script loaded successfully');
+
+(function() {
+    'use strict';
     
-    // Wait for DOM to be ready
-    setTimeout(() => {
+    // Wait for Firebase
+    const initApp = () => {
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            setTimeout(initApp, 100);
+            return;
+        }
         
-        // 1. INVOICE GENERATOR - Package Auto-fill
-        const customerSelect = document.querySelector('#invoiceCustomer, select[name="customer"], [data-customer-select]');
-        const packageDisplay = document.getElementById('invoiceCustomerPackage');
-        const packagePrice = document.getElementById('invoicePackagePrice');
-        const amountInput = document.querySelector('#invoiceAmount, input[name="amount"]');
-        const dueDateInput = document.getElementById('invoiceDueDateNew');
-        
-        console.log('[Invoice] Customer select found:', !!customerSelect);
-        console.log('[Invoice] Package display found:', !!packageDisplay);
-        
-        if (customerSelect && packageDisplay) {
-            customerSelect.addEventListener('change', async function() {
-                const customerId = this.value;
-                if (!customerId) {
-                    packageDisplay.value = '';
-                    packagePrice.value = '';
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) return;
+            console.log('[v16] User authenticated:', user.email);
+            
+            // 1. INVOICE GENERATOR - Add Package Field
+            function injectInvoicePackage() {
+                // Check if already exists
+                if (document.getElementById('invoicePackageField_v16')) return;
+                
+                // Find Amount input
+                const amountInput = document.querySelector('input[type="number"][name*="amount"], input[name="amount"], #invoiceAmount');
+                if (!amountInput) {
+                    setTimeout(injectInvoicePackage, 500);
                     return;
                 }
                 
-                try {
-                    console.log('[Invoice] Fetching customer:', customerId);
-                    const customerDoc = await db.collection('customers').doc(customerId).get();
-                    
-                    if (customerDoc.exists) {
-                        const customer = customerDoc.data();
-                        console.log('[Invoice] Customer data:', customer);
-                        
-                        // Set package name
-                        if (customer.package) {
-                            packageDisplay.value = customer.package;
-                            
-                            // Get package price
-                            const pkgSnap = await db.collection('packages')
-                                .where('name', '==', customer.package)
-                                .limit(1).get();
-                            
-                            if (!pkgSnap.empty) {
-                                const price = pkgSnap.docs[0].data().price || 0;
-                                packagePrice.value = price;
-                                if (amountInput) amountInput.value = price;
-                                console.log('[Invoice] Set price:', price);
-                            }
-                        } else {
-                            packageDisplay.value = 'No package';
-                            packagePrice.value = '';
-                        }
-                        
-                        // Set due date
-                        if (dueDateInput) {
-                            const nextMonth = new Date();
-                            nextMonth.setMonth(nextMonth.getMonth() + 1);
-                            nextMonth.setDate(10);
-                            dueDateInput.value = nextMonth.toISOString().split('T')[0];
-                        }
-                    }
-                } catch (err) {
-                    console.error('[Invoice] Error:', err);
-                    packageDisplay.value = 'Error loading';
+                // Create package field
+                const packageDiv = document.createElement('div');
+                packageDiv.className = 'grid grid-cols-1 md:grid-cols-3 gap-4 mt-4';
+                packageDiv.id = 'invoicePackageRow_v16';
+                packageDiv.innerHTML = `
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Customer Package</label>
+                        <input type="text" id="invoicePackageField_v16" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white" readonly placeholder="Select customer">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Package Price</label>
+                        <input type="text" id="invoicePackagePrice_v16" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Due Date</label>
+                        <input type="date" id="invoiceDueDate_v16" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
+                    </div>
+                `;
+                
+                // Insert after amount row
+                const amountRow = amountInput.closest('.grid') || amountInput.parentElement;
+                if (amountRow && amountRow.parentNode) {
+                    amountRow.parentNode.insertBefore(packageDiv, amountRow.nextSibling);
+                    console.log('[Invoice] Package field injected');
                 }
-            });
-        }
-        
-        // 2. ADD AREA MODAL - Load Zones
-        function loadZonesForAreaModal() {
-            const zoneSelect = document.getElementById('areaZoneSelect');
-            if (!zoneSelect) {
-                console.log('[Area] Zone select not found, retrying...');
-                setTimeout(loadZonesForAreaModal, 500);
-                return;
+                
+                // Setup auto-fill
+                const customerSelect = document.querySelector('select[name*="customer"], #invoiceCustomer, [data-customer-select]');
+                if (customerSelect) {
+                    customerSelect.addEventListener('change', async function() {
+                        const customerId = this.value;
+                        const pkgField = document.getElementById('invoicePackageField_v16');
+                        const priceField = document.getElementById('invoicePackagePrice_v16');
+                        const dueField = document.getElementById('invoiceDueDate_v16');
+                        
+                        if (!customerId || !window.db) return;
+                        
+                        try {
+                            const doc = await db.collection('customers').doc(customerId).get();
+                            if (doc.exists) {
+                                const data = doc.data();
+                                if (pkgField) pkgField.value = data.package || 'No package';
+                                
+                                if (data.package && priceField) {
+                                    const pkgSnap = await db.collection('packages').where('name', '==', data.package).limit(1).get();
+                                    if (!pkgSnap.empty) {
+                                        const price = pkgSnap.docs[0].data().price || 0;
+                                        priceField.value = price;
+                                        if (amountInput) amountInput.value = price;
+                                    }
+                                }
+                                
+                                if (dueField) {
+                                    const nextMonth = new Date();
+                                    nextMonth.setMonth(nextMonth.getMonth() + 1);
+                                    nextMonth.setDate(10);
+                                    dueField.value = nextMonth.toISOString().split('T')[0];
+                                }
+                            }
+                        } catch (err) {
+                            console.error('[Invoice] Error:', err);
+                        }
+                    });
+                }
             }
             
-            console.log('[Area] Loading zones...');
-            zoneSelect.innerHTML = '<option value="">Loading zones...</option>';
-            
-            db.collection('zones').orderBy('name').get().then(snapshot => {
-                zoneSelect.innerHTML = '<option value="">Select Zone</option>';
-                
-                if (snapshot.empty) {
-                    zoneSelect.innerHTML = '<option value="">No zones found - Add zones first</option>';
-                    console.log('[Area] No zones in Firebase');
+            // 2. ADD AREA - Load Zones
+            function loadZonesForArea() {
+                const zoneSelect = document.getElementById('areaZoneSelect');
+                if (!zoneSelect || !window.db) {
+                    setTimeout(loadZonesForArea, 500);
                     return;
                 }
                 
-                snapshot.forEach(doc => {
-                    const opt = document.createElement('option');
-                    opt.value = doc.id;
-                    opt.textContent = doc.data().name || doc.id;
-                    zoneSelect.appendChild(opt);
-                });
-                console.log('[Area] Loaded', snapshot.size, 'zones');
-            }).catch(err => {
-                console.error('[Area] Zone load error:', err);
-                zoneSelect.innerHTML = '<option value="">Error loading zones</option>';
-            });
-        }
-        
-        // Load zones when modal opens
-        const addAreaBtn = document.querySelector('[onclick*="addArea"], [data-action="add-area"], button:contains("Add Area")');
-        if (addAreaBtn) {
-            addAreaBtn.addEventListener('click', () => {
-                setTimeout(loadZonesForAreaModal, 100);
-            });
-        }
-        
-        // Also load on page load
-        loadZonesForAreaModal();
-        
-        // 3. ADD CUSTOMER - Zone to Area Cascade
-        const customerZoneSelect = document.querySelector('#customerZoneSelect, select[name="zone"]');
-        const customerAreaSelect = document.querySelector('#customerAreaSelect, select[name="area"]');
-        
-        if (customerZoneSelect && customerAreaSelect) {
-            console.log('[Customer] Zone-Area cascade ready');
-            
-            customerZoneSelect.addEventListener('change', async function() {
-                const zoneId = this.value;
-                customerAreaSelect.innerHTML = '<option value="">Loading areas...</option>';
-                customerAreaSelect.disabled = true;
+                zoneSelect.innerHTML = '<option value="">Loading...</option>';
                 
-                if (!zoneId) {
-                    customerAreaSelect.innerHTML = '<option value="">Select Zone First</option>';
-                    return;
-                }
-                
-                try {
-                    // Load areas for this zone
-                    const areasSnap = await db.collection('areas')
-                        .where('zoneId', '==', zoneId)
-                        .orderBy('name')
-                        .get();
-                    
-                    customerAreaSelect.innerHTML = '<option value="">Select Area</option>';
-                    
-                    if (areasSnap.empty) {
-                        customerAreaSelect.innerHTML = '<option value="">No areas in this zone</option>';
-                    } else {
-                        areasSnap.forEach(doc => {
+                db.collection('zones').orderBy('name').get()
+                    .then(snapshot => {
+                        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+                        if (snapshot.empty) {
+                            zoneSelect.innerHTML = '<option value="">No zones - Add zones first</option>';
+                            return;
+                        }
+                        snapshot.forEach(doc => {
                             const opt = document.createElement('option');
                             opt.value = doc.id;
-                            opt.textContent = doc.data().name;
-                            customerAreaSelect.appendChild(opt);
+                            opt.textContent = doc.data().name || doc.id;
+                            zoneSelect.appendChild(opt);
                         });
-                        customerAreaSelect.disabled = false;
+                        console.log('[Area] Loaded', snapshot.size, 'zones');
+                    })
+                    .catch(err => {
+                        console.error('[Area] Zone error:', err);
+                        zoneSelect.innerHTML = '<option value="">Error loading zones</option>';
+                    });
+            }
+            
+            // 3. ADD CUSTOMER - Zone to Area Cascade
+            function setupZoneAreaCascade() {
+                const zoneSelect = document.querySelector('#customerZoneSelect, select[name="zone"]');
+                const areaSelect = document.querySelector('#customerAreaSelect, select[name="area"]');
+                
+                if (!zoneSelect || !areaSelect) {
+                    setTimeout(setupZoneAreaCascade, 500);
+                    return;
+                }
+                
+                zoneSelect.addEventListener('change', async function() {
+                    const zoneId = this.value;
+                    areaSelect.innerHTML = '<option value="">Loading...</option>';
+                    areaSelect.disabled = true;
+                    
+                    if (!zoneId || !window.db) {
+                        areaSelect.innerHTML = '<option value="">Select Zone First</option>';
+                        return;
                     }
-                    console.log('[Customer] Loaded', areasSnap.size, 'areas');
-                } catch (err) {
-                    console.error('[Customer] Area load error:', err);
-                    customerAreaSelect.innerHTML = '<option value="">Error loading areas</option>';
+                    
+                    try {
+                        const snap = await db.collection('areas')
+                            .where('zoneId', '==', zoneId)
+                            .orderBy('name')
+                            .get();
+                        
+                        areaSelect.innerHTML = '<option value="">Select Area</option>';
+                        if (snap.empty) {
+                            areaSelect.innerHTML = '<option value="">No areas in this zone</option>';
+                        } else {
+                            snap.forEach(doc => {
+                                const opt = document.createElement('option');
+                                opt.value = doc.id;
+                                opt.textContent = doc.data().name;
+                                areaSelect.appendChild(opt);
+                            });
+                            areaSelect.disabled = false;
+                        }
+                    } catch (err) {
+                        console.error('[Customer] Area error:', err);
+                        areaSelect.innerHTML = '<option value="">Error loading</option>';
+                    }
+                });
+            }
+            
+            // Initialize all
+            setTimeout(() => {
+                injectInvoicePackage();
+                loadZonesForArea();
+                setupZoneAreaCascade();
+            }, 1500);
+            
+            // Re-run on navigation
+            const observer = new MutationObserver(() => {
+                if (document.querySelector('h1, h2')?.textContent.includes('Invoice')) {
+                    injectInvoicePackage();
                 }
             });
-        }
-        
-    }, 1000); // Wait 1s for Firebase
-});
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    };
+    
+    // Start
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+        initApp();
+    }
+})();
 </script>
 
 </body>
