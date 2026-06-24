@@ -1470,8 +1470,8 @@
             <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" id="customerZoneSelect" data-zone-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" id="customerAreaSelect" data-area-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
@@ -1847,24 +1847,6 @@
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
             <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Zones</option>
-    </select>
-    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
-        <option value="">All Areas</option>
-    </select>
-    <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Staff</option>
-    </select>
-    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Print Monthly
-    </button>
-</div>
-
           <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
             <i data-lucide="download" class="w-5 h-5"></i> Export CSV
           </button>
@@ -2362,14 +2344,7 @@ service cloud.firestore {
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
         <form id="area-form">
           <div>
-            
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-300 mb-2">Zone *</label>
-    <select id="areaZoneSelect" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
-        <option value="">Select Zone</option>
-    </select>
-</div>
-<label class="text-sm font-medium mb-2 block">Area Name *</label>
+            <label class="text-sm font-medium mb-2 block">Area Name *</label>
             <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
           <div class="flex gap-3 mt-6">
@@ -3245,235 +3220,5 @@ service cloud.firestore {
 </script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
-
-
-
-
-<script>
-// ISP Billing v13 - All Features Working
-const ZONE_AREAS = {
-    'K. P. Bag': ['Biler Kani', 'Kola Bagan', 'Grameen Towar', 'Shahi Mosjid', 'Talukdar Bari Road', 'Pathan Bari', 'Hazi Bari', 'Bot Tola'],
-    'Uttara': ['Sector 1', 'Sector 3', 'Sector 7', 'Sector 10', 'Sector 12'],
-    'Mirpur': ['Mirpur 1', 'Mirpur 10', 'Mirpur 12', 'Kafrul', 'Pallabi'],
-    'Dhanmondi': ['Dhanmondi 27', 'Dhanmondi 32', 'Jigatola', 'Kalabagan']
-};
-
-// Wait for Firebase and DOM
-firebase.auth().onAuthStateChanged(async (user) => {
-    if (!user) return;
-    
-    // 1. Load Zones for all dropdowns
-    const zoneSelects = document.querySelectorAll('#customerZoneSelect, #billsFilterZone, #areaZoneSelect');
-    zoneSelects.forEach(select => {
-        if (select && select.options.length <= 1) {
-            Object.keys(ZONE_AREAS).forEach(zone => {
-                const opt = document.createElement('option');
-                opt.value = zone;
-                opt.textContent = zone;
-                select.appendChild(opt);
-            });
-        }
-    });
-    
-    // 2. Zone -> Area Cascade for Add Customer
-    const customerZone = document.getElementById('customerZoneSelect');
-    const customerArea = document.getElementById('customerAreaSelect');
-    
-    if (customerZone && customerArea) {
-        customerZone.addEventListener('change', function() {
-            const zone = this.value;
-            customerArea.innerHTML = '<option value="">Select Area</option>';
-            
-            if (zone && ZONE_AREAS[zone]) {
-                customerArea.disabled = false;
-                ZONE_AREAS[zone].forEach(area => {
-                    const opt = document.createElement('option');
-                    opt.value = area;
-                    opt.textContent = area;
-                    customerArea.appendChild(opt);
-                });
-            } else {
-                customerArea.disabled = true;
-            }
-        });
-    }
-    
-    // 3. Invoice Generator - Auto-fill Package
-    const invoiceCustomer = document.getElementById('invoiceCustomer') || document.querySelector('select[name="customer"]');
-    const invoicePackage = document.getElementById('invoicePackageField');
-    const invoiceAmount = document.getElementById('invoiceAmount');
-    const invoiceDueDate = document.getElementById('invoiceDueDateField');
-    
-    if (invoiceCustomer) {
-        invoiceCustomer.addEventListener('change', async function() {
-            const customerId = this.value;
-            if (!customerId) return;
-            
-            try {
-                const doc = await firebase.firestore().collection('customers').doc(customerId).get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    
-                    // Fill package
-                    if (invoicePackage && data.package) {
-                        invoicePackage.value = data.package;
-                    }
-                    
-                    // Fill amount from package
-                    if (data.package && invoiceAmount) {
-                        const pkgSnap = await firebase.firestore().collection('packages').where('name', '==', data.package).limit(1).get();
-                        if (!pkgSnap.empty) {
-                            invoiceAmount.value = pkgSnap.docs[0].data().price || '';
-                        }
-                    }
-                    
-                    // Set due date to next month 10th
-                    if (invoiceDueDate) {
-                        const nextMonth = new Date();
-                        nextMonth.setMonth(nextMonth.getMonth() + 1);
-                        nextMonth.setDate(10);
-                        invoiceDueDate.value = nextMonth.toISOString().split('T')[0];
-                    }
-                }
-            } catch (err) {
-                console.error('Invoice auto-fill error:', err);
-            }
-        });
-    }
-    
-    // 4. Bills Page Filters
-    const billsFilterZone = document.getElementById('billsFilterZone');
-    const billsFilterArea = document.getElementById('billsFilterArea');
-    const billsFilterStaff = document.getElementById('billsFilterStaff');
-    const billsFilterCustomer = document.getElementById('billsFilterCustomer');
-    const billsFilterMonth = document.getElementById('billsFilterMonth');
-    const billsPrintBtn = document.getElementById('billsPrintMonthly');
-    
-    // Zone -> Area cascade for bills filter
-    if (billsFilterZone && billsFilterArea) {
-        billsFilterZone.addEventListener('change', function() {
-            const zone = this.value;
-            billsFilterArea.innerHTML = '<option value="">All Areas</option>';
-            
-            if (zone && ZONE_AREAS[zone]) {
-                billsFilterArea.disabled = false;
-                ZONE_AREAS[zone].forEach(area => {
-                    const opt = document.createElement('option');
-                    opt.value = area;
-                    opt.textContent = area;
-                    billsFilterArea.appendChild(opt);
-                });
-            } else {
-                billsFilterArea.disabled = true;
-            }
-            loadFilteredBills();
-        });
-    }
-    
-    // Load staff for filter
-    if (billsFilterStaff) {
-        firebase.firestore().collection('staff').get().then(snap => {
-            snap.forEach(doc => {
-                const opt = document.createElement('option');
-                opt.value = doc.id;
-                opt.textContent = doc.data().name;
-                billsFilterStaff.appendChild(opt);
-            });
-        });
-    }
-    
-    // Filter change events
-    [billsFilterArea, billsFilterStaff, billsFilterMonth].forEach(el => {
-        el?.addEventListener('change', loadFilteredBills);
-    });
-    billsFilterCustomer?.addEventListener('input', debounce(loadFilteredBills, 500));
-    
-    // Monthly Print
-    if (billsPrintBtn) {
-        billsPrintBtn.addEventListener('click', function() {
-            const month = billsFilterMonth?.value;
-            if (!month) {
-                alert('Please select a month first');
-                return;
-            }
-            // Create printable version
-            const printWindow = window.open('', '_blank');
-            const billsTable = document.querySelector('#billsTable')?.outerHTML || '';
-            printWindow.document.write(`
-                <html>
-                <head><title>Monthly Bills - ${month}</title>
-                <style>
-                    body { font-family: Arial; padding: 20px; }
-                    table { width: 100%; border-collapse: collapse; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background: #f0f0f0; }
-                    h1 { text-align: center; }
-                </style>
-                </head>
-                <body>
-                    <h1>Monthly Bills Report - ${month}</h1>
-                    ${billsTable}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        });
-    }
-    
-    // Load filtered bills function
-    async function loadFilteredBills() {
-        const zone = billsFilterZone?.value;
-        const area = billsFilterArea?.value;
-        const staff = billsFilterStaff?.value;
-        const customer = billsFilterCustomer?.value.toLowerCase();
-        const month = billsFilterMonth?.value;
-        
-        let query = firebase.firestore().collection('bills');
-        
-        if (zone) query = query.where('zone', '==', zone);
-        if (area) query = query.where('area', '==', area);
-        if (staff) query = query.where('staffId', '==', staff);
-        
-        if (month) {
-            const start = new Date(month + '-01');
-            const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
-            query = query.where('date', '>=', start).where('date', '<=', end);
-        }
-        
-        try {
-            const snap = await query.get();
-            let bills = [];
-            snap.forEach(doc => bills.push({id: doc.id, ...doc.data()}));
-            
-            if (customer) {
-                bills = bills.filter(b => 
-                    b.customerName?.toLowerCase().includes(customer) || 
-                    b.customerMobile?.includes(customer)
-                );
-            }
-            
-            // Call your existing render function
-            if (typeof renderBillsTable === 'function') {
-                renderBillsTable(bills);
-            } else {
-                console.log('Filtered bills:', bills);
-            }
-        } catch (err) {
-            console.error('Bills filter error:', err);
-        }
-    }
-    
-    // Helper
-    function debounce(func, wait) {
-        let timeout;
-        return function(...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    }
-});
-</script>
-
 </body>
 </html>
