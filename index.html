@@ -1831,7 +1831,7 @@
     }
   };
 
-  const renderBills = (myBills = false) => {
+    const renderBills = (myBills = false) => {
     const list = myBills && currentRole === 'customer'
       ? appState.bills.filter(b => b.customerId === currentUser.uid)
       : appState.bills;
@@ -1842,84 +1842,59 @@
 
     container.innerHTML = `
       <div class="space-y-4 fade-in">
-        <div class="flex flex-col sm:flex-row gap-3">
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+          ${currentRole !== 'customer' ? `
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
             <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-    ${currentRole === 'admin' ? `
-    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Zones</option>
-    </select>
-    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
-        <option value="">All Areas</option>
-    </select>
-    <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Staff</option>
-    </select>
-    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    ` : currentRole === 'staff' ? `
-    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Zones</option>
-    </select>
-    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
-        <option value="">All Areas</option>
-    </select>
-    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    ` : ``}
-    <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Status</option>
-        <option value="paid">Paid</option>
-        <option value="unpaid">Unpaid</option>
-    </select>
-    <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Print Monthly
-    </button>
-    <button id="billsExportCSV" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
-        Export CSV
-    </button>
-</div>
-
-          <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
-            <i data-lucide="download" class="w-5 h-5"></i> Export CSV
-          </button>
-        </div>
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
-        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-          <div class="table-container">
-            <table class="w-full">
-              <thead class="bg-[rgb(var(--border))] text-sm">
-                <tr>
-                  <th class="text-left p-4 font-semibold">Invoice</th>
-                  ${currentRole !== 'customer' ? '<th class="text-left p-4 font-semibold">Customer</th>' : ''}
-                  <th class="text-left p-4 font-semibold">Amount</th>
-                  <th class="text-left p-4 font-semibold">Method</th>
-                  <th class="text-left p-4 font-semibold">Status</th>
-                  <th class="text-left p-4 font-semibold">Date</th>
-                  <th class="text-right p-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="bills-tbody">${renderBillsTable(list)}</tbody>
-            </table>
+          ` : ''}
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 flex-1" id="billsAdvancedFilters">
+            ${currentRole === 'admin' ? `
+            <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                <option value="">All Zones</option>
+            </select>
+            <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
+                <option value="">All Areas</option>
+            </select>
+            <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                <option value="">All Staff</option>
+            </select>
+            <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+            ` : currentRole === 'staff' ? `
+            <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                <option value="">All Zones</option>
+            </select>
+            <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
+                <option value="">All Areas</option>
+            </select>
+            <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+            ` : ``}
+            <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+            <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                <option value="">All Status</option>
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+            </select>
+            <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print Monthly
+            </button>
+            <button id="billsExportCSV" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Export CSV
+            </button>
           </div>
         </div>
-        `}
+        <div id="bills-table-container">
+          ${isLoadingData ? '<div class="text-center py-8">Loading bills...</div>' : renderBillsTable(list)}
+        </div>
       </div>
     `;
-
-    $('#search-bill')?.addEventListener('input', debounce((e) => {
-      const q = e.target.value.toLowerCase();
-      const filtered = list.filter(b => 
-        b.invoiceNo?.toLowerCase().includes(q) || 
-        b.customerName?.toLowerCase().includes(q) ||
-        b.trxId?.toLowerCase().includes(q)
-      );
-      $('#bills-tbody').innerHTML = renderBillsTable(filtered);
-      lucide.createIcons();
-    }, 300));
+    
+    if (window.lucide) lucide.createIcons();
+    attachBillsFilters();
+  };, 300));
   };
 
   const renderBillsTable = (bills) => {
