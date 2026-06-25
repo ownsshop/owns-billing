@@ -338,7 +338,35 @@
   let paymentChart = null;
   let collectionChart = null;
   
-  const appState = {
+  
+      const printMonthlyBills = () => {
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const monthlyBills = appState.bills.filter(b => {
+          const billDate = toDate(b.createdAt);
+          return billDate && billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
+        });
+        const filtered = filterBillsByRole(monthlyBills);
+        if (filtered.length === 0) return showToast('No bills found for this month', 'error');
+        window.print();
+      };
+
+      const exportBillsCSV = () => {
+        const filtered = filterBillsByRole(appState.bills);
+        if (filtered.length === 0) return showToast('No bills to export', 'error');
+        const csv = 'Invoice,Customer,Amount,Method,Status,Date\n' + filtered.map(b => 
+          `${b.invoiceNo || ''},${b.customerName || ''},${b.amount || 0},${b.paymentMethod || ''},${b.status || ''},${formatDate(b.createdAt)}`
+        ).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bills_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        showToast('CSV exported successfully', 'success');
+      };
+
+      const appState = {
     users: [],
     customers: [],
     packages: [],
@@ -1831,7 +1859,18 @@
     }
   };
 
-  const renderBills = (myBills = false) => {
+  const filterBillsByRole = (bills) => {
+        if (currentUserRole === 'staff') {
+          // Staff sees only bills of customers assigned to them
+          const staffCustomers = appState.customers.filter(c => c.staffId === currentUser.uid).map(c => c.id);
+          return bills.filter(bill => staffCustomers.includes(bill.customerId));
+        } else if (currentUserRole === 'customer') {
+          // Customer sees only their own bills
+          return bills.filter(bill => bill.customerId === currentUser.uid);
+        }
+        return bills; // Admin sees all
+      };
+      const renderBills = (myBills = false) => {
     const list = myBills && currentRole === 'customer'
       ? appState.bills.filter(b => b.customerId === currentUser.uid)
       : appState.bills;
@@ -1845,10 +1884,9 @@
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-bill" type="text" ${currentUser.role === 'customer' ? 'style="display:none"' : ''} placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-    ${currentUser.role === 'admin' ? `
     <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
         <option value="">All Zones</option>
     </select>
@@ -1858,23 +1896,12 @@
     <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
         <option value="">All Staff</option>
     </select>
-    ` : currentUser.role === 'staff' ? `
-    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Zones</option>
-    </select>
-    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
-        <option value="">All Areas</option>
-    </select>
-    ` : ``}
-    ${currentUser.role !== 'customer' ? `
-    <input id="billsFilterCustomer" type="text" placeholder="Customer name/ID" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <input id="billsFilterDate" type="date" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    ` : ``}
-    <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Status</option>
-        <option value="paid">Paid</option>
-        <option value="unpaid">Unpaid</option>
-    </select>
+    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+        Print Monthly
+    </button>
 </div>
 
           <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
