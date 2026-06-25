@@ -3414,61 +3414,84 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
                 
-<script id="role-fix-v5">
-// Wait for everything to load
-document.addEventListener('DOMContentLoaded', function() {
-  const applyRoleFilters = () => {
-    const role = window.currentRole || (window.currentUser && window.currentUser.role);
-    if (!role) return;
-    
-    const staffFilter = document.getElementById('billsFilterStaff');
-    const zoneFilter = document.getElementById('billsFilterZone');
-    const areaFilter = document.getElementById('billsFilterArea');
-    const customerFilter = document.getElementById('billsFilterCustomer');
-    const searchDiv = document.querySelector('#search-bill')?.parentElement;
-    
-    if (role === 'staff') {
-      if (staffFilter) staffFilter.style.display = 'none';
-    } else if (role === 'customer') {
-      if (staffFilter) staffFilter.style.display = 'none';
-      if (zoneFilter) zoneFilter.style.display = 'none';
-      if (areaFilter) areaFilter.style.display = 'none';
-      if (customerFilter) customerFilter.style.display = 'none';
-      if (searchDiv) searchDiv.style.display = 'none';
-    }
+<script id="role-fix-v6">
+// Use MutationObserver to catch when bills page loads
+const observer = new MutationObserver((mutations) => {
+  // Check if we're on bills page
+  if (!document.querySelector('#billsFilterZone') && !document.querySelector('#billsFilterStaff')) return;
+  
+  // Get role from multiple sources
+  const getRole = () => {
+    if (window.currentRole) return window.currentRole;
+    if (window.currentUser?.role) return window.currentUser.role;
+    if (window.userData?.role) return window.userData.role;
+    // Check from DOM
+    const roleEl = document.querySelector('[data-role]');
+    if (roleEl) return roleEl.getAttribute('data-role');
+    return null;
   };
   
-  // Run after each render
-  const originalRender = window.render;
-  if (typeof originalRender === 'function') {
-    window.render = function() {
-      const result = originalRender.apply(this, arguments);
-      setTimeout(applyRoleFilters, 200);
-      return result;
-    };
+  const role = getRole();
+  if (!role) {
+    console.log('[RoleFix] Role not found yet, waiting...');
+    return;
   }
   
-  // Initial run
-  setTimeout(applyRoleFilters, 1000);
+  console.log('[RoleFix] Applying filters for role:', role);
   
-  // Data filtering
-  const originalFilterBills = window.filterBills;
-  window.filterBills = function(bills) {
-    let result = bills;
-    if (originalFilterBills) result = originalFilterBills(bills);
-    
-    const role = window.currentRole || (window.currentUser && window.currentUser.role);
-    const uid = window.currentUser?.uid;
-    
-    if (role === 'staff' && uid && window.appState?.customers) {
-      const myCustomerIds = appState.customers.filter(c => c.staffId === uid).map(c => c.id);
-      result = result.filter(b => myCustomerIds.includes(b.customerId));
-    } else if (role === 'customer' && uid) {
-      result = result.filter(b => b.customerId === uid);
-    }
-    return result;
+  // Hide elements based on role
+  const hide = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
   };
+  
+  if (role === 'staff') {
+    hide('billsFilterStaff'); // All Staff dropdown gone
+  } else if (role === 'customer') {
+    hide('billsFilterStaff');
+    hide('billsFilterZone');
+    hide('billsFilterArea');
+    hide('billsFilterCustomer');
+    // Hide search box
+    const search = document.getElementById('search-bill');
+    if (search) search.parentElement.style.display = 'none';
+  }
+  
+  // Add Print Monthly if missing
+  if (!document.getElementById('billsPrintMonthly') && document.getElementById('billsAdvancedFilters')) {
+    const btn = document.createElement('button');
+    btn.id = 'billsPrintMonthly';
+    btn.className = 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2';
+    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Print Monthly';
+    btn.onclick = () => window.print();
+    document.getElementById('billsAdvancedFilters').appendChild(btn);
+  }
+  
+  // Data filtering - override fetchBills or similar
+  if (window.appState && window.appState.bills) {
+    const originalBills = window.appState.bills;
+    const uid = window.currentUser?.uid;
+    if (role === 'staff' && uid) {
+      const myCustomers = (window.appState.customers || []).filter(c => c.staffId === uid).map(c => c.id);
+      window.appState.bills = originalBills.filter(b => myCustomerIds.includes(b.customerId));
+    } else if (role === 'customer' && uid) {
+      window.appState.bills = originalBills.filter(b => b.customerId === uid);
+    }
+  }
 });
+
+// Start observing
+observer.observe(document.body, { childList: true, subtree: true });
+
+// Also run on auth state change
+if (window.firebase && firebase.auth) {
+  firebase.auth().onAuthStateChanged(() => {
+    setTimeout(() => {
+      const event = new Event('DOMContentLoaded');
+      document.dispatchEvent(event);
+    }, 500);
+  });
+}
 </script>
 \n</body>
                 </html>
@@ -3533,61 +3556,84 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 
-<script id="role-fix-v5">
-// Wait for everything to load
-document.addEventListener('DOMContentLoaded', function() {
-  const applyRoleFilters = () => {
-    const role = window.currentRole || (window.currentUser && window.currentUser.role);
-    if (!role) return;
-    
-    const staffFilter = document.getElementById('billsFilterStaff');
-    const zoneFilter = document.getElementById('billsFilterZone');
-    const areaFilter = document.getElementById('billsFilterArea');
-    const customerFilter = document.getElementById('billsFilterCustomer');
-    const searchDiv = document.querySelector('#search-bill')?.parentElement;
-    
-    if (role === 'staff') {
-      if (staffFilter) staffFilter.style.display = 'none';
-    } else if (role === 'customer') {
-      if (staffFilter) staffFilter.style.display = 'none';
-      if (zoneFilter) zoneFilter.style.display = 'none';
-      if (areaFilter) areaFilter.style.display = 'none';
-      if (customerFilter) customerFilter.style.display = 'none';
-      if (searchDiv) searchDiv.style.display = 'none';
-    }
+<script id="role-fix-v6">
+// Use MutationObserver to catch when bills page loads
+const observer = new MutationObserver((mutations) => {
+  // Check if we're on bills page
+  if (!document.querySelector('#billsFilterZone') && !document.querySelector('#billsFilterStaff')) return;
+  
+  // Get role from multiple sources
+  const getRole = () => {
+    if (window.currentRole) return window.currentRole;
+    if (window.currentUser?.role) return window.currentUser.role;
+    if (window.userData?.role) return window.userData.role;
+    // Check from DOM
+    const roleEl = document.querySelector('[data-role]');
+    if (roleEl) return roleEl.getAttribute('data-role');
+    return null;
   };
   
-  // Run after each render
-  const originalRender = window.render;
-  if (typeof originalRender === 'function') {
-    window.render = function() {
-      const result = originalRender.apply(this, arguments);
-      setTimeout(applyRoleFilters, 200);
-      return result;
-    };
+  const role = getRole();
+  if (!role) {
+    console.log('[RoleFix] Role not found yet, waiting...');
+    return;
   }
   
-  // Initial run
-  setTimeout(applyRoleFilters, 1000);
+  console.log('[RoleFix] Applying filters for role:', role);
   
-  // Data filtering
-  const originalFilterBills = window.filterBills;
-  window.filterBills = function(bills) {
-    let result = bills;
-    if (originalFilterBills) result = originalFilterBills(bills);
-    
-    const role = window.currentRole || (window.currentUser && window.currentUser.role);
-    const uid = window.currentUser?.uid;
-    
-    if (role === 'staff' && uid && window.appState?.customers) {
-      const myCustomerIds = appState.customers.filter(c => c.staffId === uid).map(c => c.id);
-      result = result.filter(b => myCustomerIds.includes(b.customerId));
-    } else if (role === 'customer' && uid) {
-      result = result.filter(b => b.customerId === uid);
-    }
-    return result;
+  // Hide elements based on role
+  const hide = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
   };
+  
+  if (role === 'staff') {
+    hide('billsFilterStaff'); // All Staff dropdown gone
+  } else if (role === 'customer') {
+    hide('billsFilterStaff');
+    hide('billsFilterZone');
+    hide('billsFilterArea');
+    hide('billsFilterCustomer');
+    // Hide search box
+    const search = document.getElementById('search-bill');
+    if (search) search.parentElement.style.display = 'none';
+  }
+  
+  // Add Print Monthly if missing
+  if (!document.getElementById('billsPrintMonthly') && document.getElementById('billsAdvancedFilters')) {
+    const btn = document.createElement('button');
+    btn.id = 'billsPrintMonthly';
+    btn.className = 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2';
+    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Print Monthly';
+    btn.onclick = () => window.print();
+    document.getElementById('billsAdvancedFilters').appendChild(btn);
+  }
+  
+  // Data filtering - override fetchBills or similar
+  if (window.appState && window.appState.bills) {
+    const originalBills = window.appState.bills;
+    const uid = window.currentUser?.uid;
+    if (role === 'staff' && uid) {
+      const myCustomers = (window.appState.customers || []).filter(c => c.staffId === uid).map(c => c.id);
+      window.appState.bills = originalBills.filter(b => myCustomerIds.includes(b.customerId));
+    } else if (role === 'customer' && uid) {
+      window.appState.bills = originalBills.filter(b => b.customerId === uid);
+    }
+  }
 });
+
+// Start observing
+observer.observe(document.body, { childList: true, subtree: true });
+
+// Also run on auth state change
+if (window.firebase && firebase.auth) {
+  firebase.auth().onAuthStateChanged(() => {
+    setTimeout(() => {
+      const event = new Event('DOMContentLoaded');
+      document.dispatchEvent(event);
+    }, 500);
+  });
+}
 </script>
 \n</body>
 </html>
