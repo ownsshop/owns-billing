@@ -338,35 +338,7 @@
   let paymentChart = null;
   let collectionChart = null;
   
-  
-      const printMonthlyBills = () => {
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        const monthlyBills = appState.bills.filter(b => {
-          const billDate = toDate(b.createdAt);
-          return billDate && billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
-        });
-        const filtered = filterBillsByRole(monthlyBills);
-        if (filtered.length === 0) return showToast('No bills found for this month', 'error');
-        window.print();
-      };
-
-      const exportBillsCSV = () => {
-        const filtered = filterBillsByRole(appState.bills);
-        if (filtered.length === 0) return showToast('No bills to export', 'error');
-        const csv = 'Invoice,Customer,Amount,Method,Status,Date\n' + filtered.map(b => 
-          `${b.invoiceNo || ''},${b.customerName || ''},${b.amount || 0},${b.paymentMethod || ''},${b.status || ''},${formatDate(b.createdAt)}`
-        ).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `bills_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        showToast('CSV exported successfully', 'success');
-      };
-
-      const appState = {
+  const appState = {
     users: [],
     customers: [],
     packages: [],
@@ -1426,489 +1398,60 @@
   };
 
   const renderCustomersRows = (list) => {
-    if (!list.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No customers found</td></tr>`;
-    return list.map(c => {
-      const due = appState.bills.filter(b => b.customerId === c.id && b.status === 'unpaid').reduce((s,b)=>s+b.amount,0);
-      const statusBadge = currentRole === 'staff' ? `
-        <td class="p-4">
-          <span class="badge ${c.status === 'approved' || !c.status ? 'bg-emerald-500/20 text-emerald-600' : c.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
-            ${c.status || 'approved'}
-          </span>
-        </td>
-      ` : '';
-      return `
-      <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-        <td class="p-4">
-          <div class="font-semibold">${c.name || '-'}</div>
-          <div class="text-xs text-slate-500">${c.pppoeUser || '-'}</div>
-        </td>
-        <td class="p-4">
-          <div class="text-sm">${c.mobile || '-'}</div>
-          <div class="text-xs text-slate-500">${c.whatsapp || '-'}</div>
-        </td>
-        <td class="p-4">
-          <div class="text-sm font-medium text-sky-600">${c.packageName || '-'}</div>
-          <div class="text-xs text-slate-500">${c.packageSpeed || '-'}</div>
-        </td>
-        <td class="p-4 text-sm">${c.area || '-'}</td>
-        <td class="p-4">
-          <span class="px-3 py-1 rounded-full text-xs font-semibold ${due > 0 ? 'bg-rose-500/20 text-rose-600' : 'bg-emerald-500/20 text-emerald-600'}">
-            ${formatCurrency(due)}
-          </span>
-        </td>
-        ${statusBadge}
-        <td class="p-4">
-          <div class="flex items-center justify-end gap-2">
-            <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button">
-              <i data-lucide="eye" class="w-4 h-4"></i>
-            </button>
-            ${currentRole !== 'customer' ? `
-            <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="Create Invoice" type="button">
-              <i data-lucide="file-text" class="w-4 h-4"></i>
-            </button>
-            <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="WhatsApp" type="button">
-              <i data-lucide="message-circle" class="w-4 h-4"></i>
-            </button>
-            ` : ''}
-            ${(currentRole === 'admin' || (currentRole === 'staff' && c.addedBy === currentUser.uid)) ? `
-            <button onclick="showCustomerForm('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="Edit" type="button">
-              <i data-lucide="edit" class="w-4 h-4"></i>
-            </button>
-            ` : ''}
-          </div>
-        </td>
-      </tr>
-    `}).join('');
-  };
-
-  window.showCustomerForm = (id = null) => {
-    const customer = id ? appState.users.find(u => u.id === id) : null;
-    const staffList = appState.users.filter(u => u.role === 'staff' && (u.status === 'approved' || !u.status));
-    const areaOptions = (appState.areas || []).map(a => `<option value="${a.name}" ${customer?.area===a.name?'selected':''}>${a.name}</option>`).join('');
-    const zoneOptions = (appState.zones || []).map(z => `<option value="${z.name}" ${customer?.zone===z.name?'selected':''}>${z.name}</option>`).join('');
-    
-    showModal(`
-      <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
-        <form id="customer-form">
-          <div class="grid md:grid-cols-2 gap-4">
-            <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${customer?.mobile||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" id="customerZoneSelect" data-zone-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" id="customerAreaSelect" data-area-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">Assigned Staff</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Staff</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
-            <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
-            ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" id="customer-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
-        </form>
-      </div>
-    `);
-
-    $('#customer-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = $('#customer-submit-btn');
-      submitBtn.classList.add('btn-loading');
-      submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2"></i>Saving...';
-      lucide.createIcons();
-
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      const pkg = appState.packages.find(p => p.id === data.packageId);
-      if (pkg) {
-        data.packageName = pkg.name;
-        data.packageSpeed = pkg.speed;
-        data.packagePrice = pkg.price;
-      }
-      data.role = 'customer';
-      data.status = currentRole === 'staff' ? 'pending' : 'approved';
-      data.addedBy = currentUser.uid;
-      
-      let userCred = null;
-      let docCreated = false;
-      
-      try {
-        console.log('[Customer Create] Starting. Data:', data);
-        if (id) {
-          await updateDoc(doc(db, 'users', id), data);
-          await logActivity('Update Customer', `Updated customer: ${data.name}`);
-          showToast('Customer updated successfully', 'success');
-        } else {
-          console.log('[Customer Create] Creating auth user for:', data.email);
-          const secondaryAut = initSecondaryAuth();
-          userCred = await createUserWithEmailAndPassword(secondaryAut, data.email, data.password);
-          console.log('[Customer Create] Auth user created:', userCred.user.uid);
-          
-          delete data.password;
-          const userData = {
-            ...data,
-            createdAt: serverTimestamp()
-          };
-          
-          console.log('[Customer Create] Creating Firestore doc');
-          await setDoc(doc(db, 'users', userCred.user.uid), userData);
-          docCreated = true;
-          console.log('[Customer Create] Firestore doc created');
-          
-          await logActivity('Add Customer', `Added customer: ${data.name} (${data.status})`);
-          showToast(`Customer added ${data.status === 'pending' ? 'and pending approval' : 'successfully'}`, 'success');
-        }
-        closeModal();
-        setTimeout(() => renderCustomers(myCustomers), 500);
-      } catch (err) {
-        console.error('[Customer Create] Error:', err);
-        if (userCred && !docCreated && secondaryAuth?.currentUser?.uid === userCred.user.uid) {
-          try {
-            console.log('[Customer Create] Rolling back auth user');
-            await deleteUser(userCred.user);
-            showToast('Failed to create customer. Auth user rolled back.', 'error');
-          } catch (deleteErr) {
-            console.error('Rollback failed:', deleteErr);
-            showToast('Error: ' + err.message, 'error');
-          }
-        } else {
-          showToast(err.message, 'error');
-        }
-      } finally {
-        submitBtn.classList.remove('btn-loading');
-        submitBtn.innerHTML = 'Save Customer';
-        lucide.createIcons();
-      }
-    });
-  };
-
-  window.viewCustomer = (id) => {
-    const c = appState.users.find(u => u.id === id);
-    const bills = appState.bills.filter(b => b.customerId === id);
-    showModal(`
-      <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">Customer Details</h3>
-        <div class="space-y-4">
-          ${Object.entries(c).filter(([k,v])=>!['id','role','createdAt','password','status'].includes(k)&&v).map(([k,v])=>`
-            <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
-              <span class="text-slate-500 capitalize">${k.replace(/([A-Z])/g,' $1')}</span>
-              <span class="font-semibold">${v}</span>
-            </div>
-          `).join('')}
-        </div>
-        ${bills.length ? `
-        <h4 class="font-bold mt-6 mb-3">Recent Bills</h4>
-        <div class="space-y-2">${bills.slice(0,5).map(b=>`
-          <div class="flex justify-between p-3 rounded-xl bg-[rgb(var(--border))]">
-            <span>${formatDate(b.createdAt)}</span>
-            <span class="font-semibold ${b.status==='paid'?'text-emerald-600':'text-rose-600'}">${formatCurrency(b.amount)}</span>
-          </div>
-        `).join('')}</div>
-        ` : ''}
-        <button onclick="closeModal()" class="w-full mt-6 py-3 rounded-xl border border-[rgb(var(--border))]" type="button">Close</button>
-      </div>
-    `);
-  };
-
-  const renderStaff = () => {
-    const list = appState.users.filter(u => u.role === 'staff');
-    const container = document.getElementById('view-staff');
-    if (!container) return;
-
-    container.innerHTML = `
+    if (!list.length) return `
       <div class="space-y-4 fade-in">
-        <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="user-plus" class="w-5 h-5"></i> Add Staff
-        </button>
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff...</span></div>' : `
-        <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
-          <div class="table-container">
-            <table class="w-full">
-              <thead class="bg-[rgb(var(--border))] text-sm">
-                <tr>
-                  <th class="text-left p-4 font-semibold">Name</th>
-                  <th class="text-left p-4 font-semibold">Contact</th>
-                  <th class="text-left p-4 font-semibold">Status</th>
-                  <th class="text-left p-4 font-semibold">Assigned Customers</th>
-                  <th class="text-right p-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${list.length ? list.map(s => {
-                  const assignedCount = appState.users.filter(u => u.assignedStaff === s.id && (u.status === 'approved' || !u.status)).length;
-                  return `
-                  <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-                    <td class="p-4"><div class="font-semibold">${s.name || '-'}</div><div class="text-xs text-slate-500">${s.email || '-'}</div></td>
-                    <td class="p-4 text-sm">${s.mobile || '-'}<br><span class="text-xs text-slate-500">${s.whatsapp || '-'}</span></td>
-                    <td class="p-4">
-                      <span class="badge ${s.status === 'approved' || !s.status ? 'bg-emerald-500/20 text-emerald-600' : s.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
-                        ${s.status || 'approved'}
-                      </span>
-                    </td>
-                    <td class="p-4"><span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-600 text-xs font-semibold">${assignedCount} customers</span></td>
-                    <td class="p-4"><div class="flex items-center justify-end gap-2">
-                      <button onclick="showStaffForm('${s.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                      <button onclick="deleteStaff('${s.id}')" class="p-2 rounded-lg hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div></td>
-                  </tr>
-                `}).join('') : `<tr><td colspan="5" class="p-8 text-center text-slate-500">No staff found</td></tr>`}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        `}
-      </div>
-    `;
-  };
-
-  window.showStaffForm = (id = null) => {
-    const staff = id ? appState.users.find(u => u.id === id) : null;
-    showModal(`
-      <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff</h3>
-        <form id="staff-form">
-          <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
-            ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
-            ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">Status</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="pending" ${staff?.status === 'pending' ? 'selected' : ''}>Pending</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" id="staff-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
-        </form>
-      </div>
-    `);
-
-    $('#staff-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = $('#staff-submit-btn');
-      submitBtn.classList.add('btn-loading');
-      submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2"></i>Saving...';
-      lucide.createIcons();
-
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      data.role = 'staff';
-      if (!id) data.status = 'pending';
-      data.addedBy = currentUser.uid;
-      
-      let userCred = null;
-      let docCreated = false;
-      
-      try {
-        console.log('[Staff Create] Starting. Email:', data.email);
-        if (id) {
-          await updateDoc(doc(db, 'users', id), data);
-          await logActivity('Update Staff', `Updated staff: ${data.name}`);
-          showToast('Staff updated', 'success');
-          closeModal();
-          renderStaff();
-        } else {
-          console.log('[Staff Create] Initializing secondary auth');
-          const secondaryAut = initSecondaryAuth();
-          console.log('[Staff Create] Creating auth user');
-          userCred = await createUserWithEmailAndPassword(secondaryAut, data.email, data.password);
-          console.log('[Staff Create] Auth user created UID:', userCred.user.uid);
-          
-          delete data.password;
-          const userData = {
-            ...data,
-            createdAt: serverTimestamp()
-          };
-          
-          console.log('[Staff Create] Creating Firestore doc');
-          await setDoc(doc(db, 'users', userCred.user.uid), userData);
-          docCreated = true;
-          console.log('[Staff Create] Firestore doc created successfully');
-          
-          await logActivity('Add Staff', `Added staff: ${data.name} (${data.status})`);
-          showToast('Staff created. Waiting for approval.', 'success');
-          closeModal();
-          setTimeout(() => renderStaff(), 500);
-        }
-      } catch (err) {
-        console.error('[Staff Create] Error:', err);
-        if (userCred && !docCreated && secondaryAuth?.currentUser?.uid === userCred.user.uid) {
-          try {
-            console.log('[Staff Create] Rolling back auth user');
-            await deleteUser(userCred.user);
-            showToast('Failed to create staff. Auth user rolled back.', 'error');
-          } catch (deleteErr) {
-            console.error('Rollback failed:', deleteErr);
-            showToast('Error: ' + err.message + ' (Manual cleanup may be needed)', 'error');
-          }
-        } else {
-          showToast(err.message, 'error');
-        }
-      } finally {
-        submitBtn.classList.remove('btn-loading');
-        submitBtn.innerHTML = 'Save Staff';
-        lucide.createIcons();
-      }
-    });
-  };
-
-  window.deleteStaff = async (id) => {
-    if (!confirm('Delete this staff member?')) return;
-    try {
-      await deleteDoc(doc(db, 'users', id));
-      await logActivity('Delete Staff', `Deleted staff`);
-      showToast('Staff deleted', 'success');
-      renderStaff();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  const renderPackages = () => {
-    const container = document.getElementById('view-packages');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="plus" class="w-5 h-5"></i> Add Package
-        </button>
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading packages...</span></div>' : `
-        <div class="grid md:grid-cols-3 gap-4">
-          ${appState.packages.map(p => `
-            <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition">
-              <div class="flex items-start justify-between mb-4">
-                <div>
-                  <h4 class="font-bold text-lg">${p.name || '-'}</h4>
-                  <p class="text-3xl font-bold text-sky-600 mt-2">${formatCurrency(p.price)}<span class="text-sm text-slate-500 font-normal">/mo</span></p>
-                </div>
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
-                  <i data-lucide="zap" class="w-6 h-6 text-white"></i>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 mb-4 text-slate-600 dark:text-slate-400">
-                <i data-lucide="gauge" class="w-4 h-4"></i>
-                <span class="text-sm font-medium">${p.speed || '-'}</span>
-              </div>
-              <div class="flex gap-2">
-                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">Edit</button>
-                <button onclick="deletePackage('${p.id}')" class="px-4 py-2 rounded-xl hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-              </div>
-            </div>
-          `).join('') || '<div class="col-span-3 glass rounded-2xl p-8 text-center text-slate-500">No packages found</div>'}
-        </div>
-        `}
-      </div>
-    `;
-  };
-
-  window.showPackageForm = (id = null) => {
-    const pkg = id ? appState.packages.find(p => p.id === id) : null;
-    showModal(`
-      <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
-        <form id="package-form">
-          <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Package Name *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Speed *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="e.g. 10 Mbps" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
-        </form>
-      </div>
-    `);
-
-    $('#package-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      data.price = Number(data.price);
-      try {
-        if (id) {
-          await updateDoc(doc(db, 'packages', id), data);
-          await logActivity('Update Package', `Updated package: ${data.name}`);
-        } else {
-          await addDoc(collection(db, 'packages'), { ...data, createdAt: serverTimestamp() });
-          await logActivity('Add Package', `Added package: ${data.name}`);
-        }
-        showToast('Package saved', 'success');
-        closeModal();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  };
-
-  window.deletePackage = async (id) => {
-    if (!confirm('Delete this package?')) return;
-    try {
-      await deleteDoc(doc(db, 'packages', id));
-      await logActivity('Delete Package', `Deleted package`);
-      showToast('Package deleted', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
-  const filterBillsByRole = (bills) => {
-        if (currentUserRole === 'staff') {
-          // Staff sees only bills of customers assigned to them
-          const staffCustomers = appState.customers.filter(c => c.staffId === currentUser.uid).map(c => c.id);
-          return bills.filter(bill => staffCustomers.includes(bill.customerId));
-        } else if (currentUserRole === 'customer') {
-          // Customer sees only their own bills
-          return bills.filter(bill => bill.customerId === currentUser.uid);
-        }
-        return bills; // Admin sees all
-      };
-      const renderBills = (myBills = false) => {
-    const list = myBills && currentRole === 'customer'
-      ? appState.bills.filter(b => b.customerId === currentUser.uid)
-      : appState.bills;
-
-    const viewId = myBills ? 'view-mybills' : 'view-bills';
-    const container = document.getElementById(viewId);
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        <div class="flex flex-col sm:flex-row gap-3">
+        <div class="flex flex-col lg:flex-row gap-3 mb-4">
+          ${currentRole === 'admin' ? `
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
             <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Zones</option>
-    </select>
-    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
-        <option value="">All Areas</option>
-    </select>
-    <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Staff</option>
-    </select>
-    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Print Monthly
-    </button>
-</div>
-
-          <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
-            <i data-lucide="download" class="w-5 h-5"></i> Export CSV
+          <select id="billsFilterZone" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm">
+            <option value="">All Zones</option>
+            ${appState.zones.map(z => `<option value="${z.id}">${z.name}</option>`).join('')}
+          </select>
+          <select id="billsFilterArea" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm" disabled>
+            <option value="">All Areas</option>
+          </select>
+          <select id="billsFilterStaff" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm">
+            <option value="">All Staff</option>
+            ${appState.users.filter(u => u.role === 'staff').map(s => `<option value="${s.uid}">${s.name}</option>`).join('')}
+          </select>
+          <input id="billsFilterCustomer" type="text" placeholder="Customer name/ID" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm">
+          ` : currentRole === 'staff' ? `
+          <div class="relative flex-1">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+          </div>
+          <select id="billsFilterZone" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm">
+            <option value="">All Zones</option>
+            ${appState.zones.map(z => `<option value="${z.id}">${z.name}</option>`).join('')}
+          </select>
+          <select id="billsFilterArea" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm" disabled>
+            <option value="">All Areas</option>
+          </select>
+          <input id="billsFilterCustomer" type="text" placeholder="Customer name/ID" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm">
+          ` : ``}
+          <input id="billsFilterDate" type="date" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm">
+          <select id="billsFilterStatus" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm">
+            <option value="">All Status</option>
+            <option value="paid">Paid</option>
+            <option value="unpaid">Unpaid</option>
+          </select>
+          <button onclick="printMonthlyBills()" class="px-4 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium flex items-center gap-2">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            Print Monthly
+          </button>
+          <button onclick="exportBillsCSV()" class="px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm font-medium flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            Export CSV
           </button>
         </div>
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
+        <div id="bills-table-container">
+          ${isLoadingData ? '<div class="text-center py-8">Loading bills...</div>' : renderBillsTable(filterBillsByRole(list))}
+        </div>
+      </div>
+    `
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
           <div class="table-container">
             <table class="w-full">
