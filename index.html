@@ -7,74 +7,7 @@
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<script src="https://cdn.tailwindcss.com">
-      // ===== Role-based Bills Filter Fix v3 =====
-      const applyBillsRoleFilter = () => {
-        if (currentView !== 'bills') return;
-        
-        const zoneFilter = document.getElementById('billsFilterZone');
-        const areaFilter = document.getElementById('billsFilterArea');
-        const staffFilter = document.getElementById('billsFilterStaff');
-        const customerFilter = document.getElementById('billsFilterCustomer');
-        
-        if (currentRole === 'staff') {
-          // Staff: hide All Staff dropdown
-          if (staffFilter) staffFilter.style.display = 'none';
-        } else if (currentRole === 'customer') {
-          // Customer: hide Zone, Area, Staff, Customer search
-          if (zoneFilter) zoneFilter.style.display = 'none';
-          if (areaFilter) areaFilter.style.display = 'none';
-          if (staffFilter) staffFilter.style.display = 'none';
-          if (customerFilter) customerFilter.style.display = 'none';
-        }
-      };
-      
-      // Hook into render function
-      const originalRender = render;
-      render = function() {
-        originalRender.apply(this, arguments);
-        setTimeout(applyBillsRoleFilter, 100);
-      };
-      
-      // Backend data filtering
-      const originalFilterBills = window.filterBills || function(bills) { return bills; };
-      window.filterBills = function(bills) {
-        let filtered = originalFilterBills(bills);
-        if (currentRole === 'staff') {
-          const staffCustomers = appState.customers.filter(c => c.staffId === currentUser.uid).map(c => c.id);
-          filtered = filtered.filter(bill => staffCustomers.includes(bill.customerId));
-        } else if (currentRole === 'customer') {
-          filtered = filtered.filter(bill => bill.customerId === currentUser.uid);
-        }
-        return filtered;
-      };
-      
-      // Add Print Monthly button if not exists
-      const addPrintMonthlyBtn = () => {
-        if (currentView !== 'bills') return;
-        const filterDiv = document.getElementById('billsAdvancedFilters');
-        if (filterDiv && !document.getElementById('printMonthlyBtn')) {
-          const btn = document.createElement('button');
-          btn.id = 'printMonthlyBtn';
-          btn.className = 'px-4 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium flex items-center gap-2';
-          btn.innerHTML = '<i data-lucide="printer" class="w-4 h-4"></i> Print Monthly';
-          btn.onclick = () => window.print();
-          filterDiv.appendChild(btn);
-          lucide.createIcons();
-        }
-      };
-      
-      // Call after render
-      const originalRender2 = render;
-      render = function() {
-        originalRender2.apply(this, arguments);
-        setTimeout(() => {
-          applyBillsRoleFilter();
-          addPrintMonthlyBtn();
-        }, 100);
-      };
-      // ===== End Fix =====
-\n</script>
+<script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = { darkMode: 'class' }
 </script>
@@ -332,7 +265,19 @@
   }
 </style>
 
-</head>
+
+    <style id="role-based-css">
+      /* Hide elements by default, show via JS */
+      [data-role-admin], [data-role-staff], [data-role-customer] { display: none; }
+      body[data-user-role="admin"] [data-role-admin] { display: block; }
+      body[data-user-role="staff"] [data-role-staff] { display: block; }
+      body[data-user-role="customer"] [data-role-customer] { display: block; }
+      /* For inline elements */
+      body[data-user-role="admin"] [data-role-admin-inline] { display: inline-block; }
+      body[data-user-role="staff"] [data-role-staff-inline] { display: inline-block; }
+      body[data-user-role="customer"] [data-role-customer-inline] { display: inline-block; }
+    </style>
+\n</head>
 <body class="antialiased">
 <div id="auth-loading" class="auth-loading">
   <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center animate-pulse">
@@ -1910,21 +1855,19 @@
     container.innerHTML = `
       <div class="space-y-4 fade-in">
         <div class="flex flex-col sm:flex-row gap-3">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+          <div class="relative flex-1" data-role-admin data-role-staff>\1
           </div>
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    \1 data-role-admin data-role-staff
         <option value="">All Zones</option>
     </select>
-    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
+    \1 data-role-admin data-role-staff
         <option value="">All Areas</option>
     </select>
-    <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    \1 data-role-admin
         <option value="">All Staff</option>
     </select>
-    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    \1 data-role-admin data-role-staff
     <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
     <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
@@ -3540,7 +3483,60 @@ firebase.auth().onAuthStateChanged(async (user) => {
         };
     }
 });
-</script>
+
+      // ===== Role-based Access Control v4 =====
+      const updateUserRole = () => {
+        if (window.currentRole) {
+          document.body.setAttribute('data-user-role', window.currentRole);
+        }
+      };
+      
+      // Override render to update role
+      const _originalRender = window.render;
+      window.render = function() {
+        if (_originalRender) _originalRender.apply(this, arguments);
+        setTimeout(updateUserRole, 50);
+      };
+      
+      // Filter bills data based on role
+      const originalGetBills = window.getBills || function() { return appState.bills || []; };
+      window.getBills = function() {
+        let bills = originalGetBills();
+        if (window.currentRole === 'staff' && window.currentUser) {
+          const staffCustomers = (appState.customers || []).filter(c => c.staffId === currentUser.uid).map(c => c.id);
+          bills = bills.filter(b => staffCustomers.includes(b.customerId));
+        } else if (window.currentRole === 'customer' && window.currentUser) {
+          bills = bills.filter(b => b.customerId === currentUser.uid);
+        }
+        return bills;
+      };
+      
+      // Add Print Monthly button for all roles
+      const ensurePrintButton = () => {
+        if (currentView !== 'bills') return;
+        const filterDiv = document.getElementById('billsAdvancedFilters');
+        if (filterDiv && !document.getElementById('printMonthlyBtn')) {
+          const btn = document.createElement('button');
+          btn.id = 'printMonthlyBtn';
+          btn.className = 'px-4 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium flex items-center gap-2';
+          btn.innerHTML = '<i data-lucide="printer" class="w-4 h-4"></i> Print Monthly';
+          btn.onclick = () => window.print();
+          filterDiv.appendChild(btn);
+          if (window.lucide) lucide.createIcons();
+        }
+      };
+      
+      // Call on render
+      const _render2 = window.render;
+      window.render = function() {
+        if (_render2) _render2.apply(this, arguments);
+        setTimeout(() => {
+          updateUserRole();
+          ensurePrintButton();
+        }, 100);
+      };
+      // ===== End v4 =====
+\n</script>
 
 </body>
 </html>
