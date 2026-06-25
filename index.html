@@ -265,7 +265,56 @@
   }
 </style>
 
-</head>
+
+<!-- Role-based CSS -->
+<style id="role-fix-css">
+  .role-admin, .role-staff, .role-customer { display: none; }
+  body[data-role="admin"] .role-admin { display: block; }
+  body[data-role="staff"] .role-staff { display: block; }
+  body[data-role="customer"] .role-customer { display: block; }
+  body[data-role="admin"] .role-admin-inline, 
+  body[data-role="staff"] .role-staff-inline,
+  body[data-role="customer"] .role-customer-inline { display: inline-block; }
+</style>
+
+<script type="module">
+// Wait for Firebase Auth
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const auth = getAuth();
+const db = getFirestore();
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      const role = userDoc.data().role;
+      document.body.setAttribute('data-role', role);
+      window.currentRole = role;
+      window.currentUser = { uid: user.uid, ...userDoc.data() };
+      
+      // Hide elements based on role
+      const staffOnly = document.getElementById('billsFilterStaff');
+      const zoneFilter = document.getElementById('billsFilterZone');
+      const areaFilter = document.getElementById('billsFilterArea');
+      const customerFilter = document.getElementById('billsFilterCustomer');
+      const searchBox = document.getElementById('search-bill')?.parentElement;
+      
+      if (role === 'staff') {
+        if (staffOnly) staffOnly.style.display = 'none';
+      } else if (role === 'customer') {
+        if (staffOnly) staffOnly.style.display = 'none';
+        if (zoneFilter) zoneFilter.style.display = 'none';
+        if (areaFilter) areaFilter.style.display = 'none';
+        if (customerFilter) customerFilter.style.display = 'none';
+        if (searchBox) searchBox.style.display = 'none';
+      }
+    }
+  }
+});
+</script>
+\n</head>
 <body class="antialiased">
 <div id="auth-loading" class="auth-loading">
   <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center animate-pulse">
@@ -642,16 +691,7 @@
     if (currentRole === 'customer') billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
     
     appState.unsubscribers.push(safeOnSnapshot(billsQuery, (snap) => {
-      appState.bills =
-        // Role-based bill filtering
-        if (window.currentRole === 'staff' && window.currentUser) {
-          const myCustomerIds = (window.appState?.customers || []).filter(c => c.assignedStaffId === currentUser.uid || c.staffId === currentUser.uid).map(c => c.id);
-          bills = bills.filter(b => myCustomerIds.includes(b.customerId));
-        } else if (window.currentRole === 'customer' && window.currentUser) {
-          bills = bills.filter(b => b.customerId === currentUser.uid);
-        }
-
-        appState.bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      appState.bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       console.log('[Listener] Bills updated:', appState.bills.length);
       if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }, 'bills'));
@@ -1857,7 +1897,6 @@
             <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-    ${currentRole === 'admin' ? `
     <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
         <option value="">All Zones</option>
     </select>
@@ -1868,27 +1907,10 @@
         <option value="">All Staff</option>
     </select>
     <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    ` : currentRole === 'staff' ? `
-    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Zones</option>
-    </select>
-    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
-        <option value="">All Areas</option>
-    </select>
-    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    ` : ``}
     <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Status</option>
-        <option value="paid">Paid</option>
-        <option value="unpaid">Unpaid</option>
-    </select>
     <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
         Print Monthly
-    </button>
-    <button id="billsExportCSV" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
-        Export CSV
     </button>
 </div>
 
@@ -3337,7 +3359,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             if (!customerId) return;
             
             try {
-                const doc = await firebase.firestore().collection('customers').doc(customerId).get();
+                const doc = await getFirestore().collection('customers').doc(customerId).get();
                 if (doc.exists) {
                     const data = doc.data();
                     
@@ -3348,7 +3370,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     
                     // Fill amount from package
                     if (data.package && invoiceAmount) {
-                        const pkgSnap = await firebase.firestore().collection('packages').where('name', '==', data.package).limit(1).get();
+                        const pkgSnap = await getFirestore().collection('packages').where('name', '==', data.package).limit(1).get();
                         if (!pkgSnap.empty) {
                             invoiceAmount.value = pkgSnap.docs[0].data().price || '';
                         }
@@ -3399,7 +3421,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
     
     // Load staff for filter
     if (billsFilterStaff) {
-        firebase.firestore().collection('staff').get().then(snap => {
+        getFirestore().collection('staff').get().then(snap => {
             snap.forEach(doc => {
                 const opt = document.createElement('option');
                 opt.value = doc.id;
@@ -3436,7 +3458,56 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     th { background: #f0f0f0; }
                     h1 { text-align: center; }
                 </style>
-                </head>
+                
+<!-- Role-based CSS -->
+<style id="role-fix-css">
+  .role-admin, .role-staff, .role-customer { display: none; }
+  body[data-role="admin"] .role-admin { display: block; }
+  body[data-role="staff"] .role-staff { display: block; }
+  body[data-role="customer"] .role-customer { display: block; }
+  body[data-role="admin"] .role-admin-inline, 
+  body[data-role="staff"] .role-staff-inline,
+  body[data-role="customer"] .role-customer-inline { display: inline-block; }
+</style>
+
+<script type="module">
+// Wait for Firebase Auth
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const auth = getAuth();
+const db = getFirestore();
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      const role = userDoc.data().role;
+      document.body.setAttribute('data-role', role);
+      window.currentRole = role;
+      window.currentUser = { uid: user.uid, ...userDoc.data() };
+      
+      // Hide elements based on role
+      const staffOnly = document.getElementById('billsFilterStaff');
+      const zoneFilter = document.getElementById('billsFilterZone');
+      const areaFilter = document.getElementById('billsFilterArea');
+      const customerFilter = document.getElementById('billsFilterCustomer');
+      const searchBox = document.getElementById('search-bill')?.parentElement;
+      
+      if (role === 'staff') {
+        if (staffOnly) staffOnly.style.display = 'none';
+      } else if (role === 'customer') {
+        if (staffOnly) staffOnly.style.display = 'none';
+        if (zoneFilter) zoneFilter.style.display = 'none';
+        if (areaFilter) areaFilter.style.display = 'none';
+        if (customerFilter) customerFilter.style.display = 'none';
+        if (searchBox) searchBox.style.display = 'none';
+      }
+    }
+  }
+});
+</script>
+\n</head>
                 <body>
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
@@ -3456,7 +3527,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
         const customer = billsFilterCustomer?.value.toLowerCase();
         const month = billsFilterMonth?.value;
         
-        let query = firebase.firestore().collection('bills');
+        let query = getFirestore().collection('bills');
         
         if (zone) query = query.where('zone', '==', zone);
         if (area) query = query.where('area', '==', area);
