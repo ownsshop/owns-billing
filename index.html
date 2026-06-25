@@ -265,19 +265,7 @@
   }
 </style>
 
-
-    <style id="role-based-css">
-      /* Hide elements by default, show via JS */
-      [data-role-admin], [data-role-staff], [data-role-customer] { display: none; }
-      body[data-user-role="admin"] [data-role-admin] { display: block; }
-      body[data-user-role="staff"] [data-role-staff] { display: block; }
-      body[data-user-role="customer"] [data-role-customer] { display: block; }
-      /* For inline elements */
-      body[data-user-role="admin"] [data-role-admin-inline] { display: inline-block; }
-      body[data-user-role="staff"] [data-role-staff-inline] { display: inline-block; }
-      body[data-user-role="customer"] [data-role-customer-inline] { display: inline-block; }
-    </style>
-\n</head>
+</head>
 <body class="antialiased">
 <div id="auth-loading" class="auth-loading">
   <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center animate-pulse">
@@ -1855,19 +1843,21 @@
     container.innerHTML = `
       <div class="space-y-4 fade-in">
         <div class="flex flex-col sm:flex-row gap-3">
-          <div class="relative flex-1" data-role-admin data-role-staff>\1
+          <div class="relative flex-1">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-    \1 data-role-admin data-role-staff
+    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
         <option value="">All Zones</option>
     </select>
-    \1 data-role-admin data-role-staff
+    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
         <option value="">All Areas</option>
     </select>
-    \1 data-role-admin
+    <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
         <option value="">All Staff</option>
     </select>
-    \1 data-role-admin data-role-staff
+    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
     <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
     <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
@@ -3423,7 +3413,64 @@ firebase.auth().onAuthStateChanged(async (user) => {
                 <body>
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
-                </body>
+                
+<script id="role-fix-v5">
+// Wait for everything to load
+document.addEventListener('DOMContentLoaded', function() {
+  const applyRoleFilters = () => {
+    const role = window.currentRole || (window.currentUser && window.currentUser.role);
+    if (!role) return;
+    
+    const staffFilter = document.getElementById('billsFilterStaff');
+    const zoneFilter = document.getElementById('billsFilterZone');
+    const areaFilter = document.getElementById('billsFilterArea');
+    const customerFilter = document.getElementById('billsFilterCustomer');
+    const searchDiv = document.querySelector('#search-bill')?.parentElement;
+    
+    if (role === 'staff') {
+      if (staffFilter) staffFilter.style.display = 'none';
+    } else if (role === 'customer') {
+      if (staffFilter) staffFilter.style.display = 'none';
+      if (zoneFilter) zoneFilter.style.display = 'none';
+      if (areaFilter) areaFilter.style.display = 'none';
+      if (customerFilter) customerFilter.style.display = 'none';
+      if (searchDiv) searchDiv.style.display = 'none';
+    }
+  };
+  
+  // Run after each render
+  const originalRender = window.render;
+  if (typeof originalRender === 'function') {
+    window.render = function() {
+      const result = originalRender.apply(this, arguments);
+      setTimeout(applyRoleFilters, 200);
+      return result;
+    };
+  }
+  
+  // Initial run
+  setTimeout(applyRoleFilters, 1000);
+  
+  // Data filtering
+  const originalFilterBills = window.filterBills;
+  window.filterBills = function(bills) {
+    let result = bills;
+    if (originalFilterBills) result = originalFilterBills(bills);
+    
+    const role = window.currentRole || (window.currentUser && window.currentUser.role);
+    const uid = window.currentUser?.uid;
+    
+    if (role === 'staff' && uid && window.appState?.customers) {
+      const myCustomerIds = appState.customers.filter(c => c.staffId === uid).map(c => c.id);
+      result = result.filter(b => myCustomerIds.includes(b.customerId));
+    } else if (role === 'customer' && uid) {
+      result = result.filter(b => b.customerId === uid);
+    }
+    return result;
+  };
+});
+</script>
+\n</body>
                 </html>
             `);
             printWindow.document.close();
@@ -3483,60 +3530,64 @@ firebase.auth().onAuthStateChanged(async (user) => {
         };
     }
 });
+</script>
 
-      // ===== Role-based Access Control v4 =====
-      const updateUserRole = () => {
-        if (window.currentRole) {
-          document.body.setAttribute('data-user-role', window.currentRole);
-        }
-      };
-      
-      // Override render to update role
-      const _originalRender = window.render;
-      window.render = function() {
-        if (_originalRender) _originalRender.apply(this, arguments);
-        setTimeout(updateUserRole, 50);
-      };
-      
-      // Filter bills data based on role
-      const originalGetBills = window.getBills || function() { return appState.bills || []; };
-      window.getBills = function() {
-        let bills = originalGetBills();
-        if (window.currentRole === 'staff' && window.currentUser) {
-          const staffCustomers = (appState.customers || []).filter(c => c.staffId === currentUser.uid).map(c => c.id);
-          bills = bills.filter(b => staffCustomers.includes(b.customerId));
-        } else if (window.currentRole === 'customer' && window.currentUser) {
-          bills = bills.filter(b => b.customerId === currentUser.uid);
-        }
-        return bills;
-      };
-      
-      // Add Print Monthly button for all roles
-      const ensurePrintButton = () => {
-        if (currentView !== 'bills') return;
-        const filterDiv = document.getElementById('billsAdvancedFilters');
-        if (filterDiv && !document.getElementById('printMonthlyBtn')) {
-          const btn = document.createElement('button');
-          btn.id = 'printMonthlyBtn';
-          btn.className = 'px-4 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium flex items-center gap-2';
-          btn.innerHTML = '<i data-lucide="printer" class="w-4 h-4"></i> Print Monthly';
-          btn.onclick = () => window.print();
-          filterDiv.appendChild(btn);
-          if (window.lucide) lucide.createIcons();
-        }
-      };
-      
-      // Call on render
-      const _render2 = window.render;
-      window.render = function() {
-        if (_render2) _render2.apply(this, arguments);
-        setTimeout(() => {
-          updateUserRole();
-          ensurePrintButton();
-        }, 100);
-      };
-      // ===== End v4 =====
-\n</script>
 
-</body>
+<script id="role-fix-v5">
+// Wait for everything to load
+document.addEventListener('DOMContentLoaded', function() {
+  const applyRoleFilters = () => {
+    const role = window.currentRole || (window.currentUser && window.currentUser.role);
+    if (!role) return;
+    
+    const staffFilter = document.getElementById('billsFilterStaff');
+    const zoneFilter = document.getElementById('billsFilterZone');
+    const areaFilter = document.getElementById('billsFilterArea');
+    const customerFilter = document.getElementById('billsFilterCustomer');
+    const searchDiv = document.querySelector('#search-bill')?.parentElement;
+    
+    if (role === 'staff') {
+      if (staffFilter) staffFilter.style.display = 'none';
+    } else if (role === 'customer') {
+      if (staffFilter) staffFilter.style.display = 'none';
+      if (zoneFilter) zoneFilter.style.display = 'none';
+      if (areaFilter) areaFilter.style.display = 'none';
+      if (customerFilter) customerFilter.style.display = 'none';
+      if (searchDiv) searchDiv.style.display = 'none';
+    }
+  };
+  
+  // Run after each render
+  const originalRender = window.render;
+  if (typeof originalRender === 'function') {
+    window.render = function() {
+      const result = originalRender.apply(this, arguments);
+      setTimeout(applyRoleFilters, 200);
+      return result;
+    };
+  }
+  
+  // Initial run
+  setTimeout(applyRoleFilters, 1000);
+  
+  // Data filtering
+  const originalFilterBills = window.filterBills;
+  window.filterBills = function(bills) {
+    let result = bills;
+    if (originalFilterBills) result = originalFilterBills(bills);
+    
+    const role = window.currentRole || (window.currentUser && window.currentUser.role);
+    const uid = window.currentUser?.uid;
+    
+    if (role === 'staff' && uid && window.appState?.customers) {
+      const myCustomerIds = appState.customers.filter(c => c.staffId === uid).map(c => c.id);
+      result = result.filter(b => myCustomerIds.includes(b.customerId));
+    } else if (role === 'customer' && uid) {
+      result = result.filter(b => b.customerId === uid);
+    }
+    return result;
+  };
+});
+</script>
+\n</body>
 </html>
