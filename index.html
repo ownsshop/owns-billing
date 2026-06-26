@@ -7,67 +7,7 @@
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<script src="https://cdn.tailwindcss.com">
-// Role-based filter visibility
-function applyRoleBasedFilters() {
-    const role = currentUser?.role || 'customer';
-    const staffFilter = document.getElementById('billsFilterStaff');
-    const zoneFilter = document.getElementById('billsFilterZone');
-    const areaFilter = document.getElementById('billsFilterArea');
-    const customerFilter = document.getElementById('billsFilterCustomer');
-    const dateFilter = document.getElementById('billsFilterDate');
-    
-    // Reset visibility
-    [staffFilter, zoneFilter, areaFilter, customerFilter, dateFilter].forEach(el => {
-        if(el) el.style.display = '';
-    });
-    
-    if (role === 'staff') {
-        // Staff can't see other staff's filter
-        if(staffFilter) staffFilter.style.display = 'none';
-    } else if (role === 'customer') {
-        // Customer only sees their own bills - hide all filters except status and print
-        if(staffFilter) staffFilter.style.display = 'none';
-        if(zoneFilter) zoneFilter.style.display = 'none';
-        if(areaFilter) areaFilter.style.display = 'none';
-        if(customerFilter) customerFilter.style.display = 'none';
-        if(dateFilter) dateFilter.style.display = 'none';
-        // Add status filter if not exists
-        if(!document.getElementById('billsFilterStatus')) {
-            const filterContainer = document.getElementById('billsAdvancedFilters');
-            if(filterContainer) {
-                const statusSelect = document.createElement('select');
-                statusSelect.id = 'billsFilterStatus';
-                statusSelect.className = 'px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm';
-                statusSelect.innerHTML = '<option value="">All Status</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option>';
-                statusSelect.addEventListener('change', renderBills);
-                filterContainer.insertBefore(statusSelect, filterContainer.firstChild);
-            }
-        }
-    }
-}
-
-// Hook into renderBills function
-const originalRenderBills = window.renderBills;
-window.renderBills = function() {
-    if(originalRenderBills) originalRenderBills.apply(this, arguments);
-    setTimeout(applyRoleBasedFilters, 0);
-}
-
-// Also filter data based on role
-const originalGetBillsData = window.getBillsData || function(){return []};
-window.getBillsData = function() {
-    let bills = originalGetBillsData();
-    const role = currentUser?.role || 'customer';
-    if(role === 'customer') {
-        bills = bills.filter(b => b.customerId === currentUser?.uid || b.customerPhone === currentUser?.phone);
-    } else if(role === 'staff') {
-        bills = bills.filter(b => b.staffId === currentUser?.uid);
-    }
-    return bills;
-}
-
-</script>
+<script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = { darkMode: 'class' }
 </script>
@@ -1032,11 +972,11 @@ window.getBillsData = function() {
           </nav>
 
           <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
-            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
-            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
         </div>
       </div>
@@ -1892,9 +1832,12 @@ window.getBillsData = function() {
   };
 
   const renderBills = (myBills = false) => {
-    const list = myBills && currentRole === 'customer'
-      ? appState.bills.filter(b => b.customerId === currentUser.uid)
-      : appState.bills;
+    let list = appState.bills;
+    if (currentRole === 'customer') {
+      list = appState.bills.filter(b => b.customerId === currentUser.uid || b.customerPhone === currentUserData?.phone);
+    } else if (currentRole === 'staff') {
+      list = appState.bills.filter(b => b.staffId === currentUser.uid);
+    }
 
     const viewId = myBills ? 'view-mybills' : 'view-bills';
     const container = document.getElementById(viewId);
@@ -1907,23 +1850,52 @@ window.getBillsData = function() {
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
             <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Zones</option>
-    </select>
-    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
-        <option value="">All Areas</option>
-    </select>
-    <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Staff</option>
-    </select>
-    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Print Monthly
-    </button>
-</div>
+${(() => {
+          const role = currentRole || 'customer';
+          if (role === 'admin') {
+            return `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
+              <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                  <option value="">All Zones</option>
+              </select>
+              <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                  <option value="">All Areas</option>
+              </select>
+              <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                  <option value="">All Staff</option>
+              </select>
+              <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+              <input type="date" id="billsFilterDate" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+              <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                  <option value="">All Status</option>
+                  <option value="paid">Paid</option>
+                  <option value="unpaid">Unpaid</option>
+              </select>
+            </div>`;
+          } else if (role === 'staff') {
+            return `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="billsAdvancedFilters">
+              <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                  <option value="">All Zones</option>
+              </select>
+              <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                  <option value="">All Areas</option>
+              </select>
+              <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+              <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                  <option value="">All Status</option>
+                  <option value="paid">Paid</option>
+                  <option value="unpaid">Unpaid</option>
+              </select>
+            </div>`;
+          } else {
+            return `<div class="grid grid-cols-2 gap-3 mb-4" id="billsAdvancedFilters">
+              <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+                  <option value="">All Status</option>
+                  <option value="paid">Paid</option>
+                  <option value="unpaid">Unpaid</option>
+              </select>
+            </div>`;
+          }
+        })()}
 
           <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
             <i data-lucide="download" class="w-5 h-5"></i> Export CSV
