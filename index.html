@@ -7,7 +7,67 @@
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+// Role-based filter visibility
+function applyRoleBasedFilters() {
+    const role = currentUser?.role || 'customer';
+    const staffFilter = document.getElementById('billsFilterStaff');
+    const zoneFilter = document.getElementById('billsFilterZone');
+    const areaFilter = document.getElementById('billsFilterArea');
+    const customerFilter = document.getElementById('billsFilterCustomer');
+    const dateFilter = document.getElementById('billsFilterDate');
+    
+    // Reset visibility
+    [staffFilter, zoneFilter, areaFilter, customerFilter, dateFilter].forEach(el => {
+        if(el) el.style.display = '';
+    });
+    
+    if (role === 'staff') {
+        // Staff can't see other staff's filter
+        if(staffFilter) staffFilter.style.display = 'none';
+    } else if (role === 'customer') {
+        // Customer only sees their own bills - hide all filters except status and print
+        if(staffFilter) staffFilter.style.display = 'none';
+        if(zoneFilter) zoneFilter.style.display = 'none';
+        if(areaFilter) areaFilter.style.display = 'none';
+        if(customerFilter) customerFilter.style.display = 'none';
+        if(dateFilter) dateFilter.style.display = 'none';
+        // Add status filter if not exists
+        if(!document.getElementById('billsFilterStatus')) {
+            const filterContainer = document.getElementById('billsAdvancedFilters');
+            if(filterContainer) {
+                const statusSelect = document.createElement('select');
+                statusSelect.id = 'billsFilterStatus';
+                statusSelect.className = 'px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm';
+                statusSelect.innerHTML = '<option value="">All Status</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option>';
+                statusSelect.addEventListener('change', renderBills);
+                filterContainer.insertBefore(statusSelect, filterContainer.firstChild);
+            }
+        }
+    }
+}
+
+// Hook into renderBills function
+const originalRenderBills = window.renderBills;
+window.renderBills = function() {
+    if(originalRenderBills) originalRenderBills.apply(this, arguments);
+    setTimeout(applyRoleBasedFilters, 0);
+}
+
+// Also filter data based on role
+const originalGetBillsData = window.getBillsData || function(){return []};
+window.getBillsData = function() {
+    let bills = originalGetBillsData();
+    const role = currentUser?.role || 'customer';
+    if(role === 'customer') {
+        bills = bills.filter(b => b.customerId === currentUser?.uid || b.customerPhone === currentUser?.phone);
+    } else if(role === 'staff') {
+        bills = bills.filter(b => b.staffId === currentUser?.uid);
+    }
+    return bills;
+}
+
+</script>
 <script>
   tailwind.config = { darkMode: 'class' }
 </script>
