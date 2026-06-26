@@ -8,469 +8,107 @@
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
 <script src="https://cdn.tailwindcss.com">
-  // Complaint Submit Handler
-  const initComplaintForm = () => {
-    const form = document.getElementById('complaint-form');
-    if (!form) return;
+  
+  // Complaint Submit Handler - Fixed v2
+  const handleComplaintSubmit = async (e) => {
+    e.preventDefault();
+    console.log('[Complaint] Submit triggered');
     
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting...';
+    const form = document.getElementById('complaint-form');
+    const submitBtn = document.getElementById('complaint-submit-btn');
+    
+    if (!form || !currentUser) {
+      console.error('[Complaint] Form or user not found');
+      showToast('Please login first', 'error');
+      return;
+    }
+    
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+    }
+    
+    try {
+      const formData = new FormData(form);
+      const subject = formData.get('subject')?.trim();
+      const description = formData.get('description')?.trim();
+      
+      console.log('[Complaint] Data:', {subject, description});
+      
+      if (!subject || !description) {
+        showToast('Please fill all required fields', 'error');
+        return;
       }
       
-      try {
-        const formData = new FormData(form);
-        const subject = formData.get('subject')?.trim();
-        const description = formData.get('description')?.trim();
-        
-        if (!subject || !description) {
-          showToast('Please fill all required fields', 'error');
-          return;
-        }
-        
-        const complaintData = {
-          customerId: currentUser.uid,
-          customerName: currentUserData?.name || currentUser.email,
-          customerPhone: currentUserData?.phone || '',
-          customerZone: currentUserData?.zone || '',
-          customerArea: currentUserData?.area || '',
-          subject: subject,
-          description: description,
-          status: 'pending',
-          assignedTo: 'admin', // সরাসরি অ্যাডমিনের কাছে যাবে
-          assignedStaffId: '', // স্টাফ অ্যাসাইন হবে না
-          priority: 'normal',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        };
-        
-        await addDoc(collection(db, 'complaints'), complaintData);
-        await logActivity('New Complaint', `Complaint submitted: ${subject}`);
-        
-        showToast('Complaint submitted successfully', 'success');
-        closeModal();
-        form.reset();
-      } catch (err) {
-        console.error('Complaint submit error:', err);
-        showToast('Failed to submit complaint: ' + err.message, 'error');
-      } finally {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Submit';
-        }
+      const complaintData = {
+        customerId: currentUser.uid,
+        customerName: currentUserData?.name || currentUser.email || 'Unknown',
+        customerPhone: currentUserData?.phone || '',
+        customerZone: currentUserData?.zone || '',
+        customerArea: currentUserData?.area || '',
+        subject: subject,
+        description: description,
+        status: 'pending',
+        assignedTo: 'admin',
+        assignedStaffId: '',
+        priority: 'normal',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      
+      console.log('[Complaint] Saving to Firestore:', complaintData);
+      const docRef = await addDoc(collection(db, 'complaints'), complaintData);
+      console.log('[Complaint] Saved with ID:', docRef.id);
+      
+      await logActivity('New Complaint', `Complaint submitted: ${subject}`);
+      
+      showToast('Complaint submitted successfully', 'success');
+      closeModal();
+      form.reset();
+      
+      // Force refresh complaints view
+      if (currentView === 'complaints') {
+        setTimeout(() => reRenderCurrentView(), 500);
       }
-    });
+    } catch (err) {
+      console.error('[Complaint] Submit error:', err);
+      showToast('Failed: ' + err.message, 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+      }
+    }
   };
   
-  // Hook into modal open
+  // Attach handler when modal opens
+  const attachComplaintHandler = () => {
+    const form = document.getElementById('complaint-form');
+    const submitBtn = document.getElementById('complaint-submit-btn');
+    
+    if (form && !form.dataset.handlerAttached) {
+      form.addEventListener('submit', handleComplaintSubmit);
+      form.dataset.handlerAttached = 'true';
+      console.log('[Complaint] Form handler attached');
+    }
+    
+    if (submitBtn && !submitBtn.dataset.handlerAttached) {
+      submitBtn.addEventListener('click', handleComplaintSubmit);
+      submitBtn.dataset.handlerAttached = 'true';
+      console.log('[Complaint] Button handler attached');
+    }
+  };
+  
+  // Override openModal to attach handler
   const originalOpenModal = window.openModal;
   window.openModal = function(modalId) {
-    if (originalOpenModal) originalOpenModal(modalId);
+    if (originalOpenModal) originalOpenModal.call(this, modalId);
     if (modalId === 'complaint-modal') {
-      setTimeout(initComplaintForm, 100);
+      console.log('[Complaint] Modal opened, attaching handlers');
+      setTimeout(attachComplaintHandler, 50);
     }
   };
 
-</script>
-<script>
-  tailwind.config = { darkMode: 'class' }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-<style>
-  :root {
-    --primary: 14, 165, 233;
-    --bg: 248, 250, 252;
-    --card: 255, 255, 255;
-    --text: 15, 23, 42;
-    --border: 226, 232, 240;
-    --header-h: 64px;
-    --bottom-nav-h: 64px;
-    --footer-h: 40px;
-  }
-  .dark {
-    --bg: 15, 23, 42;
-    --card: 30, 41, 59;
-    --text: 226, 232, 240;
-    --border: 51, 65, 85;
-  }
-  * { touch-action: manipulation; }
-  html, body { height: 100%; }
-  body { 
-    background: rgb(var(--bg)); 
-    color: rgb(var(--text)); 
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    overscroll-behavior: none;
-  }
-  body.no-scroll { overflow: hidden; }
-  .glass { background: rgba(var(--card), 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-  .skeleton { background: linear-gradient(90deg, rgba(var(--border),0.2) 25%, rgba(var(--border),0.4) 50%, rgba(var(--border),0.2) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-  .fade-in { animation: fadeIn 0.3s ease-out; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .scale-in { animation: scaleIn 0.2s ease-out; }
-  @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-thumb { background: rgba(var(--primary), 0.5); border-radius: 3px; }
-  
-  .view-section {
-    display: block !important;
-    opacity: 1 !important;
-    height: auto !important;
-    min-height: 200px;
-  }
-  .view-section.hidden {
-    display: none !important;
-    opacity: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
-  }
-  
-  .loading-state {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem;
-    color: rgb(var(--text), 0.5);
-  }
-  .loading-state i { animation: spin 1s linear infinite; }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  
-  #sidebar { 
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    top: 0;
-    height: 100vh;
-  }
-  #sidebar-overlay {
-    transition: opacity 0.3s ease-out;
-    backdrop-filter: blur(4px);
-  }
-  
-  .table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  .main-wrapper {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  
-  #content {
-    flex: 1 1 auto;
-  }
-
-  .profile-dropdown {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 8px);
-    min-width: 240px;
-    z-index: 60;
-  }
-
-  .user-dropdown {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 8px);
-    min-width: 260px;
-    z-index: 60;
-  }
-
-  #view-dashboard {
-    padding-top: 16px;
-  }
-
-  @media (min-width: 768px) {
-    .main-wrapper {
-      padding-top: var(--header-h);
-    }
-    #view-dashboard {
-      padding-top: 0;
-    }
-    #footer-desktop {
-      position: relative;
-      margin-top: auto;
-    }
-    .mobile-only { display: none !important; }
-  }
-  
-  @media (max-width: 767px) {
-    .table-container table { min-width: 600px; }
-    #content {
-      padding-bottom: calc(var(--bottom-nav-h) + var(--footer-h) + 16px);
-      padding-top: var(--header-h);
-    }
-    #view-dashboard {
-      padding-top: 16px;
-    }
-    #footer-mobile {
-      position: fixed;
-      bottom: var(--bottom-nav-h);
-      left: 0;
-      right: 0;
-      z-index: 20;
-    }
-    .desktop-only { display: none !important; }
-  }
-  
-  @media print {
-    body * { visibility: hidden; }
-    .print-area, .print-area * { visibility: visible; }
-    .print-area { position: absolute; left: 0; top: 0; width: 100%; }
-    .print-a4 { width: 210mm; padding: 15mm; }
-    .print-thermal { width: 58mm; padding: 2mm; font-size: 12px; }
-    .no-print { display: none !important; }
-  }
-  
-  .bottom-nav-item {
-    transition: all 0.2s;
-  }
-  .bottom-nav-item.active {
-    color: rgb(var(--primary));
-    transform: translateY(-2px);
-  }
-
-  .dashboard-grid {
-    display: grid;
-    grid-template-rows: auto auto 1fr;
-    gap: 1rem;
-    height: 100%;
-  }
-
-  @media (max-width: 640px) {
-    .dashboard-grid {
-      grid-template-rows: auto auto auto;
-      height: auto;
-    }
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.25rem 0.625rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-
-  .auth-loading {
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-    background: rgb(var(--bg));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .auth-loading.hidden {
-    display: none;
-  }
-
-  .btn-loading {
-    position: relative;
-    pointer-events: none;
-    opacity: 0.7;
-  }
-  .btn-loading i {
-    animation: spin 1s linear infinite;
-  }
-
-  .modal-content {
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-</style>
-
-<style id="pc-sidebar-scroll-fix">
-  /* PC Only: md breakpoint 768px+ */
-  @media (min-width: 768px) {
-    /* Make sidebar a flex column */
-    aside, nav.sidebar, #sidebar {
-      display: flex !important;
-      flex-direction: column !important;
-      height: 100vh !important;
-    }
-    
-    /* The menu list - usually first nav or ul after logo */
-    aside > nav:first-of-type,
-    aside > ul:first-of-type,
-    aside > div > nav,
-    #sidebar nav {
-      flex: 1 1 auto !important;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-      min-height: 0 !important;
-    }
-    
-    /* Keep the last child - profile section - fixed at bottom */
-    aside > div:last-child {
-      flex-shrink: 0 !important;
-    }
-    
-    /* Scrollbar style for PC */
-    aside nav::-webkit-scrollbar {
-      width: 6px;
-    }
-    aside nav::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    aside nav::-webkit-scrollbar-thumb {
-      background: #4b5563;
-      border-radius: 3px;
-    }
-    aside nav::-webkit-scrollbar-thumb:hover {
-      background: #6b7280;
-    }
-  }
-</style>
-
-</head>
-<body class="antialiased">
-<div id="auth-loading" class="auth-loading">
-  <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center animate-pulse">
-    <span class="text-3xl font-bold text-white">O</span>
-  </div>
-  <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-    <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
-    <span class="text-sm font-medium">Loading...</span>
-  </div>
-</div>
-<div id="app" class="min-h-screen flex flex-col"></div>
-<div id="sidebar-overlay" class="fixed inset-0 z-[45] bg-black/50 hidden opacity-0 md:hidden"></div>
-<div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2 px-4 md:px-0"></div>
-<div id="command-palette" class="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm hidden items-start justify-center pt-[10vh]" onclick="window.toggleCommandPalette(false)">
-  <div class="w-full max-w-2xl mx-4 glass rounded-2xl shadow-2xl border border-[rgb(var(--border))] scale-in" onclick="event.stopPropagation()">
-    <div class="p-4 border-b border-[rgb(var(--border))] flex items-center gap-3">
-      <i data-lucide="search" class="w-5 h-5 text-[rgb(var(--primary))]"></i>
-      <input id="cmd-search" type="text" placeholder="Type a command or search..." class="flex-1 bg-transparent outline-none text-sm">
-      <kbd class="text-xs px-2 py-1 rounded bg-[rgb(var(--border))]">ESC</kbd>
-    </div>
-    <div id="cmd-results" class="max-h-80 overflow-y-auto p-2"></div>
-  </div>
-</div>
-<div id="modal-container"></div>
-
-<script type="module">
-  import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, deleteUser } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-  import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, Timestamp, limit } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-  import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
-    authDomain: "owns-billing.firebaseapp.com",
-    projectId: "owns-billing",
-    storageBucket: "owns-billing.firebasestorage.app",
-    messagingSenderId: "1036958677443",
-    appId: "1:1036958677443:web:5541baa54edc6e5f582576"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
-
-  let secondaryApp = null;
-  let secondaryAuth = null;
-
-  const initSecondaryAuth = () => {
-    if (!secondaryApp) {
-      secondaryApp = initializeApp(firebaseConfig, 'secondary');
-      secondaryAuth = getAuth(secondaryApp);
-    }
-    return secondaryAuth;
-  };
-
-  let currentUser = null;
-  let currentRole = null;
-  let currentUserData = null;
-  let companySettings = {};
-  let darkMode = localStorage.getItem('theme') === 'dark';
-  let sidebarOpen = false;
-  let touchStartX = 0;
-  let touchEndX = 0;
-  let mobileProfileOpen = false;
-  let userDropdownOpen = false;
-  let isLoadingData = true;
-  let authInitialized = false;
-  
-  let paymentChart = null;
-  let collectionChart = null;
-  
-  const appState = {
-    users: [],
-    customers: [],
-    packages: [],
-    bills: [],
-    complaints: [],
-    activities: [],
-    zones: [],
-    areas: [],
-    chats: [],
-    staffDeposits: [],
-    salaryRequests: [],
-    unsubscribers: []
-  };
-
-  const menuNames = {
-    dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
-    bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
-    activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
-    mybills: 'My Bills', profile: 'Profile', chat: 'Chat', approvals: 'Approvals',
-    mywallet: 'My Wallet', staffaccounts: 'Staff Accounts'
-  };
-
-  const applyTheme = () => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    document.querySelector('meta[name="theme-color"]').setAttribute('content', darkMode ? '#1e293b' : '#0ea5e9');
-    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-  };
-  applyTheme();
-
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => document.querySelectorAll(sel);
-  
-  const toDate = (ts) => {
-    if (!ts) return null;
-    try {
-      if (ts?.toDate && typeof ts.toDate === 'function') return ts.toDate();
-      if (ts instanceof Date) return ts;
-      if (typeof ts === 'string' || typeof ts === 'number') {
-        const d = new Date(ts);
-        return isNaN(d.getTime()) ? null : d;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  };
-  
-  const formatCurrency = (num) => `৳${Number(num || 0).toLocaleString('en-IN')}`;
-  const formatDate = (ts) => {
-    const d = toDate(ts);
-    if (!d) return '-';
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  };
-  const formatDateTime = (ts) => {
-    const d = toDate(ts);
-    if (!d) return '-';
-    return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-  };
-  const debounce = (fn, delay) => {
-    let timeout;
-    return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => fn(...args), delay);
-    };
-  };
 
   const showAuthLoading = (show) => {
     const el = $('#auth-loading');
