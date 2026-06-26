@@ -7,7 +7,74 @@
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+  // Complaint Submit Handler
+  const initComplaintForm = () => {
+    const form = document.getElementById('complaint-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+      }
+      
+      try {
+        const formData = new FormData(form);
+        const subject = formData.get('subject')?.trim();
+        const description = formData.get('description')?.trim();
+        
+        if (!subject || !description) {
+          showToast('Please fill all required fields', 'error');
+          return;
+        }
+        
+        const complaintData = {
+          customerId: currentUser.uid,
+          customerName: currentUserData?.name || currentUser.email,
+          customerPhone: currentUserData?.phone || '',
+          customerZone: currentUserData?.zone || '',
+          customerArea: currentUserData?.area || '',
+          subject: subject,
+          description: description,
+          status: 'pending',
+          assignedTo: 'admin', // সরাসরি অ্যাডমিনের কাছে যাবে
+          assignedStaffId: '', // স্টাফ অ্যাসাইন হবে না
+          priority: 'normal',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        
+        await addDoc(collection(db, 'complaints'), complaintData);
+        await logActivity('New Complaint', `Complaint submitted: ${subject}`);
+        
+        showToast('Complaint submitted successfully', 'success');
+        closeModal();
+        form.reset();
+      } catch (err) {
+        console.error('Complaint submit error:', err);
+        showToast('Failed to submit complaint: ' + err.message, 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit';
+        }
+      }
+    });
+  };
+  
+  // Hook into modal open
+  const originalOpenModal = window.openModal;
+  window.openModal = function(modalId) {
+    if (originalOpenModal) originalOpenModal(modalId);
+    if (modalId === 'complaint-modal') {
+      setTimeout(initComplaintForm, 100);
+    }
+  };
+
+</script>
 <script>
   tailwind.config = { darkMode: 'class' }
 </script>
@@ -649,6 +716,7 @@
 
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
     if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('assignedStaffId', '==', currentUser.uid));
+    // Admin sees all complaints including assignedTo='admin'
     if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
     
     appState.unsubscribers.push(safeOnSnapshot(complaintsQuery, (snap) => {
