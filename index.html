@@ -1961,7 +1961,7 @@ ${(() => {
     container.innerHTML = `
       <div class="space-y-4 fade-in">
         ${currentRole === 'customer' ? `
-        <button onclick="handleComplaintSubmit()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
+        <button onclick="openModal('complaint-modal')" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
         </button>
         ` : ''}
