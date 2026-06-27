@@ -648,6 +648,7 @@
     }, 'bills'));
 
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
+    console.log('[Complaints] Query for role:', currentRole);
     if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('assignedStaffId', '==', currentUser.uid));
     if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
     
