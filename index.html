@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
+<script type="module">
   tailwind.config = { darkMode: 'class' }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -2051,16 +2051,16 @@ ${(() => {
         const assignedStaffId = currentUserData.assignedStaffId || currentUserData.assignedStaff || null;
 
         const complaintData = {
-          subject: data.subject.trim(),
-          description: data.description.trim(),
-          customerId: customerId,
-          customerName: customerName,
-          customerMobile: customerMobile,
-          assignedStaffId: assignedStaffId,
-          status: 'pending',
-          createdAt: serverTimestamp(),
-          createdBy: currentUser.uid
-        };
+      customerId: currentUser.uid,
+      customerName: currentUserData?.name || currentUser.email,
+      subject: subject,
+      description: description,
+      status: 'pending',
+      assignedTo: 'admin',
+      assignedStaffId: null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
 
         console.log('[Complaint Submit v2.2.4] Final complaint data:', complaintData);
         
@@ -3288,7 +3288,7 @@ const ZONE_AREAS = {
 };
 
 // Wait for Firebase and DOM
-firebase.auth().onAuthStateChanged(async (user) => {
+auth.onAuthStateChanged(async (user) => {
     if (!user) return;
     
     // 1. Load Zones for all dropdowns
@@ -3339,7 +3339,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             if (!customerId) return;
             
             try {
-                const doc = await firebase.firestore().collection('customers').doc(customerId).get();
+                const doc = await db.collection('customers').doc(customerId).get();
                 if (doc.exists) {
                     const data = doc.data();
                     
@@ -3350,7 +3350,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     
                     // Fill amount from package
                     if (data.package && invoiceAmount) {
-                        const pkgSnap = await firebase.firestore().collection('packages').where('name', '==', data.package).limit(1).get();
+                        const pkgSnap = await db.collection('packages').where('name', '==', data.package).limit(1).get();
                         if (!pkgSnap.empty) {
                             invoiceAmount.value = pkgSnap.docs[0].data().price || '';
                         }
@@ -3401,7 +3401,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
     
     // Load staff for filter
     if (billsFilterStaff) {
-        firebase.firestore().collection('staff').get().then(snap => {
+        db.collection('staff').get().then(snap => {
             snap.forEach(doc => {
                 const opt = document.createElement('option');
                 opt.value = doc.id;
@@ -3487,7 +3487,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
         const customer = billsFilterCustomer?.value.toLowerCase();
         const month = billsFilterMonth?.value;
         
-        let query = firebase.firestore().collection('bills');
+        let query = db.collection('bills');
         
         if (zone) query = query.where('zone', '==', zone);
         if (area) query = query.where('area', '==', area);
@@ -3561,20 +3561,16 @@ firebase.auth().onAuthStateChanged(async (user) => {
       }
       
       const complaintData = {
-        customerId: currentUser.uid,
-        customerName: currentUserData?.name || currentUser.email || 'Unknown',
-        customerPhone: currentUserData?.phone || '',
-        customerZone: currentUserData?.zone || '',
-        customerArea: currentUserData?.area || '',
-        subject: subject,
-        description: description,
-        status: 'pending',
-        assignedTo: 'admin',
-        assignedStaffId: '',
-        priority: 'normal',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
+      customerId: currentUser.uid,
+      customerName: currentUserData?.name || currentUser.email,
+      subject: subject,
+      description: description,
+      status: 'pending',
+      assignedTo: 'admin',
+      assignedStaffId: null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
       
       console.log('[Complaint] Saving:', complaintData);
       const docRef = await addDoc(collection(db, 'complaints'), complaintData);
