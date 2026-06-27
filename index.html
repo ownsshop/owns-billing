@@ -2052,7 +2052,7 @@ ${(() => {
 
         const complaintData = {
       customerId: currentUser.uid,
-      customerName: currentUserData?.name || currentUser.email,
+      customerName: currentUserData?.name || currentUser?.email || 'Unknown',
       subject: subject,
       description: description,
       status: 'pending',
@@ -3562,7 +3562,7 @@ auth.onAuthStateChanged(async (user) => {
       
       const complaintData = {
       customerId: currentUser.uid,
-      customerName: currentUserData?.name || currentUser.email,
+      customerName: currentUserData?.name || currentUser?.email || 'Unknown',
       subject: subject,
       description: description,
       status: 'pending',
