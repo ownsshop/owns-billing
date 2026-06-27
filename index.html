@@ -1948,6 +1948,24 @@ ${(() => {
   };
 
   // v2.2.3 FIX: v2.2.4 ENHANCED: Complaint submission with dual data structure support
+  
+  // Global Modal Functions - Must be before render functions
+  window.openModal = function(modalId) {
+    console.log('[Modal] Opening:', modalId);
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    } else {
+      console.error('[Modal] Not found:', modalId, 'Available modals:', Array.from(document.querySelectorAll('[id$="-modal"]')).map(m => m.id));
+    }
+  };
+  
+  window.closeModal = function() {
+    document.querySelectorAll('[id$="-modal"]').forEach(m => m.classList.add('hidden'));
+    document.body.style.overflow = '';
+  };
+
   const renderComplaints = () => {
     const list = currentRole === 'customer' 
       ? appState.complaints.filter(c => c.customerId === currentUser.uid)
