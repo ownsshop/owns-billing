@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
 <script src="https://cdn.tailwindcss.com"></script>
-<script type="module">
+<script>
   tailwind.config = { darkMode: 'class' }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -1968,11 +1968,15 @@ ${(() => {
   };
 
   const renderComplaints = () => {
-    const list = currentRole === 'customer' 
-      ? appState.complaints.filter(c => c.customerId === currentUser.uid)
-      : currentRole === 'staff'
-      ? appState.complaints.filter(c => c.assignedStaffId === currentUser.uid || c.assignedStaffId === null)
-      : appState.complaints;
+    console.log('[Complaints] Rendering for role:', currentRole, 'Total:', appState.complaints.length);
+    let list = appState.complaints;
+    if (currentRole === 'customer') {
+      list = appState.complaints.filter(c => c.customerId === currentUser.uid);
+    } else if (currentRole === 'staff') {
+      list = appState.complaints.filter(c => c.assignedStaffId === currentUser.uid);
+    }
+    // Admin sees all
+    console.log('[Complaints] Filtered list:', list.length);
 
     const container = document.getElementById('view-complaints');
     if (!container) return;
@@ -2016,9 +2020,9 @@ ${(() => {
     showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
-        <form id="complaint-form" class="space-y-4">
+        <form id="complaint-form" class="space-y-4" onsubmit="return false;">
           <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
-            <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
+            <button type="button" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold" onclick="handleComplaintSubmit(); return false;">Submit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -2051,16 +2055,16 @@ ${(() => {
         const assignedStaffId = currentUserData.assignedStaffId || currentUserData.assignedStaff || null;
 
         const complaintData = {
-      customerId: currentUser.uid,
-      customerName: currentUserData?.name || currentUser?.email || 'Unknown',
-      subject: subject,
-      description: description,
-      status: 'pending',
-      assignedTo: 'admin',
-      assignedStaffId: null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
+          subject: data.subject.trim(),
+          description: data.description.trim(),
+          customerId: customerId,
+          customerName: customerName,
+          customerMobile: customerMobile,
+          assignedStaffId: assignedStaffId,
+          status: 'pending',
+          createdAt: serverTimestamp(),
+          createdBy: currentUser.uid
+        };
 
         console.log('[Complaint Submit v2.2.4] Final complaint data:', complaintData);
         
@@ -3288,7 +3292,7 @@ const ZONE_AREAS = {
 };
 
 // Wait for Firebase and DOM
-auth.onAuthStateChanged(async (user) => {
+firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) return;
     
     // 1. Load Zones for all dropdowns
@@ -3339,7 +3343,7 @@ auth.onAuthStateChanged(async (user) => {
             if (!customerId) return;
             
             try {
-                const doc = await db.collection('customers').doc(customerId).get();
+                const doc = await firebase.firestore().collection('customers').doc(customerId).get();
                 if (doc.exists) {
                     const data = doc.data();
                     
@@ -3350,7 +3354,7 @@ auth.onAuthStateChanged(async (user) => {
                     
                     // Fill amount from package
                     if (data.package && invoiceAmount) {
-                        const pkgSnap = await db.collection('packages').where('name', '==', data.package).limit(1).get();
+                        const pkgSnap = await firebase.firestore().collection('packages').where('name', '==', data.package).limit(1).get();
                         if (!pkgSnap.empty) {
                             invoiceAmount.value = pkgSnap.docs[0].data().price || '';
                         }
@@ -3401,7 +3405,7 @@ auth.onAuthStateChanged(async (user) => {
     
     // Load staff for filter
     if (billsFilterStaff) {
-        db.collection('staff').get().then(snap => {
+        firebase.firestore().collection('staff').get().then(snap => {
             snap.forEach(doc => {
                 const opt = document.createElement('option');
                 opt.value = doc.id;
@@ -3453,7 +3457,7 @@ auth.onAuthStateChanged(async (user) => {
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
-        <form id="complaint-form" class="space-y-4">
+        <form id="complaint-form" class="space-y-4" onsubmit="return false;">
           <div>
             <label class="text-sm font-medium mb-2 block">Subject *</label>
             <input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" placeholder="Enter complaint subject">
@@ -3463,7 +3467,7 @@ auth.onAuthStateChanged(async (user) => {
             <textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" placeholder="Describe your issue"></textarea>
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:opacity-90">Submit</button>
+            <button type="button" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:opacity-90" onclick="handleComplaintSubmit(); return false;">Submit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -3487,7 +3491,7 @@ auth.onAuthStateChanged(async (user) => {
         const customer = billsFilterCustomer?.value.toLowerCase();
         const month = billsFilterMonth?.value;
         
-        let query = db.collection('bills');
+        let query = firebase.firestore().collection('bills');
         
         if (zone) query = query.where('zone', '==', zone);
         if (area) query = query.where('area', '==', area);
@@ -3561,16 +3565,20 @@ auth.onAuthStateChanged(async (user) => {
       }
       
       const complaintData = {
-      customerId: currentUser.uid,
-      customerName: currentUserData?.name || currentUser?.email || 'Unknown',
-      subject: subject,
-      description: description,
-      status: 'pending',
-      assignedTo: 'admin',
-      assignedStaffId: null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
+        customerId: currentUser.uid,
+        customerName: currentUserData?.name || currentUser.email || 'Unknown',
+        customerPhone: currentUserData?.phone || '',
+        customerZone: currentUserData?.zone || '',
+        customerArea: currentUserData?.area || '',
+        subject: subject,
+        description: description,
+        status: 'pending',
+        assignedTo: 'admin',
+        assignedStaffId: '',
+        priority: 'normal',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
       
       console.log('[Complaint] Saving:', complaintData);
       const docRef = await addDoc(collection(db, 'complaints'), complaintData);
@@ -3625,7 +3633,7 @@ auth.onAuthStateChanged(async (user) => {
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
-        <form id="complaint-form" class="space-y-4">
+        <form id="complaint-form" class="space-y-4" onsubmit="return false;">
           <div>
             <label class="text-sm font-medium mb-2 block">Subject *</label>
             <input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" placeholder="Enter complaint subject">
@@ -3635,7 +3643,7 @@ auth.onAuthStateChanged(async (user) => {
             <textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" placeholder="Describe your issue"></textarea>
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:opacity-90">Submit</button>
+            <button type="button" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:opacity-90" onclick="handleComplaintSubmit(); return false;">Submit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
