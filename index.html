@@ -7,14 +7,590 @@
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+</script>
 <script>
   tailwind.config = { darkMode: 'class' }
+
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
 </script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js">
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js">
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js">
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js">
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+</script>
 <style>
   :root {
     --primary: 14, 165, 233;
@@ -3271,9 +3847,297 @@ service cloud.firestore {
 
   window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
+
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
 </script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+</script>
 
 
 
@@ -3615,6 +4479,102 @@ firebase.auth().onAuthStateChanged(async (user) => {
     if (originalOpenModal) originalOpenModal.call(this, modalId);
     if (modalId === 'complaint-modal') setTimeout(attachComplaintHandler, 50);
   };
+
+
+    async function openAddAreaModal() {
+        const zoneSelect = document.getElementById('areaZoneSelect');
+        if (!zoneSelect) return;
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        try {
+            const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+            const zonesSnapshot = await getDocs(zonesQuery);
+            zonesSnapshot.forEach((doc) => {
+                const zone = doc.data();
+                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            });
+        } catch (e) {
+            console.error('Error loading zones:', e);
+        }
+        document.getElementById('addAreaModal').classList.remove('hidden');
+    }
+
+
+    async function submitCustomerComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
+        const description = document.getElementById('complaintDescription').value.trim();
+        if (!subject || !description) {
+            showToast('Subject and description required', 'error');
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'complaints'), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                subject: subject,
+                description: description,
+                status: 'pending',
+                assignedTo: 'admin',
+                assignedStaffId: null,
+                createdAt: serverTimestamp()
+            });
+            showToast('Complaint submitted successfully', 'success');
+            document.getElementById('complaintSubject').value = '';
+            document.getElementById('complaintDescription').value = '';
+            closeModal('complaintModal');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to submit complaint', 'error');
+        }
+    }
+
+
+    async function sendSupportMessage() {
+        const input = document.getElementById('supportChatInput');
+        const message = input.value.trim();
+        if (!message) return;
+        const chatId = currentUser.uid;
+        try {
+            await addDoc(collection(db, 'chats', chatId, 'messages'), {
+                text: message,
+                senderId: currentUser.uid,
+                senderName: currentUser.name || currentUser.email,
+                senderRole: currentUser.role,
+                timestamp: serverTimestamp()
+            });
+            await setDoc(doc(db, 'chats', chatId), {
+                customerId: currentUser.uid,
+                customerName: currentUser.name || currentUser.email,
+                lastMessage: message,
+                updatedAt: serverTimestamp(),
+                unreadAdmin: true
+            }, { merge: true });
+            input.value = '';
+        } catch (error) {
+            console.error('Chat error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    }
+    
+    function loadSupportChat() {
+        const chatId = currentUser.uid;
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (snapshot) => {
+            const chatBox = document.getElementById('supportChatBox');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const msg = doc.data();
+                const isMe = msg.senderId === currentUser.uid;
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        <div class="text-sm font-semibold">${msg.senderName}</div>
+                        <div>${msg.text}</div>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
 
 </script>
 
