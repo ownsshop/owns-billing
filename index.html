@@ -7,26 +7,7 @@
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<script src="https://cdn.tailwindcss.com">
-
-window.openAddAreaModal = async function() {
-    const zoneSelect = document.getElementById('areaZoneSelect');
-    if (!zoneSelect) return;
-    zoneSelect.innerHTML = '<option value="">Select Zone</option>';
-    try {
-        const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
-        const zonesSnapshot = await getDocs(zonesQuery);
-        zonesSnapshot.forEach((doc) => {
-            zoneSelect.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`;
-        });
-        console.log('[Zones] Loaded:', zonesSnapshot.size);
-    } catch (error) {
-        console.error('[Zones] Error:', error);
-    }
-    document.getElementById('addAreaModal')?.classList.remove('hidden');
-};
-
-</script>
+<script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = { darkMode: 'class' }
 </script>
@@ -3490,6 +3471,207 @@ firebase.auth().onAuthStateChanged(async (user) => {
     </div>
   </div>
 
+
+<script>
+// Global debug
+window.debugMode = true;
+
+async function loadZonesDebug() {
+    console.log('[DEBUG] Starting loadZones...');
+    console.log('[DEBUG] currentUser:', window.currentUser);
+    
+    if (!window.currentUser) {
+        console.error('[DEBUG] currentUser is null - not logged in');
+        return;
+    }
+    
+    if (window.currentUser.status !== 'approved') {
+        console.error('[DEBUG] User status not approved:', window.currentUser.status);
+        alert('Your account is not approved yet');
+        return;
+    }
+    
+    const zoneSelect = document.getElementById('areaZoneSelect');
+    if (!zoneSelect) {
+        console.error('[DEBUG] areaZoneSelect element not found');
+        return;
+    }
+    
+    zoneSelect.innerHTML = '<option value="">Loading zones...</option>';
+    
+    try {
+        console.log('[DEBUG] Querying zones collection...');
+        const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+        const zonesSnapshot = await getDocs(zonesQuery);
+        
+        console.log('[DEBUG] Zones found:', zonesSnapshot.size);
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        
+        if (zonesSnapshot.empty) {
+            console.warn('[DEBUG] No zones in database');
+            zoneSelect.innerHTML = '<option value="">No zones found - Add zone in Firestore</option>';
+            return;
+        }
+        
+        zonesSnapshot.forEach((doc) => {
+            const zone = doc.data();
+            console.log('[DEBUG] Adding zone:', doc.id, zone.name);
+            zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+        });
+        
+    } catch (error) {
+        console.error('[DEBUG] Zone load error:', error.code, error.message);
+        zoneSelect.innerHTML = '<option value="">Error loading zones</option>';
+        alert('Error loading zones: ' + error.message + '\nCheck Console F12');
+    }
+}
+
+window.openAddAreaModal = async function() {
+    console.log('[DEBUG] openAddAreaModal called');
+    document.getElementById('addAreaModal')?.classList.remove('hidden');
+    await loadZonesDebug();
+};
+
+// FIX COMPLAINT SUBMIT
+window.submitCustomerComplaint = async function() {
+    console.log('[DEBUG] submitCustomerComplaint called');
+    console.log('[DEBUG] currentUser:', window.currentUser);
+    
+    const subjectEl = document.getElementById('complaintSubject');
+    const descEl = document.getElementById('complaintDescription');
+    
+    if (!subjectEl || !descEl) {
+        console.error('[DEBUG] Input elements not found');
+        alert('Form error - refresh page');
+        return;
+    }
+    
+    const subject = subjectEl.value.trim();
+    const description = descEl.value.trim();
+    
+    if (!subject || !description) {
+        alert('Subject and description required');
+        return;
+    }
+    
+    if (!window.currentUser || !window.currentUser.uid) {
+        alert('You must be logged in');
+        return;
+    }
+    
+    try {
+        const complaintData = {
+            customerId: window.currentUser.uid,
+            customerName: window.currentUser.name || window.currentUser.email,
+            subject: subject,
+            description: description,
+            status: 'pending',
+            assignedTo: 'admin',
+            assignedStaffId: null,
+            createdAt: serverTimestamp()
+        };
+        
+        console.log('[DEBUG] Saving complaint:', complaintData);
+        const docRef = await addDoc(collection(db, 'complaints'), complaintData);
+        console.log('[DEBUG] Complaint saved with ID:', docRef.id);
+        
+        alert('Complaint submitted successfully');
+        subjectEl.value = '';
+        descEl.value = '';
+        document.getElementById('complaintModal')?.classList.add('hidden');
+        
+        // Reload complaints list
+        if (typeof loadMyComplaints === 'function') loadMyComplaints();
+        
+    } catch (error) {
+        console.error('[DEBUG] Complaint submit error:', error.code, error.message);
+        alert('Failed to submit: ' + error.message);
+    }
+};
+
+// FIX ADMIN COMPLAINT LOAD
+window.loadAdminComplaints = async function() {
+    console.log('[DEBUG] loadAdminComplaints called');
+    const container = document.getElementById('complaintsList') || document.querySelector('#complaintsContainer');
+    if (!container) {
+        console.error('[DEBUG] Complaints container not found');
+        return;
+    }
+    
+    container.innerHTML = '<div>Loading complaints...</div>';
+    
+    try {
+        const q = query(
+            collection(db, 'complaints'),
+            where('assignedTo', '==', 'admin'),
+            orderBy('createdAt', 'desc')
+        );
+        
+        console.log('[DEBUG] Querying complaints...');
+        const snapshot = await getDocs(q);
+        console.log('[DEBUG] Complaints found:', snapshot.size);
+        
+        if (snapshot.empty) {
+            container.innerHTML = '<div>No complaints found</div>';
+            return;
+        }
+        
+        let html = '';
+        snapshot.forEach((doc) => {
+            const c = doc.data();
+            html += `<div class="complaint-item">
+                <h4>${c.subject}</h4>
+                <p>${c.description}</p>
+                <small>By: ${c.customerName} | Status: ${c.status}</small>
+            </div>`;
+        });
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('[DEBUG] Load complaints error:', error.code, error.message);
+        container.innerHTML = '<div>Error loading complaints: ' + error.message + '</div>';
+    }
+};
+
+// FIX CUSTOMER COMPLAINT LOAD
+window.loadMyComplaints = async function() {
+    console.log('[DEBUG] loadMyComplaints called');
+    const container = document.getElementById('myComplaintsList') || document.querySelector('#complaintsList');
+    if (!container) return;
+    
+    try {
+        const q = query(
+            collection(db, 'complaints'),
+            where('customerId', '==', window.currentUser.uid),
+            orderBy('createdAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        console.log('[DEBUG] My complaints found:', snapshot.size);
+        
+        if (snapshot.empty) {
+            container.innerHTML = '<div>No complaints found</div>';
+            return;
+        }
+        
+        let html = '';
+        snapshot.forEach((doc) => {
+            const c = doc.data();
+            html += `<div class="complaint-item">
+                <h4>${c.subject}</h4>
+                <p>${c.description}</p>
+                <small>Status: ${c.status}</small>
+            </div>`;
+        });
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('[DEBUG] Load my complaints error:', error);
+    }
+};
+
+console.log('[DEBUG] All fixes loaded');
+</script>
+
 </body>
                 </html>
             `);
@@ -3665,6 +3847,207 @@ firebase.auth().onAuthStateChanged(async (user) => {
       </div>
     </div>
   </div>
+
+
+<script>
+// Global debug
+window.debugMode = true;
+
+async function loadZonesDebug() {
+    console.log('[DEBUG] Starting loadZones...');
+    console.log('[DEBUG] currentUser:', window.currentUser);
+    
+    if (!window.currentUser) {
+        console.error('[DEBUG] currentUser is null - not logged in');
+        return;
+    }
+    
+    if (window.currentUser.status !== 'approved') {
+        console.error('[DEBUG] User status not approved:', window.currentUser.status);
+        alert('Your account is not approved yet');
+        return;
+    }
+    
+    const zoneSelect = document.getElementById('areaZoneSelect');
+    if (!zoneSelect) {
+        console.error('[DEBUG] areaZoneSelect element not found');
+        return;
+    }
+    
+    zoneSelect.innerHTML = '<option value="">Loading zones...</option>';
+    
+    try {
+        console.log('[DEBUG] Querying zones collection...');
+        const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+        const zonesSnapshot = await getDocs(zonesQuery);
+        
+        console.log('[DEBUG] Zones found:', zonesSnapshot.size);
+        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+        
+        if (zonesSnapshot.empty) {
+            console.warn('[DEBUG] No zones in database');
+            zoneSelect.innerHTML = '<option value="">No zones found - Add zone in Firestore</option>';
+            return;
+        }
+        
+        zonesSnapshot.forEach((doc) => {
+            const zone = doc.data();
+            console.log('[DEBUG] Adding zone:', doc.id, zone.name);
+            zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+        });
+        
+    } catch (error) {
+        console.error('[DEBUG] Zone load error:', error.code, error.message);
+        zoneSelect.innerHTML = '<option value="">Error loading zones</option>';
+        alert('Error loading zones: ' + error.message + '\nCheck Console F12');
+    }
+}
+
+window.openAddAreaModal = async function() {
+    console.log('[DEBUG] openAddAreaModal called');
+    document.getElementById('addAreaModal')?.classList.remove('hidden');
+    await loadZonesDebug();
+};
+
+// FIX COMPLAINT SUBMIT
+window.submitCustomerComplaint = async function() {
+    console.log('[DEBUG] submitCustomerComplaint called');
+    console.log('[DEBUG] currentUser:', window.currentUser);
+    
+    const subjectEl = document.getElementById('complaintSubject');
+    const descEl = document.getElementById('complaintDescription');
+    
+    if (!subjectEl || !descEl) {
+        console.error('[DEBUG] Input elements not found');
+        alert('Form error - refresh page');
+        return;
+    }
+    
+    const subject = subjectEl.value.trim();
+    const description = descEl.value.trim();
+    
+    if (!subject || !description) {
+        alert('Subject and description required');
+        return;
+    }
+    
+    if (!window.currentUser || !window.currentUser.uid) {
+        alert('You must be logged in');
+        return;
+    }
+    
+    try {
+        const complaintData = {
+            customerId: window.currentUser.uid,
+            customerName: window.currentUser.name || window.currentUser.email,
+            subject: subject,
+            description: description,
+            status: 'pending',
+            assignedTo: 'admin',
+            assignedStaffId: null,
+            createdAt: serverTimestamp()
+        };
+        
+        console.log('[DEBUG] Saving complaint:', complaintData);
+        const docRef = await addDoc(collection(db, 'complaints'), complaintData);
+        console.log('[DEBUG] Complaint saved with ID:', docRef.id);
+        
+        alert('Complaint submitted successfully');
+        subjectEl.value = '';
+        descEl.value = '';
+        document.getElementById('complaintModal')?.classList.add('hidden');
+        
+        // Reload complaints list
+        if (typeof loadMyComplaints === 'function') loadMyComplaints();
+        
+    } catch (error) {
+        console.error('[DEBUG] Complaint submit error:', error.code, error.message);
+        alert('Failed to submit: ' + error.message);
+    }
+};
+
+// FIX ADMIN COMPLAINT LOAD
+window.loadAdminComplaints = async function() {
+    console.log('[DEBUG] loadAdminComplaints called');
+    const container = document.getElementById('complaintsList') || document.querySelector('#complaintsContainer');
+    if (!container) {
+        console.error('[DEBUG] Complaints container not found');
+        return;
+    }
+    
+    container.innerHTML = '<div>Loading complaints...</div>';
+    
+    try {
+        const q = query(
+            collection(db, 'complaints'),
+            where('assignedTo', '==', 'admin'),
+            orderBy('createdAt', 'desc')
+        );
+        
+        console.log('[DEBUG] Querying complaints...');
+        const snapshot = await getDocs(q);
+        console.log('[DEBUG] Complaints found:', snapshot.size);
+        
+        if (snapshot.empty) {
+            container.innerHTML = '<div>No complaints found</div>';
+            return;
+        }
+        
+        let html = '';
+        snapshot.forEach((doc) => {
+            const c = doc.data();
+            html += `<div class="complaint-item">
+                <h4>${c.subject}</h4>
+                <p>${c.description}</p>
+                <small>By: ${c.customerName} | Status: ${c.status}</small>
+            </div>`;
+        });
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('[DEBUG] Load complaints error:', error.code, error.message);
+        container.innerHTML = '<div>Error loading complaints: ' + error.message + '</div>';
+    }
+};
+
+// FIX CUSTOMER COMPLAINT LOAD
+window.loadMyComplaints = async function() {
+    console.log('[DEBUG] loadMyComplaints called');
+    const container = document.getElementById('myComplaintsList') || document.querySelector('#complaintsList');
+    if (!container) return;
+    
+    try {
+        const q = query(
+            collection(db, 'complaints'),
+            where('customerId', '==', window.currentUser.uid),
+            orderBy('createdAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        console.log('[DEBUG] My complaints found:', snapshot.size);
+        
+        if (snapshot.empty) {
+            container.innerHTML = '<div>No complaints found</div>';
+            return;
+        }
+        
+        let html = '';
+        snapshot.forEach((doc) => {
+            const c = doc.data();
+            html += `<div class="complaint-item">
+                <h4>${c.subject}</h4>
+                <p>${c.description}</p>
+                <small>Status: ${c.status}</small>
+            </div>`;
+        });
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('[DEBUG] Load my complaints error:', error);
+    }
+};
+
+console.log('[DEBUG] All fixes loaded');
+</script>
 
 </body>
 </html>
