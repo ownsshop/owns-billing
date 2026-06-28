@@ -7,7 +7,26 @@
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+
+window.openAddAreaModal = async function() {
+    const zoneSelect = document.getElementById('areaZoneSelect');
+    if (!zoneSelect) return;
+    zoneSelect.innerHTML = '<option value="">Select Zone</option>';
+    try {
+        const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
+        const zonesSnapshot = await getDocs(zonesQuery);
+        zonesSnapshot.forEach((doc) => {
+            zoneSelect.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`;
+        });
+        console.log('[Zones] Loaded:', zonesSnapshot.size);
+    } catch (error) {
+        console.error('[Zones] Error:', error);
+    }
+    document.getElementById('addAreaModal')?.classList.remove('hidden');
+};
+
+</script>
 <script>
   tailwind.config = { darkMode: 'class' }
 </script>
@@ -297,24 +316,16 @@
   import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, Timestamp, limit } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
   import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
-  
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, setDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
+    authDomain: "owns-billing.firebaseapp.com",
+    projectId: "owns-billing",
+    storageBucket: "owns-billing.firebasestorage.app",
+    messagingSenderId: "1036958677443",
+    appId: "1:1036958677443:web:5541baa54edc6e5f582576"
+  };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
-  authDomain: "owns-billing.firebaseapp.com",
-  projectId: "owns-billing",
-  storageBucket: "owns-billing.appspot.com",
-  messagingSenderId: "1036958677443",
-  appId: "1:1036958677443:web:5541baa54edc6e5f582576"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
+  const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
