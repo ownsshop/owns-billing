@@ -265,6 +265,18 @@
   }
 </style>
 
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* Fix sidebar layout */
+.sidebar { position: fixed !important; height: 100vh !important; overflow-y: auto !important; }
+.main-content { margin-left: 250px !important; }
+/* Fix modal z-index */
+.modal { z-index: 9999 !important; }
+/* Fix dropdown */
+select { background-color: #1e293b !important; color: #fff !important; }
+</style>
+
 </head>
 <body class="antialiased">
 <div id="auth-loading" class="auth-loading">
@@ -3518,161 +3530,260 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     th { background: #f0f0f0; }
                     h1 { text-align: center; }
                 </style>
-                </head>
+                
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* Fix sidebar layout */
+.sidebar { position: fixed !important; height: 100vh !important; overflow-y: auto !important; }
+.main-content { margin-left: 250px !important; }
+/* Fix modal z-index */
+.modal { z-index: 9999 !important; }
+/* Fix dropdown */
+select { background-color: #1e293b !important; color: #fff !important; }
+</style>
+
+</head>
                 <body>
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
                 
 <script>
-// Fixed: Load all Zones in Area Edit/Add Modal
-async function loadZonesInAreaModal() {
-    const zoneSelect = document.getElementById('areaZoneSelect') || document.querySelector('#editAreaModal select[name="zone"]');
-    if (!zoneSelect) return;
-    
-    zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
+// Universal Zone Loader - works with any modal structure
+async function loadAllZonesIntoSelect(selectElement) {
+    if (!selectElement) return;
+    selectElement.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
     
     try {
-        // Load all zones from Firestore
-        const zonesSnap = await firebase.firestore().collection('zones').orderBy('name').get();
-        zonesSnap.forEach(doc => {
+        const snapshot = await db.collection('zones').orderBy('name').get();
+        if (snapshot.empty) {
+            selectElement.innerHTML += '<option value="" disabled>কোন জোন নেই - আগে জোন অ্যাড করুন</option>';
+            return;
+        }
+        snapshot.forEach(doc => {
             const zone = doc.data();
-            zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+            selectElement.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
         });
     } catch (error) {
         console.error('Zone load error:', error);
-        zoneSelect.innerHTML = '<option value="">জোন লোড হয়নি</option>';
+        selectElement.innerHTML = '<option value="">এরর: জোন লোড হয়নি</option>';
     }
 }
 
-// Call this when Add Area or Edit Area modal opens
+// Watch for any modal opening and auto-populate zone selects
 document.addEventListener('DOMContentLoaded', function() {
-    // Hook into modal open events
-    const addAreaBtn = document.getElementById('addAreaBtn');
-    if (addAreaBtn) {
-        addAreaBtn.addEventListener('click', () => {
-            setTimeout(loadZonesInAreaModal, 100); // Wait for modal to render
+    // Use MutationObserver to detect when modals are added to DOM
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    // Find all zone selects in newly added modals
+                    const zoneSelects = node.querySelectorAll('select[name*="zone" i], select[id*="zone" i]');
+                    zoneSelects.forEach(select => {
+                        // Only load if it's in an Area modal
+                        if (select.closest('[id*="Area"], [id*="area"]')) {
+                            loadAllZonesIntoSelect(select);
+                        }
+                    });
+                }
+            });
         });
-    }
+    });
     
-    // Hook into all edit buttons
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Also trigger on button clicks
     document.addEventListener('click', function(e) {
-        if (e.target.closest('.edit-area-btn')) {
-            setTimeout(loadZonesInAreaModal, 100);
+        if (e.target.textContent.includes('Add Area') || e.target.textContent.includes('Edit') || e.target.closest('.edit-area-btn')) {
+            setTimeout(() => {
+                const zoneSelects = document.querySelectorAll('select[name*="zone" i]');
+                zoneSelects.forEach(loadAllZonesIntoSelect);
+            }, 200);
         }
     });
 });
-</script>
 
-<script>
-// Fixed: Customer -> Package auto-load in Invoice Generator
-async function setupInvoiceCustomerChange() {
-    const customerSelect = document.getElementById('invoiceCustomerSelect') || document.querySelector('#invoiceGenerator select[name="customer"]');
-    const packageInput = document.getElementById('invoicePackage') || document.querySelector('#invoiceGenerator input[name="package"]');
-    const amountInput = document.getElementById('invoiceAmount') || document.querySelector('#invoiceGenerator input[name="amount"]');
+// Fix: Invoice Generator Customer -> Package
+document.addEventListener('DOMContentLoaded', function() {
+    const custSelect = document.getElementById('invoiceCustomer');
+    const pkgSelect = document.getElementById('invoicePackage');
     
-    if (!customerSelect) return;
-    
-    customerSelect.addEventListener('change', async function() {
-        const customerId = this.value;
-        if (!customerId) {
-            if (packageInput) packageInput.value = '';
-            if (amountInput) amountInput.value = '';
-            return;
-        }
-        
-        try {
-            const customerDoc = await firebase.firestore().collection('customers').doc(customerId).get();
-            if (customerDoc.exists) {
-                const data = customerDoc.data();
-                if (packageInput) packageInput.value = data.packageName || data.package || '';
-                if (amountInput) amountInput.value = data.monthlyFee || data.packagePrice || '';
+    if (custSelect && pkgSelect) {
+        custSelect.addEventListener('change', async function() {
+            const custId = this.value;
+            pkgSelect.innerHTML = '<option value="">প্যাকেজ লোড হচ্ছে...</option>';
+            
+            if (!custId) {
+                pkgSelect.innerHTML = '<option value="">প্যাকেজ সিলেক্ট করুন</option>';
+                return;
             }
-        } catch (error) {
-            console.error('Customer package load error:', error);
-        }
-    });
-}
-
-document.addEventListener('DOMContentLoaded', setupInvoiceCustomerChange);
+            
+            try {
+                const doc = await db.collection('customers').doc(custId).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    pkgSelect.innerHTML = `<option value="${data.packageId || ''}">${data.packageName || data.package || 'প্যাকেজ নেই'}</option>`;
+                    // Auto-fill amount
+                    const amtInput = document.querySelector('input[name="amount"]');
+                    if (amtInput && data.monthlyFee) amtInput.value = data.monthlyFee;
+                }
+            } catch (e) {
+                console.error(e);
+                pkgSelect.innerHTML = '<option value="">এরর</option>';
+            }
+        });
+    }
+});
 </script>
 
 </body>
                 </html>
-            `
-</script>
-
-
-<script>
-// Fixed: Load all Zones in Area Edit/Add Modal
-async function loadZonesInAreaModal() {
-    const zoneSelect = document.getElementById('areaZoneSelect') || document.querySelector('#editAreaModal select[name="zone"]');
-    if (!zoneSelect) return;
-    
-    zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
-    
-    try {
-        // Load all zones from Firestore
-        const zonesSnap = await firebase.firestore().collection('zones').orderBy('name').get();
-        zonesSnap.forEach(doc => {
-            const zone = doc.data();
-            zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
-        });
-    } catch (error) {
-        console.error('Zone load error:', error);
-        zoneSelect.innerHTML = '<option value="">জোন লোড হয়নি</option>';
-    }
-}
-
-// Call this when Add Area or Edit Area modal opens
-document.addEventListener('DOMContentLoaded', function() {
-    // Hook into modal open events
-    const addAreaBtn = document.getElementById('addAreaBtn');
-    if (addAreaBtn) {
-        addAreaBtn.addEventListener('click', () => {
-            setTimeout(loadZonesInAreaModal, 100); // Wait for modal to render
+            `);
+            printWindow.document.close();
+            printWindow.print();
         });
     }
     
-    // Hook into all edit buttons
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.edit-area-btn')) {
-            setTimeout(loadZonesInAreaModal, 100);
-        }
-    });
-});
-</script>
-
-<script>
-// Fixed: Customer -> Package auto-load in Invoice Generator
-async function setupInvoiceCustomerChange() {
-    const customerSelect = document.getElementById('invoiceCustomerSelect') || document.querySelector('#invoiceGenerator select[name="customer"]');
-    const packageInput = document.getElementById('invoicePackage') || document.querySelector('#invoiceGenerator input[name="package"]');
-    const amountInput = document.getElementById('invoiceAmount') || document.querySelector('#invoiceGenerator input[name="amount"]');
-    
-    if (!customerSelect) return;
-    
-    customerSelect.addEventListener('change', async function() {
-        const customerId = this.value;
-        if (!customerId) {
-            if (packageInput) packageInput.value = '';
-            if (amountInput) amountInput.value = '';
-            return;
+    // Load filtered bills function
+    async function loadFilteredBills() {
+        const zone = billsFilterZone?.value;
+        const area = billsFilterArea?.value;
+        const staff = billsFilterStaff?.value;
+        const customer = billsFilterCustomer?.value.toLowerCase();
+        const month = billsFilterMonth?.value;
+        
+        let query = firebase.firestore().collection('bills');
+        
+        if (zone) query = query.where('zone', '==', zone);
+        if (area) query = query.where('area', '==', area);
+        if (staff) query = query.where('staffId', '==', staff);
+        
+        if (month) {
+            const start = new Date(month + '-01');
+            const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+            query = query.where('date', '>=', start).where('date', '<=', end);
         }
         
         try {
-            const customerDoc = await firebase.firestore().collection('customers').doc(customerId).get();
-            if (customerDoc.exists) {
-                const data = customerDoc.data();
-                if (packageInput) packageInput.value = data.packageName || data.package || '';
-                if (amountInput) amountInput.value = data.monthlyFee || data.packagePrice || '';
+            const snap = await query.get();
+            let bills = [];
+            snap.forEach(doc => bills.push({id: doc.id, ...doc.data()}));
+            
+            if (customer) {
+                bills = bills.filter(b => 
+                    b.customerName?.toLowerCase().includes(customer) || 
+                    b.customerMobile?.includes(customer)
+                );
             }
-        } catch (error) {
-            console.error('Customer package load error:', error);
+            
+            // Call your existing render function
+            if (typeof renderBillsTable === 'function') {
+                renderBillsTable(bills);
+            } else {
+                console.log('Filtered bills:', bills);
+            }
+        } catch (err) {
+            console.error('Bills filter error:', err);
         }
-    });
+    }
+    
+    // Helper
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+});
+</script>
+
+
+<script>
+// Universal Zone Loader - works with any modal structure
+async function loadAllZonesIntoSelect(selectElement) {
+    if (!selectElement) return;
+    selectElement.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
+    
+    try {
+        const snapshot = await db.collection('zones').orderBy('name').get();
+        if (snapshot.empty) {
+            selectElement.innerHTML += '<option value="" disabled>কোন জোন নেই - আগে জোন অ্যাড করুন</option>';
+            return;
+        }
+        snapshot.forEach(doc => {
+            const zone = doc.data();
+            selectElement.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+        });
+    } catch (error) {
+        console.error('Zone load error:', error);
+        selectElement.innerHTML = '<option value="">এরর: জোন লোড হয়নি</option>';
+    }
 }
 
-document.addEventListener('DOMContentLoaded', setupInvoiceCustomerChange);
+// Watch for any modal opening and auto-populate zone selects
+document.addEventListener('DOMContentLoaded', function() {
+    // Use MutationObserver to detect when modals are added to DOM
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    // Find all zone selects in newly added modals
+                    const zoneSelects = node.querySelectorAll('select[name*="zone" i], select[id*="zone" i]');
+                    zoneSelects.forEach(select => {
+                        // Only load if it's in an Area modal
+                        if (select.closest('[id*="Area"], [id*="area"]')) {
+                            loadAllZonesIntoSelect(select);
+                        }
+                    });
+                }
+            });
+        });
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Also trigger on button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.textContent.includes('Add Area') || e.target.textContent.includes('Edit') || e.target.closest('.edit-area-btn')) {
+            setTimeout(() => {
+                const zoneSelects = document.querySelectorAll('select[name*="zone" i]');
+                zoneSelects.forEach(loadAllZonesIntoSelect);
+            }, 200);
+        }
+    });
+});
+
+// Fix: Invoice Generator Customer -> Package
+document.addEventListener('DOMContentLoaded', function() {
+    const custSelect = document.getElementById('invoiceCustomer');
+    const pkgSelect = document.getElementById('invoicePackage');
+    
+    if (custSelect && pkgSelect) {
+        custSelect.addEventListener('change', async function() {
+            const custId = this.value;
+            pkgSelect.innerHTML = '<option value="">প্যাকেজ লোড হচ্ছে...</option>';
+            
+            if (!custId) {
+                pkgSelect.innerHTML = '<option value="">প্যাকেজ সিলেক্ট করুন</option>';
+                return;
+            }
+            
+            try {
+                const doc = await db.collection('customers').doc(custId).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    pkgSelect.innerHTML = `<option value="${data.packageId || ''}">${data.packageName || data.package || 'প্যাকেজ নেই'}</option>`;
+                    // Auto-fill amount
+                    const amtInput = document.querySelector('input[name="amount"]');
+                    if (amtInput && data.monthlyFee) amtInput.value = data.monthlyFee;
+                }
+            } catch (e) {
+                console.error(e);
+                pkgSelect.innerHTML = '<option value="">এরর</option>';
+            }
+        });
+    }
+});
 </script>
 
 </body>
