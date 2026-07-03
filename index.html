@@ -3266,10 +3266,10 @@ firebase.auth().onAuthStateChanged(async (user) => {
     const zoneSelects = document.querySelectorAll('#customerZoneSelect, #billsFilterZone, #areaZoneSelect');
     zoneSelects.forEach(select => {
         if (select && select.options.length <= 1) {
-            Object.keys(ZONE_AREAS).forEach(zone => {
+            (appState.zones || []).forEach(z => {
                 const opt = document.createElement('option');
-                opt.value = zone;
-                opt.textContent = zone;
+                opt.value = z.name;
+                opt.textContent = z.name;
                 select.appendChild(opt);
             });
         }
