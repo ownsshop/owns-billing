@@ -343,7 +343,6 @@
     customers: [],
     packages: [],
     bills: [],
-    complaints: [],
     activities: [],
     zones: [],
     areas: [],
@@ -355,7 +354,7 @@
 
   const menuNames = {
     dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
-    bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
+    bills: 'Bills', invoice: 'Invoice Generator', reports: 'Reports',
     activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
     mybills: 'My Bills', profile: 'Profile', chat: 'Chat', approvals: 'Approvals',
     mywallet: 'My Wallet', staffaccounts: 'Staff Accounts'
@@ -721,7 +720,6 @@
       packages: renderPackages,
       bills: renderBills,
       invoice: renderInvoice,
-      complaints: renderComplaints,
       reports: renderReports,
       activities: renderActivities,
       settings: renderSettings,
@@ -807,7 +805,6 @@
         { id: 'bills', label: 'Bills', icon: 'receipt' },
         { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
         { id: 'staffaccounts', label: 'Staff Accounts', icon: 'wallet' },
-        { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
         { id: 'reports', label: 'Reports', icon: 'bar-chart-3' },
         { id: 'activities', label: 'Activity Log', icon: 'history' },
         { id: 'settings', label: 'Settings', icon: 'settings' }
@@ -818,15 +815,12 @@
         { id: 'bills', label: 'Bills', icon: 'receipt' },
         { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
         { id: 'mywallet', label: 'My Wallet', icon: 'wallet' },
-        { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
         { id: 'reports', label: 'Reports', icon: 'bar-chart-3' }
       ],
       customer: [
         { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
         { id: 'mybills', label: 'My Bills', icon: 'receipt' },
-        { id: 'profile', label: 'Profile', icon: 'user' },
-        { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
-        { id: 'chat', label: 'Chat', icon: 'messages-square' }
+        { id: 'profile', label: 'Profile', icon: 'user' }
       ]
     };
 
@@ -1938,142 +1932,12 @@
   };
 
   // v2.2.3 FIX: v2.2.4 ENHANCED: Complaint submission with dual data structure support
-  const renderComplaints = () => {
-    const list = currentRole === 'customer' 
-      ? appState.complaints.filter(c => c.customerId === currentUser.uid)
-      : currentRole === 'staff'
-      ? appState.complaints.filter(c => c.assignedStaffId === currentUser.uid || c.assignedStaffId === null)
-      : appState.complaints;
-
-    const container = document.getElementById('view-complaints');
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 fade-in">
-        ${currentRole === 'customer' ? `
-        <button onclick="handleComplaintSubmit()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
-        </button>
-        ` : ''}
-        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading complaints...</span></div>' : `
-        <div class="space-y-3">
-          ${list.length ? list.map(c => `
-            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <h4 class="font-bold">${c.subject || '-'}</h4>
-                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status || 'pending'}</span>
-                  </div>
-                  <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
-                </div>
-              </div>
-              <div class="flex items-center justify-between text-xs text-slate-500">
-                <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
-                ${currentRole !== 'customer' && c.status !== 'resolved' ? `
-                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">Mark Resolved</button>
-                ` : ''}
-              </div>
-            </div>
-          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No complaints found</div>'}
-        </div>
-        `}
-      </div>
-    `;
-  };
+  
 
   // v2.2.4 FIX: Handle both users doc and customers collection structures
-  window.handleComplaintSubmit = () => {
-    showModal(`
-      <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
-        <form id="complaint-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
-            <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
-          </div>
-        </form>
-      </div>
-    `);
+  
 
-    $('#complaint-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = $('#complaint-submit-btn');
-      submitBtn.classList.add('btn-loading');
-      submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2"></i>Submitting...';
-      lucide.createIcons();
-
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      
-      try {
-        console.log('[Complaint Submit v2.2.4] Starting submission');
-        console.log('[Complaint Submit] Current user data:', currentUserData);
-        
-        if (!currentUser || !currentUserData || currentUserData.role !== 'customer') {
-          throw new Error('Only customers can submit complaints');
-        }
-
-        // v2.2.4 FIX: Flexible customer data extraction
-        // Works with both: users doc only OR users + customers collection
-        const customerId = currentUserData.customerId || currentUser.uid;
-        const customerName = currentUserData.name || currentUser.email || 'Unknown Customer';
-        const customerMobile = currentUserData.mobile || currentUserData.whatsapp || '';
-        const assignedStaffId = currentUserData.assignedStaffId || currentUserData.assignedStaff || null;
-
-        const complaintData = {
-          subject: data.subject.trim(),
-          description: data.description.trim(),
-          customerId: customerId,
-          customerName: customerName,
-          customerMobile: customerMobile,
-          assignedStaffId: assignedStaffId,
-          status: 'pending',
-          createdAt: serverTimestamp(),
-          createdBy: currentUser.uid
-        };
-
-        console.log('[Complaint Submit v2.2.4] Final complaint data:', complaintData);
-        
-        const docRef = await addDoc(collection(db, 'complaints'), complaintData);
-        console.log('[Complaint Submit] Success! Doc ID:', docRef.id);
-        
-        await logActivity('Complaint', `New complaint: ${data.subject}`);
-        
-        showToast('Complaint submitted successfully', 'success');
-        closeModal();
-        setTimeout(() => renderComplaints(), 500);
-        
-      } catch (error) {
-        console.error('[Complaint Submit v2.2.4] Error details:', error);
-        console.error('[Complaint Submit] Error code:', error.code);
-        console.error('[Complaint Submit] Error message:', error.message);
-        
-        let errorMsg = 'Failed to submit complaint';
-        if (error.code === 'permission-denied') {
-          errorMsg = 'Permission denied. Please check your account status or contact admin.';
-        } else if (error.message) {
-          errorMsg = error.message;
-        }
-        
-        showToast(errorMsg, 'error');
-      } finally {
-        submitBtn.classList.remove('btn-loading');
-        submitBtn.innerHTML = 'Submit';
-        lucide.createIcons();
-      }
-    });
-  };
-
-  window.updateComplaintStatus = async (id, status) => {
-    try {
-      await updateDoc(doc(db, 'complaints', id), { status, updatedAt: serverTimestamp() });
-      await logActivity('Complaint Update', `Status changed to ${status}`);
-      showToast('Status updated', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
+  
 
   const renderReports = () => {
     const container = document.getElementById('view-reports');
@@ -2950,134 +2814,108 @@ service cloud.firestore {
   };
 
   const renderInvoice = () => {
+    const customers = currentRole === 'staff' 
+      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && (u.status === 'approved' || !u.status))
+      : appState.users.filter(u => u.role === 'customer' && (u.status === 'approved' || !u.status));
+
     const container = document.getElementById('view-invoice');
     if (!container) return;
-    
-    const customers = appState.users.filter(u => u.role === 'customer' && u.status === 'approved');
-    const packages = appState.packages || [];
-    
-    const customerOptions = customers.map(c => 
-      `<option value="${c.id}" data-package="${c.packageId || ''}" data-amount="${packages.find(p => p.id === c.packageId)?.price || 0}">${c.name} - ${c.mobile}</option>`
-    ).join('');
-    
-    const packageOptions = packages.map(p => 
-      `<option value="${p.id}" data-price="${p.price}">${p.name} - ${formatCurrency(p.price)}</option>`
-    ).join('');
 
     container.innerHTML = `
       <div class="max-w-4xl mx-auto space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="text-xl font-bold mb-6">Generate Invoice</h3>
+          <h3 class="font-bold text-lg mb-6">Generate Invoice</h3>
           <form id="invoice-form" class="space-y-4">
             <div class="grid md:grid-cols-2 gap-4">
               <div>
                 <label class="text-sm font-medium mb-2 block">Select Customer *</label>
-                <select id="invoiceCustomer" name="customerId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+                <select id="invoice-customer" name="customerId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
                   <option value="">Choose customer</option>
-                  ${customerOptions}
-                </select>
-              </div>
-              <div>
-                <label class="text-sm font-medium mb-2 block">Package *</label>
-                <select id="invoicePackage" name="packageId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">Select package</option>
-                  ${packageOptions}
+                  ${customers.map(c => `<option value="${c.id}" data-customer='${JSON.stringify(c)}'>${c.name} - ${c.mobile}</option>`).join('')}
                 </select>
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Amount *</label>
-                <input type="number" id="invoiceAmount" name="amount" required readonly class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-              </div>
-              <div>
+                <input type="number" name="amount" id="invoice-amount" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div>
                 <label class="text-sm font-medium mb-2 block">Payment Method *</label>
-                <select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">Select method</option>
-                  <option value="Cash">Cash</option>
-                  <option value="bKash">bKash</option>
-                  <option value="Nagad">Nagad</option>
-                  <option value="Bank">Bank Transfer</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-sm font-medium mb-2 block">Status *</label>
-                <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="paid">Paid</option>
-                  <option value="unpaid">Unpaid</option>
-                </select>
-              </div>
-              <div>
+                <select name="paymentMethod" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div>
                 <label class="text-sm font-medium mb-2 block">Transaction ID</label>
-                <input type="text" name="transactionId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-              </div>
-            </div>
-            <div>
-              <label class="text-sm font-medium mb-2 block">Notes</label>
-              <textarea name="notes" rows="3" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea>
+                <input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div>
+                <label class="text-sm font-medium mb-2 block">Status *</label>
+                <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div><div>
+                <label class="text-sm font-medium mb-2 block">Promise Date</label>
+                <input type="date" name="promiseDate" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="md:col-span-2">
+                <label class="text-sm font-medium mb-2 block">Notes</label>
+                <textarea name="notes" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
             </div>
             <div class="flex gap-3">
               <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
-              <button type="button" onclick="previewInvoice()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
+              <button type="button" id="preview-invoice" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
             </div>
           </form>
         </div>
+        <div id="invoice-preview" class="hidden"></div>
       </div>
     `;
-    
-    // Auto-fill package and amount when customer selected
-    document.getElementById('invoiceCustomer')?.addEventListener('change', (e) => {
-      const selectedOption = e.target.options[e.target.selectedIndex];
-      const packageId = selectedOption.getAttribute('data-package');
-      const amount = selectedOption.getAttribute('data-amount');
-      if (packageId) {
-        document.getElementById('invoicePackage').value = packageId;
-        document.getElementById('invoiceAmount').value = amount;
+
+    $('#invoice-customer').addEventListener('change', (e) => {
+      const option = e.target.selectedOptions[0];
+      if (option.value) {
+        const customer = JSON.parse(option.dataset.customer);
+        $('#invoice-amount').value = customer.packagePrice || '';
       }
     });
-    
-    // Update amount when package changed
-    document.getElementById('invoicePackage')?.addEventListener('change', (e) => {
-      const selectedOption = e.target.options[e.target.selectedIndex];
-      const price = selectedOption.getAttribute('data-price');
-      document.getElementById('invoiceAmount').value = price || '';
+
+    $('#invoice-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      const customerOption = $('#invoice-customer').selectedOptions[0];
+      const customer = JSON.parse(customerOption.dataset.customer);
+      
+      try {
+        const billData = {
+          ...data,
+          amount: Number(data.amount),
+          customerId: data.customerId,
+          customerName: customer.name,
+          customerMobile: customer.mobile,
+          customerEmail: customer.email,
+          customerPPPoE: customer.pppoeUser,
+          packageName: customer.packageName,
+          staffId: customer.assignedStaff || currentUser.uid,
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp(),
+          promiseDate: data.promiseDate ? Timestamp.fromDate(new Date(data.promiseDate)) : null,
+          invoiceNo: `INV-${Date.now()}`
+        };
+        
+        const docRef = await addDoc(collection(db, 'bills'), billData);
+        
+        if (data.promiseDate) {
+          await updateDoc(doc(db, 'users', data.customerId), {
+            promiseDate: Timestamp.fromDate(new Date(data.promiseDate))
+          });
+        }
+        
+        await logActivity('Create Invoice', `Invoice for ${customer.name}: ${formatCurrency(data.amount)}`);
+        showToast('Invoice created successfully', 'success');
+        
+        showInvoicePreview({ ...billData, id: docRef.id });
+        e.target.reset();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
     });
-    
-    document.getElementById('invoice-form')?.addEventListener('submit', handleInvoiceSubmit);
-    lucide.createIcons();
-  };
-  
-  window.handleInvoiceSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
-    
-    try {
-      const customer = appState.users.find(u => u.id === data.customerId);
-      const pkg = appState.packages.find(p => p.id === data.packageId);
-      
-      const invoiceData = {
-        invoiceId: 'INV-' + Date.now(),
-        customerId: data.customerId,
-        customerName: customer?.name || '',
-        customerMobile: customer?.mobile || '',
-        packageId: data.packageId,
-        packageName: pkg?.name || '',
-        amount: parseFloat(data.amount),
-        method: data.method,
-        status: data.status,
-        transactionId: data.transactionId || '',
-        notes: data.notes || '',
-        createdAt: serverTimestamp(),
-        createdBy: currentUser.uid
-      };
-      
-      await addDoc(collection(db, 'bills'), invoiceData);
-      await logActivity('Invoice Created', `Invoice for ${customer?.name}: ${formatCurrency(data.amount)}`);
-      showToast('Invoice created successfully', 'success');
-      e.target.reset();
-    } catch (err) {
-      console.error('Invoice error:', err);
-      showToast(err.message, 'error');
-    }
+
+    $('#preview-invoice').addEventListener('click', () => {
+      const formData = new FormData($('#invoice-form'));
+      const data = Object.fromEntries(formData);
+      const customerOption = $('#invoice-customer').selectedOptions[0];
+      if (!customerOption.value) return showToast('Please select a customer', 'warning');
+      const customer = JSON.parse(customerOption.dataset.customer);
+      showInvoicePreview({ ...data, customer, invoiceNo: `INV-${Date.now()}` });
+    });
   };
 
   window.createInvoiceFor = (customerId) => {
