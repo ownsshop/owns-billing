@@ -2355,50 +2355,59 @@ service cloud.firestore {
     });
   };
 
-  window.showAreaForm = (id = null) => {
-    const area = id ? appState.areas.find(a => a.id === id) : null;
+window.showAreaForm = async (id = null) => {
+    const area = id ? appState.areas?.find(a => a.id === id) : null;
+    
+    // Load zones fresh to avoid timing issues
+    const zonesSnap = await getDocs(collection(db, 'zones'));
+    const zones = zonesSnap.docs.map(d => ({id: d.id,...d.data()}));
+    const zoneOptions = zones.map(z => 
+      `<option value="${z.name}" ${area?.zone===z.name?'selected':''}>${z.name}</option>`
+    ).join('');
+    
     showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
         <form id="area-form">
           <div>
-            
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-300 mb-2">Zone *</label>
-    <select id="areaZoneSelect" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
-        <option value="">Select Zone</option>
-    </select>
-</div>
-<label class="text-sm font-medium mb-2 block">Area Name *</label>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-300 mb-2">Zone *</label>
+              <select id="areaZoneSelect" name="zone" required class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
+                <option value="">Select Zone</option>
+                ${zoneOptions}
+              </select>
+            </div>
+            <label class="text-sm font-medium mb-2 block">Area Name *</label>
             <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
           <div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
       </div>
     `);
 
     $('#area-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-      try {
-        if (id) {
-          await updateDoc(doc(db, 'areas', id), data);
-          await logActivity('Update Area', `Updated area: ${data.name}`);
-        } else {
-          await addDoc(collection(db, 'areas'), { ...data, createdAt: serverTimestamp() });
-          await logActivity('Add Area', `Added area: ${data.name}`);
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
+        try {
+            if (id) {
+                await updateDoc(doc(db, 'areas', id), data);
+                await logActivity('Update Area', `Updated area: ${data.name}`);
+            } else {
+                await addDoc(collection(db, 'areas'), { ...data, createdAt: serverTimestamp() });
+                await logActivity('Add Area', `Added area: ${data.name}`);
+            }
+            showToast('Area saved', 'success');
+            closeModal();
+        } catch (err) {
+            showToast(err.message, 'error');
         }
-        showToast('Area saved', 'success');
-        closeModal();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
     });
-  };
+};
+
 
   window.deleteArea = async (id) => {
     if (!confirm('Delete this area?')) return;
@@ -3266,10 +3275,10 @@ firebase.auth().onAuthStateChanged(async (user) => {
     const zoneSelects = document.querySelectorAll('#customerZoneSelect, #billsFilterZone, #areaZoneSelect');
     zoneSelects.forEach(select => {
         if (select && select.options.length <= 1) {
-            (appState.zones || []).forEach(z => {
+            Object.keys(ZONE_AREAS).forEach(zone => {
                 const opt = document.createElement('option');
-                opt.value = z.name;
-                opt.textContent = z.name;
+                opt.value = zone;
+                opt.textContent = zone;
                 select.appendChild(opt);
             });
         }
