@@ -648,7 +648,6 @@
     }, 'bills'));
 
     let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
-    console.log('[Complaints] Query for role:', currentRole);
     if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('assignedStaffId', '==', currentUser.uid));
     if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
     
@@ -1833,12 +1832,9 @@
   };
 
   const renderBills = (myBills = false) => {
-    let list = appState.bills;
-    if (currentRole === 'customer') {
-      list = appState.bills.filter(b => b.customerId === currentUser.uid || b.customerPhone === currentUserData?.phone);
-    } else if (currentRole === 'staff') {
-      list = appState.bills.filter(b => b.staffId === currentUser.uid);
-    }
+    const list = myBills && currentRole === 'customer'
+      ? appState.bills.filter(b => b.customerId === currentUser.uid)
+      : appState.bills;
 
     const viewId = myBills ? 'view-mybills' : 'view-bills';
     const container = document.getElementById(viewId);
@@ -1851,30 +1847,23 @@
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
             <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
-${(() => {
-          const role = currentRole || 'customer';
-          if (role === 'admin') {
-            return `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-              <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"><option value="">All Zones</option></select>
-              <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"><option value="">All Areas</option></select>
-              <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"><option value="">All Staff</option></select>
-              <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-              <input type="date" id="billsFilterDate" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-              <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"><option value="">All Status</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select>
-            </div>`;
-          } else if (role === 'staff') {
-            return `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="billsAdvancedFilters">
-              <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"><option value="">All Zones</option></select>
-              <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"><option value="">All Areas</option></select>
-              <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-              <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"><option value="">All Status</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select>
-            </div>`;
-          } else {
-            return `<div class="grid grid-cols-2 gap-3 mb-4" id="billsAdvancedFilters">
-              <select id="billsFilterStatus" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"><option value="">All Status</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select>
-            </div>`;
-          }
-        })()}
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
+    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+        <option value="">All Zones</option>
+    </select>
+    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
+        <option value="">All Areas</option>
+    </select>
+    <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+        <option value="">All Staff</option>
+    </select>
+    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+        Print Monthly
+    </button>
+</div>
 
           <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
             <i data-lucide="download" class="w-5 h-5"></i> Export CSV
@@ -1949,24 +1938,6 @@ ${(() => {
   };
 
   // v2.2.3 FIX: v2.2.4 ENHANCED: Complaint submission with dual data structure support
-  
-  // Global Modal Functions - Must be before render functions
-  window.openModal = function(modalId) {
-    console.log('[Modal] Opening:', modalId);
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    } else {
-      console.error('[Modal] Not found:', modalId, 'Available modals:', Array.from(document.querySelectorAll('[id$="-modal"]')).map(m => m.id));
-    }
-  };
-  
-  window.closeModal = function() {
-    document.querySelectorAll('[id$="-modal"]').forEach(m => m.classList.add('hidden'));
-    document.body.style.overflow = '';
-  };
-
   const renderComplaints = () => {
     const list = currentRole === 'customer' 
       ? appState.complaints.filter(c => c.customerId === currentUser.uid)
@@ -1980,7 +1951,7 @@ ${(() => {
     container.innerHTML = `
       <div class="space-y-4 fade-in">
         ${currentRole === 'customer' ? `
-        <button onclick="openModal('complaint-modal')" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
+        <button onclick="handleComplaintSubmit()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
         </button>
         ` : ''}
@@ -3442,237 +3413,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
                 <body>
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
-                
-  <!-- Complaint Modal -->
-  <div id="complaint-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="if(event.target === this) closeModal()">
-    <div class="bg-[rgb(var(--card))] rounded-2xl shadow-2xl w-full max-w-lg" onclick="event.stopPropagation()">
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-xl font-bold">Submit Complaint</h3>
-          <button onclick="closeModal()" class="p-2 hover:bg-[rgb(var(--border))] rounded-lg">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-        </div>
-        <form id="complaint-form" class="space-y-4">
-          <div>
-            <label class="text-sm font-medium mb-2 block">Subject *</label>
-            <input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" placeholder="Enter complaint subject">
-          </div>
-          <div>
-            <label class="text-sm font-medium mb-2 block">Description *</label>
-            <textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" placeholder="Describe your issue"></textarea>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:opacity-90">Submit</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-
-<script>
-// Global debug
-window.debugMode = true;
-
-async function loadZonesDebug() {
-    console.log('[DEBUG] Starting loadZones...');
-    console.log('[DEBUG] currentUser:', window.currentUser);
-    
-    if (!window.currentUser) {
-        console.error('[DEBUG] currentUser is null - not logged in');
-        return;
-    }
-    
-    if (window.currentUser.status !== 'approved') {
-        console.error('[DEBUG] User status not approved:', window.currentUser.status);
-        alert('Your account is not approved yet');
-        return;
-    }
-    
-    const zoneSelect = document.getElementById('areaZoneSelect');
-    if (!zoneSelect) {
-        console.error('[DEBUG] areaZoneSelect element not found');
-        return;
-    }
-    
-    zoneSelect.innerHTML = '<option value="">Loading zones...</option>';
-    
-    try {
-        console.log('[DEBUG] Querying zones collection...');
-        const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
-        const zonesSnapshot = await getDocs(zonesQuery);
-        
-        console.log('[DEBUG] Zones found:', zonesSnapshot.size);
-        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
-        
-        if (zonesSnapshot.empty) {
-            console.warn('[DEBUG] No zones in database');
-            zoneSelect.innerHTML = '<option value="">No zones found - Add zone in Firestore</option>';
-            return;
-        }
-        
-        zonesSnapshot.forEach((doc) => {
-            const zone = doc.data();
-            console.log('[DEBUG] Adding zone:', doc.id, zone.name);
-            zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
-        });
-        
-    } catch (error) {
-        console.error('[DEBUG] Zone load error:', error.code, error.message);
-        zoneSelect.innerHTML = '<option value="">Error loading zones</option>';
-        alert('Error loading zones: ' + error.message + '\nCheck Console F12');
-    }
-}
-
-window.openAddAreaModal = async function() {
-    console.log('[DEBUG] openAddAreaModal called');
-    document.getElementById('addAreaModal')?.classList.remove('hidden');
-    await loadZonesDebug();
-};
-
-// FIX COMPLAINT SUBMIT
-window.submitCustomerComplaint = async function() {
-    console.log('[DEBUG] submitCustomerComplaint called');
-    console.log('[DEBUG] currentUser:', window.currentUser);
-    
-    const subjectEl = document.getElementById('complaintSubject');
-    const descEl = document.getElementById('complaintDescription');
-    
-    if (!subjectEl || !descEl) {
-        console.error('[DEBUG] Input elements not found');
-        alert('Form error - refresh page');
-        return;
-    }
-    
-    const subject = subjectEl.value.trim();
-    const description = descEl.value.trim();
-    
-    if (!subject || !description) {
-        alert('Subject and description required');
-        return;
-    }
-    
-    if (!window.currentUser || !window.currentUser.uid) {
-        alert('You must be logged in');
-        return;
-    }
-    
-    try {
-        const complaintData = {
-            customerId: window.currentUser.uid,
-            customerName: window.currentUser.name || window.currentUser.email,
-            subject: subject,
-            description: description,
-            status: 'pending',
-            assignedTo: 'admin',
-            assignedStaffId: null,
-            createdAt: serverTimestamp()
-        };
-        
-        console.log('[DEBUG] Saving complaint:', complaintData);
-        const docRef = await addDoc(collection(db, 'complaints'), complaintData);
-        console.log('[DEBUG] Complaint saved with ID:', docRef.id);
-        
-        alert('Complaint submitted successfully');
-        subjectEl.value = '';
-        descEl.value = '';
-        document.getElementById('complaintModal')?.classList.add('hidden');
-        
-        // Reload complaints list
-        if (typeof loadMyComplaints === 'function') loadMyComplaints();
-        
-    } catch (error) {
-        console.error('[DEBUG] Complaint submit error:', error.code, error.message);
-        alert('Failed to submit: ' + error.message);
-    }
-};
-
-// FIX ADMIN COMPLAINT LOAD
-window.loadAdminComplaints = async function() {
-    console.log('[DEBUG] loadAdminComplaints called');
-    const container = document.getElementById('complaintsList') || document.querySelector('#complaintsContainer');
-    if (!container) {
-        console.error('[DEBUG] Complaints container not found');
-        return;
-    }
-    
-    container.innerHTML = '<div>Loading complaints...</div>';
-    
-    try {
-        const q = query(
-            collection(db, 'complaints'),
-            where('assignedTo', '==', 'admin'),
-            orderBy('createdAt', 'desc')
-        );
-        
-        console.log('[DEBUG] Querying complaints...');
-        const snapshot = await getDocs(q);
-        console.log('[DEBUG] Complaints found:', snapshot.size);
-        
-        if (snapshot.empty) {
-            container.innerHTML = '<div>No complaints found</div>';
-            return;
-        }
-        
-        let html = '';
-        snapshot.forEach((doc) => {
-            const c = doc.data();
-            html += `<div class="complaint-item">
-                <h4>${c.subject}</h4>
-                <p>${c.description}</p>
-                <small>By: ${c.customerName} | Status: ${c.status}</small>
-            </div>`;
-        });
-        container.innerHTML = html;
-        
-    } catch (error) {
-        console.error('[DEBUG] Load complaints error:', error.code, error.message);
-        container.innerHTML = '<div>Error loading complaints: ' + error.message + '</div>';
-    }
-};
-
-// FIX CUSTOMER COMPLAINT LOAD
-window.loadMyComplaints = async function() {
-    console.log('[DEBUG] loadMyComplaints called');
-    const container = document.getElementById('myComplaintsList') || document.querySelector('#complaintsList');
-    if (!container) return;
-    
-    try {
-        const q = query(
-            collection(db, 'complaints'),
-            where('customerId', '==', window.currentUser.uid),
-            orderBy('createdAt', 'desc')
-        );
-        const snapshot = await getDocs(q);
-        console.log('[DEBUG] My complaints found:', snapshot.size);
-        
-        if (snapshot.empty) {
-            container.innerHTML = '<div>No complaints found</div>';
-            return;
-        }
-        
-        let html = '';
-        snapshot.forEach((doc) => {
-            const c = doc.data();
-            html += `<div class="complaint-item">
-                <h4>${c.subject}</h4>
-                <p>${c.description}</p>
-                <small>Status: ${c.status}</small>
-            </div>`;
-        });
-        container.innerHTML = html;
-        
-    } catch (error) {
-        console.error('[DEBUG] Load my complaints error:', error);
-    }
-};
-
-console.log('[DEBUG] All fixes loaded');
-</script>
-
-</body>
+                </body>
                 </html>
             `);
             printWindow.document.close();
@@ -3732,321 +3473,6 @@ console.log('[DEBUG] All fixes loaded');
         };
     }
 });
-
-  // Complaint Submit Handler - Fixed v3
-  const handleComplaintSubmit = async (e) => {
-    e.preventDefault();
-    console.log('[Complaint] Submit triggered');
-    
-    const form = document.getElementById('complaint-form');
-    const submitBtn = document.getElementById('complaint-submit-btn');
-    
-    if (!form || !currentUser) {
-      showToast('Please login first', 'error');
-      return;
-    }
-    
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting...';
-    }
-    
-    try {
-      const formData = new FormData(form);
-      const subject = formData.get('subject')?.trim();
-      const description = formData.get('description')?.trim();
-      
-      if (!subject || !description) {
-        showToast('Please fill all required fields', 'error');
-        return;
-      }
-      
-      const complaintData = {
-        customerId: currentUser.uid,
-        customerName: currentUserData?.name || currentUser.email || 'Unknown',
-        customerPhone: currentUserData?.phone || '',
-        customerZone: currentUserData?.zone || '',
-        customerArea: currentUserData?.area || '',
-        subject: subject,
-        description: description,
-        status: 'pending',
-        assignedTo: 'admin',
-        assignedStaffId: '',
-        priority: 'normal',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-      
-      console.log('[Complaint] Saving:', complaintData);
-      const docRef = await addDoc(collection(db, 'complaints'), complaintData);
-      console.log('[Complaint] Saved ID:', docRef.id);
-      
-      await logActivity('New Complaint', `Complaint: ${subject}`);
-      showToast('Complaint submitted successfully', 'success');
-      closeModal();
-      form.reset();
-      
-      if (currentView === 'complaints') setTimeout(() => reRenderCurrentView(), 500);
-    } catch (err) {
-      console.error('[Complaint] Error:', err);
-      showToast('Failed: ' + err.message, 'error');
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit';
-      }
-    }
-  };
-  
-  const attachComplaintHandler = () => {
-    const form = document.getElementById('complaint-form');
-    const btn = document.getElementById('complaint-submit-btn');
-    if (form && !form.dataset.handlerAttached) {
-      form.addEventListener('submit', handleComplaintSubmit);
-      form.dataset.handlerAttached = 'true';
-    }
-    if (btn && !btn.dataset.handlerAttached) {
-      btn.addEventListener('click', handleComplaintSubmit);
-      btn.dataset.handlerAttached = 'true';
-    }
-  };
-  
-  const originalOpenModal = window.openModal;
-  window.openModal = function(modalId) {
-    if (originalOpenModal) originalOpenModal.call(this, modalId);
-    if (modalId === 'complaint-modal') setTimeout(attachComplaintHandler, 50);
-  };
-
-</script>
-
-
-  <!-- Complaint Modal -->
-  <div id="complaint-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="if(event.target === this) closeModal()">
-    <div class="bg-[rgb(var(--card))] rounded-2xl shadow-2xl w-full max-w-lg" onclick="event.stopPropagation()">
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-xl font-bold">Submit Complaint</h3>
-          <button onclick="closeModal()" class="p-2 hover:bg-[rgb(var(--border))] rounded-lg">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-        </div>
-        <form id="complaint-form" class="space-y-4">
-          <div>
-            <label class="text-sm font-medium mb-2 block">Subject *</label>
-            <input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" placeholder="Enter complaint subject">
-          </div>
-          <div>
-            <label class="text-sm font-medium mb-2 block">Description *</label>
-            <textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" placeholder="Describe your issue"></textarea>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:opacity-90">Submit</button>
-            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-
-<script>
-// Global debug
-window.debugMode = true;
-
-async function loadZonesDebug() {
-    console.log('[DEBUG] Starting loadZones...');
-    console.log('[DEBUG] currentUser:', window.currentUser);
-    
-    if (!window.currentUser) {
-        console.error('[DEBUG] currentUser is null - not logged in');
-        return;
-    }
-    
-    if (window.currentUser.status !== 'approved') {
-        console.error('[DEBUG] User status not approved:', window.currentUser.status);
-        alert('Your account is not approved yet');
-        return;
-    }
-    
-    const zoneSelect = document.getElementById('areaZoneSelect');
-    if (!zoneSelect) {
-        console.error('[DEBUG] areaZoneSelect element not found');
-        return;
-    }
-    
-    zoneSelect.innerHTML = '<option value="">Loading zones...</option>';
-    
-    try {
-        console.log('[DEBUG] Querying zones collection...');
-        const zonesQuery = query(collection(db, 'zones'), orderBy('name'));
-        const zonesSnapshot = await getDocs(zonesQuery);
-        
-        console.log('[DEBUG] Zones found:', zonesSnapshot.size);
-        zoneSelect.innerHTML = '<option value="">Select Zone</option>';
-        
-        if (zonesSnapshot.empty) {
-            console.warn('[DEBUG] No zones in database');
-            zoneSelect.innerHTML = '<option value="">No zones found - Add zone in Firestore</option>';
-            return;
-        }
-        
-        zonesSnapshot.forEach((doc) => {
-            const zone = doc.data();
-            console.log('[DEBUG] Adding zone:', doc.id, zone.name);
-            zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
-        });
-        
-    } catch (error) {
-        console.error('[DEBUG] Zone load error:', error.code, error.message);
-        zoneSelect.innerHTML = '<option value="">Error loading zones</option>';
-        alert('Error loading zones: ' + error.message + '\nCheck Console F12');
-    }
-}
-
-window.openAddAreaModal = async function() {
-    console.log('[DEBUG] openAddAreaModal called');
-    document.getElementById('addAreaModal')?.classList.remove('hidden');
-    await loadZonesDebug();
-};
-
-// FIX COMPLAINT SUBMIT
-window.submitCustomerComplaint = async function() {
-    console.log('[DEBUG] submitCustomerComplaint called');
-    console.log('[DEBUG] currentUser:', window.currentUser);
-    
-    const subjectEl = document.getElementById('complaintSubject');
-    const descEl = document.getElementById('complaintDescription');
-    
-    if (!subjectEl || !descEl) {
-        console.error('[DEBUG] Input elements not found');
-        alert('Form error - refresh page');
-        return;
-    }
-    
-    const subject = subjectEl.value.trim();
-    const description = descEl.value.trim();
-    
-    if (!subject || !description) {
-        alert('Subject and description required');
-        return;
-    }
-    
-    if (!window.currentUser || !window.currentUser.uid) {
-        alert('You must be logged in');
-        return;
-    }
-    
-    try {
-        const complaintData = {
-            customerId: window.currentUser.uid,
-            customerName: window.currentUser.name || window.currentUser.email,
-            subject: subject,
-            description: description,
-            status: 'pending',
-            assignedTo: 'admin',
-            assignedStaffId: null,
-            createdAt: serverTimestamp()
-        };
-        
-        console.log('[DEBUG] Saving complaint:', complaintData);
-        const docRef = await addDoc(collection(db, 'complaints'), complaintData);
-        console.log('[DEBUG] Complaint saved with ID:', docRef.id);
-        
-        alert('Complaint submitted successfully');
-        subjectEl.value = '';
-        descEl.value = '';
-        document.getElementById('complaintModal')?.classList.add('hidden');
-        
-        // Reload complaints list
-        if (typeof loadMyComplaints === 'function') loadMyComplaints();
-        
-    } catch (error) {
-        console.error('[DEBUG] Complaint submit error:', error.code, error.message);
-        alert('Failed to submit: ' + error.message);
-    }
-};
-
-// FIX ADMIN COMPLAINT LOAD
-window.loadAdminComplaints = async function() {
-    console.log('[DEBUG] loadAdminComplaints called');
-    const container = document.getElementById('complaintsList') || document.querySelector('#complaintsContainer');
-    if (!container) {
-        console.error('[DEBUG] Complaints container not found');
-        return;
-    }
-    
-    container.innerHTML = '<div>Loading complaints...</div>';
-    
-    try {
-        const q = query(
-            collection(db, 'complaints'),
-            where('assignedTo', '==', 'admin'),
-            orderBy('createdAt', 'desc')
-        );
-        
-        console.log('[DEBUG] Querying complaints...');
-        const snapshot = await getDocs(q);
-        console.log('[DEBUG] Complaints found:', snapshot.size);
-        
-        if (snapshot.empty) {
-            container.innerHTML = '<div>No complaints found</div>';
-            return;
-        }
-        
-        let html = '';
-        snapshot.forEach((doc) => {
-            const c = doc.data();
-            html += `<div class="complaint-item">
-                <h4>${c.subject}</h4>
-                <p>${c.description}</p>
-                <small>By: ${c.customerName} | Status: ${c.status}</small>
-            </div>`;
-        });
-        container.innerHTML = html;
-        
-    } catch (error) {
-        console.error('[DEBUG] Load complaints error:', error.code, error.message);
-        container.innerHTML = '<div>Error loading complaints: ' + error.message + '</div>';
-    }
-};
-
-// FIX CUSTOMER COMPLAINT LOAD
-window.loadMyComplaints = async function() {
-    console.log('[DEBUG] loadMyComplaints called');
-    const container = document.getElementById('myComplaintsList') || document.querySelector('#complaintsList');
-    if (!container) return;
-    
-    try {
-        const q = query(
-            collection(db, 'complaints'),
-            where('customerId', '==', window.currentUser.uid),
-            orderBy('createdAt', 'desc')
-        );
-        const snapshot = await getDocs(q);
-        console.log('[DEBUG] My complaints found:', snapshot.size);
-        
-        if (snapshot.empty) {
-            container.innerHTML = '<div>No complaints found</div>';
-            return;
-        }
-        
-        let html = '';
-        snapshot.forEach((doc) => {
-            const c = doc.data();
-            html += `<div class="complaint-item">
-                <h4>${c.subject}</h4>
-                <p>${c.description}</p>
-                <small>Status: ${c.status}</small>
-            </div>`;
-        });
-        container.innerHTML = html;
-        
-    } catch (error) {
-        console.error('[DEBUG] Load my complaints error:', error);
-    }
-};
-
-console.log('[DEBUG] All fixes loaded');
 </script>
 
 </body>
