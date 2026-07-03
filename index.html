@@ -848,9 +848,34 @@ async function onCustomerSelectForInvoice(customerId) {
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill" type="text" placeholder="বিল সার্চ করুন..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
-            <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            
+<div class="flex gap-2 mb-4">
+    <select id="billMonth" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg">
+        <option value="">মাস সিলেক্ট করুন</option>
+        <option value="1">জানুয়ারি</option>
+        <option value="2">ফেব্রুয়ারি</option>
+        <option value="3">মার্চ</option>
+        <option value="4">এপ্রিল</option>
+        <option value="5">মে</option>
+        <option value="6">জুন</option>
+        <option value="7">জুলাই</option>
+        <option value="8">আগস্ট</option>
+        <option value="9">সেপ্টেম্বর</option>
+        <option value="10">অক্টোবর</option>
+        <option value="11">নভেম্বর</option>
+        <option value="12">ডিসেম্বর</option>
+    </select>
+    <select id="billYear" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg">
+        <option value="2024">২০২৪</option>
+        <option value="2025">২০২৫</option>
+        <option value="2026" selected>২০২৬</option>
+    </select>
+    <button onclick="filterCustomerBills()" class="px-4 py-2 bg-blue-600 rounded-lg">সার্চ</button>
+    <button onclick="printCustomerBills()" class="px-4 py-2 bg-slate-700 rounded-lg">প্রিন্ট</button>
+</div>
+
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
               <i data-lucide="printer" class="w-4 h-4"></i> Print
             </button>
@@ -860,12 +885,12 @@ async function onCustomerSelectForInvoice(customerId) {
               <table class="w-full">
                 <thead class="bg-[rgb(var(--border))]">
                   <tr>
-                    <th class="text-left p-4 font-semibold">Invoice</th>
+                    <th class="text-left p-4 font-semibold">ইনভয়েস নং</th>
                     <th class="text-left p-4 font-semibold">টাকা</th>
-                    <th class="text-left p-4 font-semibold">Method</th>
+                    <th class="text-left p-4 font-semibold">পেমেন্ট মাধ্যম</th>
                     <th class="text-left p-4 font-semibold">স্ট্যাটাস</th>
                     <th class="text-left p-4 font-semibold">তারিখ</th>
-                    <th class="text-left p-4 font-semibold">Actions</th>
+                    <th class="text-left p-4 font-semibold">অ্যাকশন</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -881,7 +906,7 @@ async function onCustomerSelectForInvoice(customerId) {
                         ${b.status === 'unpaid' ? `<button onclick="payBill('${b.id}')" class="ml-2 px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold text-sm" type="button">Pay</button>` : ''}
                       </td>
                     </tr>
-                  `).join('') : '<tr><td colspan="6" class="p-8 text-center text-slate-500">No bills found</td></tr>'}
+                  `).join('') : '<tr><td colspan="6" class="p-8 text-center text-slate-500">কোন বিল পাওয়া যায়নি</td></tr>'}
                 </tbody>
               </table>
             </div>
@@ -896,7 +921,7 @@ async function onCustomerSelectForInvoice(customerId) {
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill" type="text" placeholder="বিল সার্চ করুন..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <select id="billsFilterZone" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
               <option value="">All Zones</option>
@@ -907,7 +932,32 @@ async function onCustomerSelectForInvoice(customerId) {
               ${(appState.areas || []).map(a => `<option value="${a.name}">${a.name}</option>`).join('')}
             </select>
             <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            
+<div class="flex gap-2 mb-4">
+    <select id="billMonth" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg">
+        <option value="">মাস সিলেক্ট করুন</option>
+        <option value="1">জানুয়ারি</option>
+        <option value="2">ফেব্রুয়ারি</option>
+        <option value="3">মার্চ</option>
+        <option value="4">এপ্রিল</option>
+        <option value="5">মে</option>
+        <option value="6">জুন</option>
+        <option value="7">জুলাই</option>
+        <option value="8">আগস্ট</option>
+        <option value="9">সেপ্টেম্বর</option>
+        <option value="10">অক্টোবর</option>
+        <option value="11">নভেম্বর</option>
+        <option value="12">ডিসেম্বর</option>
+    </select>
+    <select id="billYear" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg">
+        <option value="2024">২০২৪</option>
+        <option value="2025">২০২৫</option>
+        <option value="2026" selected>২০২৬</option>
+    </select>
+    <button onclick="filterCustomerBills()" class="px-4 py-2 bg-blue-600 rounded-lg">সার্চ</button>
+    <button onclick="printCustomerBills()" class="px-4 py-2 bg-slate-700 rounded-lg">প্রিন্ট</button>
+</div>
+
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
               <i data-lucide="printer" class="w-4 h-4"></i> Print
             </button>
@@ -920,13 +970,13 @@ async function onCustomerSelectForInvoice(customerId) {
               <table class="w-full">
                 <thead class="bg-[rgb(var(--border))]">
                   <tr>
-                    <th class="text-left p-4 font-semibold">Invoice</th>
+                    <th class="text-left p-4 font-semibold">ইনভয়েস নং</th>
                     <th class="text-left p-4 font-semibold">কাস্টমার</th>
                     <th class="text-left p-4 font-semibold">টাকা</th>
-                    <th class="text-left p-4 font-semibold">Method</th>
+                    <th class="text-left p-4 font-semibold">পেমেন্ট মাধ্যম</th>
                     <th class="text-left p-4 font-semibold">স্ট্যাটাস</th>
                     <th class="text-left p-4 font-semibold">তারিখ</th>
-                    <th class="text-left p-4 font-semibold">Actions</th>
+                    <th class="text-left p-4 font-semibold">অ্যাকশন</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -942,7 +992,7 @@ async function onCustomerSelectForInvoice(customerId) {
                         <button onclick="viewBillDetails('${b.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
                       </td>
                     </tr>
-                  `).join('') : '<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>'}
+                  `).join('') : '<tr><td colspan="7" class="p-8 text-center text-slate-500">কোন বিল পাওয়া যায়নি</td></tr>'}
                 </tbody>
               </table>
             </div>
@@ -957,7 +1007,7 @@ async function onCustomerSelectForInvoice(customerId) {
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill" type="text" placeholder="বিল সার্চ করুন..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <select id="billsFilterZone" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
               <option value="">All Zones</option>
@@ -972,7 +1022,32 @@ async function onCustomerSelectForInvoice(customerId) {
               ${appState.users.filter(u => u.role === 'staff').map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
             </select>
             <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            
+<div class="flex gap-2 mb-4">
+    <select id="billMonth" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg">
+        <option value="">মাস সিলেক্ট করুন</option>
+        <option value="1">জানুয়ারি</option>
+        <option value="2">ফেব্রুয়ারি</option>
+        <option value="3">মার্চ</option>
+        <option value="4">এপ্রিল</option>
+        <option value="5">মে</option>
+        <option value="6">জুন</option>
+        <option value="7">জুলাই</option>
+        <option value="8">আগস্ট</option>
+        <option value="9">সেপ্টেম্বর</option>
+        <option value="10">অক্টোবর</option>
+        <option value="11">নভেম্বর</option>
+        <option value="12">ডিসেম্বর</option>
+    </select>
+    <select id="billYear" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg">
+        <option value="2024">২০২৪</option>
+        <option value="2025">২০২৫</option>
+        <option value="2026" selected>২০২৬</option>
+    </select>
+    <button onclick="filterCustomerBills()" class="px-4 py-2 bg-blue-600 rounded-lg">সার্চ</button>
+    <button onclick="printCustomerBills()" class="px-4 py-2 bg-slate-700 rounded-lg">প্রিন্ট</button>
+</div>
+
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
               <i data-lucide="printer" class="w-4 h-4"></i> Print
             </button>
@@ -985,13 +1060,13 @@ async function onCustomerSelectForInvoice(customerId) {
               <table class="w-full">
                 <thead class="bg-[rgb(var(--border))]">
                   <tr>
-                    <th class="text-left p-4 font-semibold">Invoice</th>
+                    <th class="text-left p-4 font-semibold">ইনভয়েস নং</th>
                     <th class="text-left p-4 font-semibold">কাস্টমার</th>
                     <th class="text-left p-4 font-semibold">টাকা</th>
-                    <th class="text-left p-4 font-semibold">Method</th>
+                    <th class="text-left p-4 font-semibold">পেমেন্ট মাধ্যম</th>
                     <th class="text-left p-4 font-semibold">স্ট্যাটাস</th>
                     <th class="text-left p-4 font-semibold">তারিখ</th>
-                    <th class="text-left p-4 font-semibold">Actions</th>
+                    <th class="text-left p-4 font-semibold">অ্যাকশন</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1007,7 +1082,7 @@ async function onCustomerSelectForInvoice(customerId) {
                         <button onclick="viewBillDetails('${b.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
                       </td>
                     </tr>
-                  `).join('') : '<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>'}
+                  `).join('') : '<tr><td colspan="7" class="p-8 text-center text-slate-500">কোন বিল পাওয়া যায়নি</td></tr>'}
                 </tbody>
               </table>
             </div>
@@ -1678,9 +1753,9 @@ async function onCustomerSelectForInvoice(customerId) {
                   <th class="text-left p-4 font-semibold">Contact</th>
                   <th class="text-left p-4 font-semibold">Package</th>
                   <th class="text-left p-4 font-semibold">Area</th>
-                  <th class="text-left p-4 font-semibold">Due</th>
+                  <th class="text-left p-4 font-semibold">বকেয়া</th>
                   ${currentRole === 'staff' ? '<th class="text-left p-4 font-semibold">স্ট্যাটাস</th>' : ''}
-                  <th class="text-right p-4 font-semibold">Actions</th>
+                  <th class="text-right p-4 font-semibold">অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody id="customers-tbody">
@@ -1744,7 +1819,7 @@ async function onCustomerSelectForInvoice(customerId) {
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
             ${currentRole !== 'customer' ? `
-            <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="Create Invoice" type="button">
+            <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="ইনভয়েস তৈরি করুন" type="button">
               <i data-lucide="file-text" class="w-4 h-4"></i>
             </button>
             <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="WhatsApp" type="button">
@@ -1779,7 +1854,7 @@ async function onCustomerSelectForInvoice(customerId) {
             <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" id="customerZoneSelect" data-zone-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" id="customerZoneSelect" data-zone-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">জোন সিলেক্ট করুন</option>${zoneOptions}</select></div>
             <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" id="customerAreaSelect" data-area-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
@@ -1916,7 +1991,7 @@ async function onCustomerSelectForInvoice(customerId) {
                   <th class="text-left p-4 font-semibold">Contact</th>
                   <th class="text-left p-4 font-semibold">স্ট্যাটাস</th>
                   <th class="text-left p-4 font-semibold">Assigned Customers</th>
-                  <th class="text-right p-4 font-semibold">Actions</th>
+                  <th class="text-right p-4 font-semibold">অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody>
@@ -1960,7 +2035,7 @@ async function onCustomerSelectForInvoice(customerId) {
             <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
             ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
-            ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">স্ট্যাটাস</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="অপেক্ষমান" ${staff?.status === 'pending' ? 'selected' : ''}>Pending</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
+            ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">স্ট্যাটাস</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="অপেক্ষমান" ${staff?.status === 'pending' ? 'selected' : ''}>অপেক্ষমান</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
             <button type="submit" id="staff-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
@@ -2154,7 +2229,7 @@ async function onCustomerSelectForInvoice(customerId) {
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <input id="search-bill" type="text" placeholder="বিল সার্চ করুন..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
     <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
@@ -2167,7 +2242,32 @@ async function onCustomerSelectForInvoice(customerId) {
         <option value="">All Staff</option>
     </select>
     <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    
+<div class="flex gap-2 mb-4">
+    <select id="billMonth" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg">
+        <option value="">মাস সিলেক্ট করুন</option>
+        <option value="1">জানুয়ারি</option>
+        <option value="2">ফেব্রুয়ারি</option>
+        <option value="3">মার্চ</option>
+        <option value="4">এপ্রিল</option>
+        <option value="5">মে</option>
+        <option value="6">জুন</option>
+        <option value="7">জুলাই</option>
+        <option value="8">আগস্ট</option>
+        <option value="9">সেপ্টেম্বর</option>
+        <option value="10">অক্টোবর</option>
+        <option value="11">নভেম্বর</option>
+        <option value="12">ডিসেম্বর</option>
+    </select>
+    <select id="billYear" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg">
+        <option value="2024">২০২৪</option>
+        <option value="2025">২০২৫</option>
+        <option value="2026" selected>২০২৬</option>
+    </select>
+    <button onclick="filterCustomerBills()" class="px-4 py-2 bg-blue-600 rounded-lg">সার্চ</button>
+    <button onclick="printCustomerBills()" class="px-4 py-2 bg-slate-700 rounded-lg">প্রিন্ট</button>
+</div>
+
     <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
         Print Monthly
@@ -2184,13 +2284,13 @@ async function onCustomerSelectForInvoice(customerId) {
             <table class="w-full">
               <thead class="bg-[rgb(var(--border))] text-sm">
                 <tr>
-                  <th class="text-left p-4 font-semibold">Invoice</th>
+                  <th class="text-left p-4 font-semibold">ইনভয়েস নং</th>
                   ${currentRole !== 'customer' ? '<th class="text-left p-4 font-semibold">কাস্টমার</th>' : ''}
                   <th class="text-left p-4 font-semibold">টাকা</th>
-                  <th class="text-left p-4 font-semibold">Method</th>
+                  <th class="text-left p-4 font-semibold">পেমেন্ট মাধ্যম</th>
                   <th class="text-left p-4 font-semibold">স্ট্যাটাস</th>
                   <th class="text-left p-4 font-semibold">তারিখ</th>
-                  <th class="text-right p-4 font-semibold">Actions</th>
+                  <th class="text-right p-4 font-semibold">অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody id="bills-tbody">${renderBillsTable(list)}</tbody>
@@ -2214,7 +2314,7 @@ async function onCustomerSelectForInvoice(customerId) {
   };
 
   const renderBillsTable = (bills) => {
-    if (!bills.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
+    if (!bills.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">কোন বিল পাওয়া যায়নি</td></tr>`;
     return bills.map(b => `
       <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
         <td class="p-4"><div class="font-mono text-sm font-semibold">${b.invoiceNo || '-'}</div></td>
@@ -2273,8 +2373,8 @@ async function onCustomerSelectForInvoice(customerId) {
             <div><label class="text-sm font-medium mb-2 block">To Date</label><input type="date" id="report-to" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
             ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">স্টাফ</label><select id="report-staff" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Staff</option>${staffOptions}</select></div>` : ''}
             <div><label class="text-sm font-medium mb-2 block">Area</label><select id="report-area" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Areas</option>${areaOptions}</select></div>
-            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">Zone</label><select id="report-zone" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Zones</option>${zoneOptions}</select></div>` : ''}
-            <div><label class="text-sm font-medium mb-2 block">স্ট্যাটাস</label><select id="report-status" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All</option><option value="পরিশোধিত">Paid</option><option value="unpaid">Unpaid</option></select></div>
+            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">জোন</label><select id="report-zone" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Zones</option>${zoneOptions}</select></div>` : ''}
+            <div><label class="text-sm font-medium mb-2 block">স্ট্যাটাস</label><select id="report-status" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All</option><option value="পরিশোধিত">পরিশোধিত</option><option value="unpaid">Unpaid</option></select></div>
             <div class="md:col-span-3 lg:col-span-6"><label class="text-sm font-medium mb-2 block">Customer Search</label><input type="text" id="report-customer" placeholder="Search by name or mobile..." class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
             <div class="md:col-span-3 lg:col-span-6 flex gap-3">
               <button onclick="generateReport()" class="flex-1 py-2.5 rounded-xl bg-sky-500 text-white font-semibold" type="button">Generate Report</button>
@@ -2336,13 +2436,13 @@ async function onCustomerSelectForInvoice(customerId) {
     $('#report-results').innerHTML = `
       <div class="grid md:grid-cols-3 gap-4 mb-6">
         <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Total Amount</p><p class="text-2xl font-bold">${formatCurrency(total)}</p></div>
-        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Paid</p><p class="text-2xl font-bold text-emerald-600">${formatCurrency(paid)}</p></div>
+        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">পরিশোধিত</p><p class="text-2xl font-bold text-emerald-600">${formatCurrency(paid)}</p></div>
         <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Unpaid</p><p class="text-2xl font-bold text-rose-600">${formatCurrency(unpaid)}</p></div>
       </div>
       <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
         <div class="table-container">
           <table class="w-full">
-            <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">Invoice</th><th class="text-left p-4 text-sm">কাস্টমার</th><th class="text-left p-4 text-sm">টাকা</th><th class="text-left p-4 text-sm">স্ট্যাটাস</th><th class="text-left p-4 text-sm">তারিখ</th></tr></thead>
+            <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">ইনভয়েস নং</th><th class="text-left p-4 text-sm">কাস্টমার</th><th class="text-left p-4 text-sm">টাকা</th><th class="text-left p-4 text-sm">স্ট্যাটাস</th><th class="text-left p-4 text-sm">তারিখ</th></tr></thead>
             <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo || '-'}</td><td class="p-4 text-sm">${b.customerName || '-'}<br><span class="text-xs text-slate-500">${b.customerMobile || '-'}</span></td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
           </table>
         </div>
@@ -2545,14 +2645,14 @@ service cloud.firestore {
 <div class="mb-4">
     <label class="block text-sm font-medium text-gray-300 mb-2">Zone *</label>
     <select id="areaZoneSelect" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
-        <option value="">Select Zone</option>
+        <option value="">জোন সিলেক্ট করুন</option>
     </select>
 </div>
 <label class="text-sm font-medium mb-2 block">Area Name *</label>
             <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">এরিয়া সেভ করুন</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">বাতিল</button>
           </div>
         </form>
@@ -2884,7 +2984,7 @@ service cloud.firestore {
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
         <form id="deposit-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div><label class="text-sm font-medium mb-2 block">ট্রানজেকশন আইডি</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">বাতিল</button>
           </div>
@@ -2983,8 +3083,8 @@ service cloud.firestore {
                   <th class="text-left p-4 font-semibold">Deposited</th>
                   <th class="text-left p-4 font-semibold">Salary Paid</th>
                   <th class="text-left p-4 font-semibold">Balance</th>
-                  <th class="text-left p-4 font-semibold">Pending</th>
-                  <th class="text-right p-4 font-semibold">Actions</th>
+                  <th class="text-left p-4 font-semibold">অপেক্ষমান</th>
+                  <th class="text-right p-4 font-semibold">অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody>
@@ -3099,7 +3199,7 @@ service cloud.firestore {
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
         <form id="pay-salary-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><label class="text-sm font-medium mb-2 block">ট্রানজেকশন আইডি</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">বাতিল</button>
           </div>
@@ -3152,14 +3252,14 @@ service cloud.firestore {
               <div>
                 <label class="text-sm font-medium mb-2 block">Select Customer *</label>
                 <select id="invoiceCustomer" name="customerId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">Choose customer</option>
+                  <option value="">কাস্টমার বেছে নিন</option>
                   ${customerOptions}
                 </select>
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Package *</label>
                 <select id="invoicePackage" name="packageId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">Select package</option>
+                  <option value="">প্যাকেজ সিলেক্ট করুন</option>
                   ${packageOptions}
                 </select>
               </div>
@@ -3170,7 +3270,7 @@ service cloud.firestore {
               <div>
                 <label class="text-sm font-medium mb-2 block">Payment Method *</label>
                 <select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">Select method</option>
+                  <option value="">মাধ্যম সিলেক্ট করুন</option>
                   <option value="Cash">Cash</option>
                   <option value="bKash">bKash</option>
                   <option value="Nagad">Nagad</option>
@@ -3180,22 +3280,22 @@ service cloud.firestore {
               <div>
                 <label class="text-sm font-medium mb-2 block">Status *</label>
                 <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="পরিশোধিত">Paid</option>
+                  <option value="পরিশোধিত">পরিশোধিত</option>
                   <option value="unpaid">Unpaid</option>
                 </select>
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block">Transaction ID</label>
+                <label class="text-sm font-medium mb-2 block">ট্রানজেকশন আইডি</label>
                 <input type="text" name="transactionId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
               </div>
             </div>
             <div>
-              <label class="text-sm font-medium mb-2 block">Notes</label>
+              <label class="text-sm font-medium mb-2 block">নোট</label>
               <textarea name="notes" rows="3" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea>
             </div>
             <div class="flex gap-3">
-              <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
-              <button type="button" onclick="previewInvoice()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
+              <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">ইনভয়েস তৈরি করুন</button>
+              <button type="button" onclick="previewInvoice()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">প্রিভিউ</button>
             </div>
           </form>
         </div>
