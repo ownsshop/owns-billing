@@ -1104,7 +1104,7 @@
               <div class="flex items-center gap-2">
                 <button onclick="toggleCommandPalette(true)" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm" type="button">
                   <i data-lucide="search" class="w-4 h-4"></i>
-                  <span class="text-slate-500">সার্চ</span>
+                  <span class="text-slate-500">Search</span>
                   <kbd class="text-xs px-1.5 py-0.5 rounded bg-[rgb(var(--border))]">⌘K</kbd>
                 </button>
                 <button onclick="toggleTheme()" class="p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
@@ -1683,7 +1683,7 @@
             <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" id="customerZoneSelect" data-zone-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">জোন *</label><select name="zone" id="customerZoneSelect" data-zone-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">জোন সিলেক্ট করুন</option>${zoneOptions}</select></div>
             <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" id="customerAreaSelect" data-area-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
@@ -1982,7 +1982,7 @@
                 <span class="text-sm font-medium">${p.speed || '-'}</span>
               </div>
               <div class="flex gap-2">
-                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">এডিট</button>
+                <button onclick="showPackageForm('${p.id}')" class="flex-1 py-2 rounded-xl border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] text-sm font-medium" type="button">Edit</button>
                 <button onclick="deletePackage('${p.id}')" class="px-4 py-2 rounded-xl hover:bg-rose-500/20 text-rose-600" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
               </div>
             </div>
@@ -2175,7 +2175,7 @@
           <div class="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div><label class="text-sm font-medium mb-2 block">From Date</label><input type="date" id="report-from" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
             <div><label class="text-sm font-medium mb-2 block">To Date</label><input type="date" id="report-to" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
-            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">স্টাফ</label><select id="report-staff" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Staff</option>${staffOptions}</select></div>` : ''}
+            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">Staff</label><select id="report-staff" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Staff</option>${staffOptions}</select></div>` : ''}
             <div><label class="text-sm font-medium mb-2 block">Area</label><select id="report-area" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Areas</option>${areaOptions}</select></div>
             ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">Zone</label><select id="report-zone" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Zones</option>${zoneOptions}</select></div>` : ''}
             <div><label class="text-sm font-medium mb-2 block">Status</label><select id="report-status" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div>
@@ -2447,16 +2447,16 @@ service cloud.firestore {
           <div>
             
 <div class="mb-4">
-    <label class="block text-sm font-medium text-gray-300 mb-2">Zone *</label>
+    <label class="block text-sm font-medium text-gray-300 mb-2">জোন *</label>
     <select id="areaZoneSelect" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
-        <option value="">Select Zone</option>
+        <option value="">জোন সিলেক্ট করুন</option>
     </select>
 </div>
 <label class="text-sm font-medium mb-2 block">Area Name *</label>
             <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">এরিয়া সেভ করুন</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">বাতিল</button>
           </div>
         </form>
@@ -3524,316 +3524,155 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     ${billsTable}
                 
 <script>
-// Fixed: Area to Zone dropdown dependency for Admin Settings
-function loadZonesForArea() {
-    const areaSelect = document.getElementById('areaSelect') || document.querySelector('select[name="area"]');
-    const zoneSelect = document.getElementById('zoneSelect') || document.querySelector('select[name="zone"]');
+// Fixed: Load all Zones in Area Edit/Add Modal
+async function loadZonesInAreaModal() {
+    const zoneSelect = document.getElementById('areaZoneSelect') || document.querySelector('#editAreaModal select[name="zone"]');
+    if (!zoneSelect) return;
     
-    if (!areaSelect || !zoneSelect) return;
+    zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
     
-    areaSelect.addEventListener('change', async function() {
-        const areaId = this.value;
-        zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
-        
-        if (!areaId) return;
-        
-        try {
-            // Get zones from Firestore where area_id matches
-            const zonesSnap = await firebase.firestore().collection('zones').where('area_id', '==', areaId).get();
-            zonesSnap.forEach(doc => {
-                const zone = doc.data();
-                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
-            });
-        } catch (e) {
-            console.error('Zone load error:', e);
-        }
-    });
+    try {
+        // Load all zones from Firestore
+        const zonesSnap = await firebase.firestore().collection('zones').orderBy('name').get();
+        zonesSnap.forEach(doc => {
+            const zone = doc.data();
+            zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+        });
+    } catch (error) {
+        console.error('Zone load error:', error);
+        zoneSelect.innerHTML = '<option value="">জোন লোড হয়নি</option>';
+    }
 }
 
-// Fixed: Auto-load customer package in Invoice Generator
-function setupInvoicePackageLoader() {
-    const custSelect = document.getElementById('invoiceCustomer') || document.querySelector('select[name="customer"]');
-    const packageInput = document.getElementById('invoicePackage') || document.querySelector('input[name="package"]');
+// Call this when Add Area or Edit Area modal opens
+document.addEventListener('DOMContentLoaded', function() {
+    // Hook into modal open events
+    const addAreaBtn = document.getElementById('addAreaBtn');
+    if (addAreaBtn) {
+        addAreaBtn.addEventListener('click', () => {
+            setTimeout(loadZonesInAreaModal, 100); // Wait for modal to render
+        });
+    }
     
-    if (!custSelect || !packageInput) return;
+    // Hook into all edit buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-area-btn')) {
+            setTimeout(loadZonesInAreaModal, 100);
+        }
+    });
+});
+</script>
+
+<script>
+// Fixed: Customer -> Package auto-load in Invoice Generator
+async function setupInvoiceCustomerChange() {
+    const customerSelect = document.getElementById('invoiceCustomerSelect') || document.querySelector('#invoiceGenerator select[name="customer"]');
+    const packageInput = document.getElementById('invoicePackage') || document.querySelector('#invoiceGenerator input[name="package"]');
+    const amountInput = document.getElementById('invoiceAmount') || document.querySelector('#invoiceGenerator input[name="amount"]');
     
-    custSelect.addEventListener('change', async function() {
-        const custId = this.value;
-        if (!custId) {
-            packageInput.value = '';
+    if (!customerSelect) return;
+    
+    customerSelect.addEventListener('change', async function() {
+        const customerId = this.value;
+        if (!customerId) {
+            if (packageInput) packageInput.value = '';
+            if (amountInput) amountInput.value = '';
             return;
         }
         
         try {
-            const custDoc = await firebase.firestore().collection('customers').doc(custId).get();
-            if (custDoc.exists) {
-                const data = custDoc.data();
-                packageInput.value = data.package || data.packageName || '';
-                // Also update amount if package has price
-                const amountInput = document.getElementById('invoiceAmount');
-                if (amountInput && data.packagePrice) {
-                    amountInput.value = data.packagePrice;
-                }
+            const customerDoc = await firebase.firestore().collection('customers').doc(customerId).get();
+            if (customerDoc.exists) {
+                const data = customerDoc.data();
+                if (packageInput) packageInput.value = data.packageName || data.package || '';
+                if (amountInput) amountInput.value = data.monthlyFee || data.packagePrice || '';
             }
-        } catch (e) {
-            console.error('Customer load error:', e);
+        } catch (error) {
+            console.error('Customer package load error:', error);
         }
     });
 }
 
-// Fixed: Generate proper Invoice Number
-function generateInvoiceNumber() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `INV-${year}${month}-${random}`;
-}
-
-// Initialize all fixes
-document.addEventListener('DOMContentLoaded', function() {
-    loadZonesForArea();
-    setupInvoicePackageLoader();
-    
-    // Fix Dashboard - load stats
-    if (document.getElementById('dashboardStats')) {
-        loadDashboardStats();
-    }
-    
-    // Fix Activity Log - load logs
-    if (document.getElementById('activityLogList')) {
-        loadActivityLogs();
-    }
-    
-    // Fix Staff Accounts - load staff
-    if (document.getElementById('staffAccountsList')) {
-        loadStaffAccounts();
-    }
-});
-
-async function loadDashboardStats() {
-    try {
-        const billsSnap = await firebase.firestore().collection('bills').get();
-        const customersSnap = await firebase.firestore().collection('customers').get();
-        document.getElementById('totalBills').textContent = billsSnap.size;
-        document.getElementById('totalCustomers').textContent = customersSnap.size;
-    } catch (e) { console.error(e); }
-}
-
-async function loadActivityLogs() {
-    try {
-        const logsSnap = await firebase.firestore().collection('activity_logs').orderBy('timestamp', 'desc').limit(50).get();
-        const container = document.getElementById('activityLogList');
-        container.innerHTML = '';
-        logsSnap.forEach(doc => {
-            const log = doc.data();
-            container.innerHTML += `<div class="log-item">${log.action} - ${log.timestamp?.toDate().toLocaleString()}</div>`;
-        });
-    } catch (e) { console.error(e); }
-}
-
-async function loadStaffAccounts() {
-    try {
-        const staffSnap = await firebase.firestore().collection('staff').get();
-        const container = document.getElementById('staffAccountsList');
-        container.innerHTML = '';
-        staffSnap.forEach(doc => {
-            const staff = doc.data();
-            container.innerHTML += `<div class="staff-card">${staff.name} - ${staff.email}</div>`;
-        });
-    } catch (e) { 
-        container.innerHTML = '<p>স্টাফ লোড হচ্ছে...</p>';
-        console.error(e); 
-    }
-}
+document.addEventListener('DOMContentLoaded', setupInvoiceCustomerChange);
 </script>
 
 </body>
                 </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        });
-    }
-    
-    // Load filtered bills function
-    async function loadFilteredBills() {
-        const zone = billsFilterZone?.value;
-        const area = billsFilterArea?.value;
-        const staff = billsFilterStaff?.value;
-        const customer = billsFilterCustomer?.value.toLowerCase();
-        const month = billsFilterMonth?.value;
-        
-        let query = firebase.firestore().collection('bills');
-        
-        if (zone) query = query.where('zone', '==', zone);
-        if (area) query = query.where('area', '==', area);
-        if (staff) query = query.where('staffId', '==', staff);
-        
-        if (month) {
-            const start = new Date(month + '-01');
-            const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
-            query = query.where('date', '>=', start).where('date', '<=', end);
-        }
-        
-        try {
-            const snap = await query.get();
-            let bills = [];
-            snap.forEach(doc => bills.push({id: doc.id, ...doc.data()}));
-            
-            if (customer) {
-                bills = bills.filter(b => 
-                    b.customerName?.toLowerCase().includes(customer) || 
-                    b.customerMobile?.includes(customer)
-                );
-            }
-            
-            // Call your existing render function
-            if (typeof renderBillsTable === 'function') {
-                renderBillsTable(bills);
-            } else {
-                console.log('Filtered bills:', bills);
-            }
-        } catch (err) {
-            console.error('Bills filter error:', err);
-        }
-    }
-    
-    // Helper
-    function debounce(func, wait) {
-        let timeout;
-        return function(...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    }
-});
+            `
 </script>
 
 
 <script>
-// Fixed: Area to Zone dropdown dependency for Admin Settings
-function loadZonesForArea() {
-    const areaSelect = document.getElementById('areaSelect') || document.querySelector('select[name="area"]');
-    const zoneSelect = document.getElementById('zoneSelect') || document.querySelector('select[name="zone"]');
+// Fixed: Load all Zones in Area Edit/Add Modal
+async function loadZonesInAreaModal() {
+    const zoneSelect = document.getElementById('areaZoneSelect') || document.querySelector('#editAreaModal select[name="zone"]');
+    if (!zoneSelect) return;
     
-    if (!areaSelect || !zoneSelect) return;
+    zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
     
-    areaSelect.addEventListener('change', async function() {
-        const areaId = this.value;
-        zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
-        
-        if (!areaId) return;
-        
-        try {
-            // Get zones from Firestore where area_id matches
-            const zonesSnap = await firebase.firestore().collection('zones').where('area_id', '==', areaId).get();
-            zonesSnap.forEach(doc => {
-                const zone = doc.data();
-                zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
-            });
-        } catch (e) {
-            console.error('Zone load error:', e);
-        }
-    });
+    try {
+        // Load all zones from Firestore
+        const zonesSnap = await firebase.firestore().collection('zones').orderBy('name').get();
+        zonesSnap.forEach(doc => {
+            const zone = doc.data();
+            zoneSelect.innerHTML += `<option value="${doc.id}">${zone.name}</option>`;
+        });
+    } catch (error) {
+        console.error('Zone load error:', error);
+        zoneSelect.innerHTML = '<option value="">জোন লোড হয়নি</option>';
+    }
 }
 
-// Fixed: Auto-load customer package in Invoice Generator
-function setupInvoicePackageLoader() {
-    const custSelect = document.getElementById('invoiceCustomer') || document.querySelector('select[name="customer"]');
-    const packageInput = document.getElementById('invoicePackage') || document.querySelector('input[name="package"]');
+// Call this when Add Area or Edit Area modal opens
+document.addEventListener('DOMContentLoaded', function() {
+    // Hook into modal open events
+    const addAreaBtn = document.getElementById('addAreaBtn');
+    if (addAreaBtn) {
+        addAreaBtn.addEventListener('click', () => {
+            setTimeout(loadZonesInAreaModal, 100); // Wait for modal to render
+        });
+    }
     
-    if (!custSelect || !packageInput) return;
+    // Hook into all edit buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-area-btn')) {
+            setTimeout(loadZonesInAreaModal, 100);
+        }
+    });
+});
+</script>
+
+<script>
+// Fixed: Customer -> Package auto-load in Invoice Generator
+async function setupInvoiceCustomerChange() {
+    const customerSelect = document.getElementById('invoiceCustomerSelect') || document.querySelector('#invoiceGenerator select[name="customer"]');
+    const packageInput = document.getElementById('invoicePackage') || document.querySelector('#invoiceGenerator input[name="package"]');
+    const amountInput = document.getElementById('invoiceAmount') || document.querySelector('#invoiceGenerator input[name="amount"]');
     
-    custSelect.addEventListener('change', async function() {
-        const custId = this.value;
-        if (!custId) {
-            packageInput.value = '';
+    if (!customerSelect) return;
+    
+    customerSelect.addEventListener('change', async function() {
+        const customerId = this.value;
+        if (!customerId) {
+            if (packageInput) packageInput.value = '';
+            if (amountInput) amountInput.value = '';
             return;
         }
         
         try {
-            const custDoc = await firebase.firestore().collection('customers').doc(custId).get();
-            if (custDoc.exists) {
-                const data = custDoc.data();
-                packageInput.value = data.package || data.packageName || '';
-                // Also update amount if package has price
-                const amountInput = document.getElementById('invoiceAmount');
-                if (amountInput && data.packagePrice) {
-                    amountInput.value = data.packagePrice;
-                }
+            const customerDoc = await firebase.firestore().collection('customers').doc(customerId).get();
+            if (customerDoc.exists) {
+                const data = customerDoc.data();
+                if (packageInput) packageInput.value = data.packageName || data.package || '';
+                if (amountInput) amountInput.value = data.monthlyFee || data.packagePrice || '';
             }
-        } catch (e) {
-            console.error('Customer load error:', e);
+        } catch (error) {
+            console.error('Customer package load error:', error);
         }
     });
 }
 
-// Fixed: Generate proper Invoice Number
-function generateInvoiceNumber() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `INV-${year}${month}-${random}`;
-}
-
-// Initialize all fixes
-document.addEventListener('DOMContentLoaded', function() {
-    loadZonesForArea();
-    setupInvoicePackageLoader();
-    
-    // Fix Dashboard - load stats
-    if (document.getElementById('dashboardStats')) {
-        loadDashboardStats();
-    }
-    
-    // Fix Activity Log - load logs
-    if (document.getElementById('activityLogList')) {
-        loadActivityLogs();
-    }
-    
-    // Fix Staff Accounts - load staff
-    if (document.getElementById('staffAccountsList')) {
-        loadStaffAccounts();
-    }
-});
-
-async function loadDashboardStats() {
-    try {
-        const billsSnap = await firebase.firestore().collection('bills').get();
-        const customersSnap = await firebase.firestore().collection('customers').get();
-        document.getElementById('totalBills').textContent = billsSnap.size;
-        document.getElementById('totalCustomers').textContent = customersSnap.size;
-    } catch (e) { console.error(e); }
-}
-
-async function loadActivityLogs() {
-    try {
-        const logsSnap = await firebase.firestore().collection('activity_logs').orderBy('timestamp', 'desc').limit(50).get();
-        const container = document.getElementById('activityLogList');
-        container.innerHTML = '';
-        logsSnap.forEach(doc => {
-            const log = doc.data();
-            container.innerHTML += `<div class="log-item">${log.action} - ${log.timestamp?.toDate().toLocaleString()}</div>`;
-        });
-    } catch (e) { console.error(e); }
-}
-
-async function loadStaffAccounts() {
-    try {
-        const staffSnap = await firebase.firestore().collection('staff').get();
-        const container = document.getElementById('staffAccountsList');
-        container.innerHTML = '';
-        staffSnap.forEach(doc => {
-            const staff = doc.data();
-            container.innerHTML += `<div class="staff-card">${staff.name} - ${staff.email}</div>`;
-        });
-    } catch (e) { 
-        container.innerHTML = '<p>স্টাফ লোড হচ্ছে...</p>';
-        console.error(e); 
-    }
-}
+document.addEventListener('DOMContentLoaded', setupInvoiceCustomerChange);
 </script>
 
 </body>
