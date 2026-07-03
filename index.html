@@ -966,7 +966,7 @@
             <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
               <span class="text-3xl font-bold text-white">O</span>
             </div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsLink</h1>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">OwnsBill v2.2.4</h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">ISP Reseller Management System</p>
           </div>
           <form id="login-form" class="space-y-4">
@@ -3524,24 +3524,32 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     ${billsTable}
                 
 <script>
-// Zone Loader v5 - Final
-document.addEventListener('DOMContentLoaded', function() {
-    const originalShowArea = window.showAddAreaModal;
-    window.showAddAreaModal = async function() {
-        if (originalShowArea) originalShowArea();
-        const sel = document.getElementById('areaZone');
-        if (!sel) return;
-        try {
-            sel.innerHTML = '<option value="">লোড হচ্ছে...</option>';
-            const snap = await getDocs(collection(db, 'zones'));
-            sel.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
-            snap.forEach(d => sel.add(new Option(d.data().name || d.id, d.id)));
-            console.log('Zones loaded:', snap.size);
-        } catch(e) {
-            console.error('Zone error:', e);
-            sel.innerHTML = '<option value="">এরর</option>';
-        }
-    };
+// Zone loader with debug
+async function loadZonesForArea() {
+    const sel = document.getElementById('areaZone');
+    if (!sel) return console.error('areaZone not found');
+    
+    sel.innerHTML = '<option value="">লোড হচ্ছে...</option>';
+    
+    try {
+        const snap = await getDocs(collection(db, 'zones'));
+        console.log('Zones:', snap.size);
+        sel.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
+        snap.forEach(d => {
+            const o = new Option(d.data().name || d.id, d.id);
+            sel.add(o);
+        });
+    } catch(e) {
+        console.error('Zone error:', e);
+        sel.innerHTML = '<option value="">এরর: Firebase চেক করুন</option>';
+    }
+}
+
+// Auto-load when modal opens
+document.addEventListener('click', (e) => {
+    if (e.target.closest('#addAreaBtn') || e.target.closest('[onclick*="Area"]')) {
+        setTimeout(loadZonesForArea, 200);
+    }
 });
 </script>
 
@@ -3609,24 +3617,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 <script>
-// Zone Loader v5 - Final
-document.addEventListener('DOMContentLoaded', function() {
-    const originalShowArea = window.showAddAreaModal;
-    window.showAddAreaModal = async function() {
-        if (originalShowArea) originalShowArea();
-        const sel = document.getElementById('areaZone');
-        if (!sel) return;
-        try {
-            sel.innerHTML = '<option value="">লোড হচ্ছে...</option>';
-            const snap = await getDocs(collection(db, 'zones'));
-            sel.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
-            snap.forEach(d => sel.add(new Option(d.data().name || d.id, d.id)));
-            console.log('Zones loaded:', snap.size);
-        } catch(e) {
-            console.error('Zone error:', e);
-            sel.innerHTML = '<option value="">এরর</option>';
-        }
-    };
+// Zone loader with debug
+async function loadZonesForArea() {
+    const sel = document.getElementById('areaZone');
+    if (!sel) return console.error('areaZone not found');
+    
+    sel.innerHTML = '<option value="">লোড হচ্ছে...</option>';
+    
+    try {
+        const snap = await getDocs(collection(db, 'zones'));
+        console.log('Zones:', snap.size);
+        sel.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
+        snap.forEach(d => {
+            const o = new Option(d.data().name || d.id, d.id);
+            sel.add(o);
+        });
+    } catch(e) {
+        console.error('Zone error:', e);
+        sel.innerHTML = '<option value="">এরর: Firebase চেক করুন</option>';
+    }
+}
+
+// Auto-load when modal opens
+document.addEventListener('click', (e) => {
+    if (e.target.closest('#addAreaBtn') || e.target.closest('[onclick*="Area"]')) {
+        setTimeout(loadZonesForArea, 200);
+    }
 });
 </script>
 
