@@ -353,11 +353,11 @@
   };
 
   const menuNames = {
-    dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
-    bills: 'Bills', invoice: 'Invoice Generator', reports: 'Reports',
-    activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
+    dashboard: 'ড্যাশবোর্ড', customers: 'কাস্টমারগণ', staff: 'স্টাফ', packages: 'Packages',
+    bills: 'Bills', invoice: 'ইনভয়েস Generator', reports: 'Reports',
+    activities: 'Activity Log', settings: 'Settings', mycustomers: 'My কাস্টমারগণ',
     mybills: 'My Bills', profile: 'Profile', chat: 'Chat', approvals: 'Approvals',
-    mywallet: 'My Wallet', staffaccounts: 'Staff Accounts'
+    mywallet: 'My Wallet', staffaccounts: 'স্টাফ Accounts'
   };
 
   const applyTheme = () => {
@@ -374,9 +374,9 @@
     if (!ts) return null;
     try {
       if (ts?.toDate && typeof ts.toDate === 'function') return ts.toDate();
-      if (ts instanceof Date) return ts;
+      if (ts instanceof তারিখ) return ts;
       if (typeof ts === 'string' || typeof ts === 'number') {
-        const d = new Date(ts);
+        const d = new তারিখ(ts);
         return isNaN(d.getTime()) ? null : d;
       }
       return null;
@@ -699,7 +699,7 @@
     currentView = viewId;
     
     const titleEl = document.getElementById('page-title');
-    if (titleEl) titleEl.textContent = menuNames[viewId] || 'Dashboard';
+    if (titleEl) titleEl.textContent = menuNames[viewId] || 'ড্যাশবোর্ড';
     
     reRenderCurrentView();
     updateBottomNavActive();
@@ -731,7 +731,7 @@
     } else if (isStaffView) {
       const myCustomerIds = appState.users.filter(u => u.assignedStaff === currentUser.uid).map(u => u.id);
       list = list.filter(b => myCustomerIds.includes(b.customerId));
-      console.log('[Bills] STAFF VIEW - My Customers:', myCustomerIds.length, 'Bills:', list.length);
+      console.log('[Bills] STAFF VIEW - My কাস্টমারগণ:', myCustomerIds.length, 'Bills:', list.length);
     }
     
     // Apply month filter
@@ -745,18 +745,19 @@
       });
     }
 
-    // CUSTOMER VIEW: ONLY Search + Month + Print
+    // CUSTOMER VIEW: ONLY সার্চ + Month + প্রিন্ট
     if (isCustomerView) {
       container.innerHTML = `
         <div class="space-y-4 fade-in">
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill" type="text" placeholder="সার্চ bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <i data-lucide="printer" class="w-4 h-4"></i>প্রিন্ট</button>
+              <i data-lucide="printer" class="w-4 h-4"></i> প্রিন্ট
+            </button>
           </div>
           <div class="glass rounded-2xl overflow-hidden border border-[rgb(var(--border))]">
             <div class="overflow-x-auto">
@@ -792,14 +793,14 @@
         </div>
       `;
     } 
-    // STAFF VIEW: NO All Staff dropdown
+    // STAFF VIEW: NO All স্টাফ dropdown
     else if (isStaffView) {
       container.innerHTML = `
         <div class="space-y-4 fade-in">
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill" type="text" placeholder="সার্চ bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <select id="billsFilterZone" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
               <option value="">All Zones</option>
@@ -809,10 +810,11 @@
               <option value="">All Areas</option>
               ${(appState.areas || []).map(a => `<option value="${a.name}">${a.name}</option>`).join('')}
             </select>
-            <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            <input type="text" id="billsFilterCustomer" placeholder="কাস্টমার name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <i data-lucide="printer" class="w-4 h-4"></i>প্রিন্ট</button>
+              <i data-lucide="printer" class="w-4 h-4"></i> প্রিন্ট
+            </button>
             <button onclick="exportBillsCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
               <i data-lucide="download" class="w-4 h-4"></i> Export CSV
             </button>
@@ -859,7 +861,7 @@
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill" type="text" placeholder="সার্চ bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <select id="billsFilterZone" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
               <option value="">All Zones</option>
@@ -870,13 +872,14 @@
               ${(appState.areas || []).map(a => `<option value="${a.name}">${a.name}</option>`).join('')}
             </select>
             <select id="billsFilterStaff" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-              <option value="">All Staff</option>
+              <option value="">All স্টাফ</option>
               ${appState.users.filter(u => u.role === 'staff').map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
             </select>
-            <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            <input type="text" id="billsFilterCustomer" placeholder="কাস্টমার name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <i data-lucide="printer" class="w-4 h-4"></i>প্রিন্ট</button>
+              <i data-lucide="printer" class="w-4 h-4"></i> প্রিন্ট
+            </button>
             <button onclick="exportBillsCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
               <i data-lucide="download" class="w-4 h-4"></i> Export CSV
             </button>
@@ -972,7 +975,7 @@
               <input type="email" id="email" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none transition" placeholder="admin@owns.bd">
             </div>
             <div>
-              <label class="text-sm font-medium mb-2 block">পাসওয়ার্ড</label>
+              <label class="text-sm font-medium mb-2 block">Password</label>
               <input type="password" id="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none transition" placeholder="••••••••">
             </div>
             <button type="submit" id="login-submit-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition">
@@ -1013,28 +1016,28 @@
   const renderApp = () => {
     const menus = {
       admin: [
-        { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
-        { id: 'customers', label: 'Customers', icon: 'users' },
-        { id: 'staff', label: 'Staff', icon: 'user-cog' },
+        { id: 'dashboard', label: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+        { id: 'customers', label: 'কাস্টমারগণ', icon: 'users' },
+        { id: 'staff', label: 'স্টাফ', icon: 'user-cog' },
         { id: 'approvals', label: 'Approvals', icon: 'check-circle' },
         { id: 'packages', label: 'Packages', icon: 'package' },
         { id: 'bills', label: 'Bills', icon: 'receipt' },
-        { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
-        { id: 'staffaccounts', label: 'Staff Accounts', icon: 'wallet' },
+        { id: 'invoice', label: 'ইনভয়েস Generator', icon: 'file-text' },
+        { id: 'staffaccounts', label: 'স্টাফ Accounts', icon: 'wallet' },
         { id: 'reports', label: 'Reports', icon: 'bar-chart-3' },
         { id: 'activities', label: 'Activity Log', icon: 'history' },
         { id: 'settings', label: 'Settings', icon: 'settings' }
       ],
       staff: [
-        { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
-        { id: 'mycustomers', label: 'Customers', icon: 'users' },
+        { id: 'dashboard', label: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+        { id: 'mycustomers', label: 'কাস্টমারগণ', icon: 'users' },
         { id: 'bills', label: 'Bills', icon: 'receipt' },
-        { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
+        { id: 'invoice', label: 'ইনভয়েস Generator', icon: 'file-text' },
         { id: 'mywallet', label: 'My Wallet', icon: 'wallet' },
         { id: 'reports', label: 'Reports', icon: 'bar-chart-3' }
       ],
       customer: [
-        { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
+        { id: 'dashboard', label: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
         { id: 'mybills', label: 'My Bills', icon: 'receipt' },
         { id: 'profile', label: 'Profile', icon: 'user' }
       ]
@@ -1076,7 +1079,7 @@
               <i data-lucide="x" class="w-5 h-5"></i>
             </button>
           </div>
-          <img src="/mnt/data/Owns_Link_Logo_3X3_bk.jpg" alt="Owns Link" style="height:40px;margin-right:10px;"><nav id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto">${sidebarItems}</nav>
+          <nav id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto">${sidebarItems}</nav>
           <div class="p-3 border-t border-[rgb(var(--border))]">
             <button onclick="window.showProfileMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgb(var(--border))] transition" type="button">
               <img src="${userPhoto}" class="w-8 h-8 rounded-full">
@@ -1090,7 +1093,7 @@
         </aside>
 
         <div class="flex-1 flex flex-col overflow-hidden main-wrapper">
-          <header><img src="/mnt/data/Owns_Link_Logo_3X3_bk.jpg" alt="Owns Link" style="height:40px;margin-right:10px;"> class="fixed top-0 left-0 right-0 md:left-64 glass border-b border-[rgb(var(--border))] px-4 md:px-6 h-16 flex items-center no-print z-40">
+          <header class="fixed top-0 left-0 right-0 md:left-64 glass border-b border-[rgb(var(--border))] px-4 md:px-6 h-16 flex items-center no-print z-40">
             <div class="flex items-center justify-between gap-4 w-full">
               <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl hover:bg-[rgb(var(--border))]" type="button">
@@ -1136,7 +1139,8 @@
                       </button>
                       <hr class="border-[rgb(var(--border))] my-1">
                       <button onclick="handleLogout(); closeUserDropdown()" id="logoutBtn" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-rose-500/10 text-rose-600 text-left text-sm" type="button">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>লগআউট</button>
+                        <i data-lucide="log-out" class="w-4 h-4"></i> লগআউট
+                      </button>
                     </div>
                   </div>
                 <div class="md:hidden relative mobile-only">
@@ -1163,7 +1167,8 @@
                       </button>
                       <hr class="border-[rgb(var(--border))] my-1">
                       <button onclick="handleLogout(); closeMobileProfile()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-rose-500/10 text-rose-600 text-left text-sm" type="button">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>লগআউট</button>
+                        <i data-lucide="log-out" class="w-4 h-4"></i> লগআউট
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1175,7 +1180,7 @@
             ${viewSections}
           </main>
 
-          <img src="/mnt/data/Owns_Link_Logo_3X3_bk.jpg" alt="Owns Link" style="height:40px;margin-right:10px;"><nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-[rgb(var(--border))] px-2 py-2 flex items-center justify-around no-print z-30">
+          <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-[rgb(var(--border))] px-2 py-2 flex items-center justify-around no-print z-30">
             ${mobileNavItems}
           </nav>
 
@@ -1284,7 +1289,8 @@
             <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-5 h-5"></i> Toggle Theme
           </button>
           <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-rose-500/10 text-rose-600 text-left" type="button">
-            <i data-lucide="log-out" class="w-5 h-5"></i>লগআউট</button>
+            <i data-lucide="log-out" class="w-5 h-5"></i> লগআউট
+          </button>
         </div>
       </div>
     `);
@@ -1302,8 +1308,8 @@
       currentUserData = null;
       currentRole = null;
     } catch (err) {
-      console.error('Logout error:', err);
-      showToast('Logout failed: ' + err.message, 'error');
+      console.error('লগআউট error:', err);
+      showToast('লগআউট failed: ' + err.message, 'error');
     }
   };
   window.handleLogout = handleLogout;
@@ -1316,11 +1322,11 @@
     const staffList = appState.users.filter(u => u.role === 'staff' && (u.status === 'approved'));
     const bills = appState.bills;
     
-    const today = new Date();
+    const today = new তারিখ();
     today.setHours(0,0,0,0);
-    const tomorrow = new Date(today);
+    const tomorrow = new তারিখ(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthStart = new তারিখ(today.getFullYear(), today.getMonth(), 1);
     
     const todayBills = bills.filter(b => {
       const d = toDate(b.createdAt);
@@ -1346,21 +1352,21 @@
     const pendingCustomerCount = appState.users.filter(u => u.role === 'customer' && u.status === 'pending').length;
 
     const stats = currentRole === 'admin' ? [
-      { label: 'Total Customers', value: customers.length, icon: 'users', color: 'sky' },
-      { label: 'Total Staff', value: staffList.length, icon: 'user-cog', color: 'indigo' },
+      { label: 'Total কাস্টমারগণ', value: customers.length, icon: 'users', color: 'sky' },
+      { label: 'Total স্টাফ', value: staffList.length, icon: 'user-cog', color: 'indigo' },
       { label: "Today's Collection", value: formatCurrency(todayBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'wallet', color: 'emerald' },
-      { label: 'Monthly Due', value: formatCurrency(monthBills.filter(b=>b.status==='unpaid').reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
+      { label: 'মাসিক Due', value: formatCurrency(monthBills.filter(b=>b.status==='unpaid').reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
       { label: 'Pending Deposits', value: formatCurrency(totalPendingDeposits), icon: 'arrow-down-circle', color: 'amber' },
       { label: 'Salary Requests', value: formatCurrency(totalSalaryRequests), icon: 'dollar-sign', color: 'purple' }
     ] : currentRole === 'staff' ? [
-      { label: 'Assigned Customers', value: customers.length, icon: 'users', color: 'sky' },
+      { label: 'Assigned কাস্টমারগণ', value: customers.length, icon: 'users', color: 'sky' },
       { label: "Today's Promise", value: todayPromise.length, icon: 'calendar', color: 'amber' },
       { label: 'Month Paid', value: formatCurrency(monthBills.filter(b=>b.status==='paid').reduce((s,b)=>s+b.amount,0)), icon: 'trending-up', color: 'emerald' },
       { label: 'Unpaid Due', value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' }
     ] : [
       { label: 'Current Due', value: formatCurrency(unpaidBills.reduce((s,b)=>s+b.amount,0)), icon: 'alert-circle', color: 'rose' },
       { label: 'Last Payment', value: paidBills[0] ? formatDate(paidBills[0].createdAt) : '-', icon: 'calendar', color: 'emerald' },
-      { label: 'Package', value: currentUserData?.packageName || '-', icon: 'package', color: 'sky' },
+      { label: 'প্যাকেজ', value: currentUserData?.packageName || '-', icon: 'package', color: 'sky' },
       { label: 'Speed', value: currentUserData?.packageSpeed || '-', icon: 'zap', color: 'indigo' }
     ];
 
@@ -1408,7 +1414,7 @@
         <div class="grid lg:grid-cols-2 gap-3">
           <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
             <h3 class="font-bold mb-2 flex items-center gap-2 text-sm">
-              <i data-lucide="pie-chart" class="w-4 h-4 text-sky-600"></i> Payment Status
+              <i data-lucide="pie-chart" class="w-4 h-4 text-sky-600"></i> Payment স্ট্যাটাস
             </h3>
             <div class="h-[250px] md:h-[280px]">
               <canvas id="paymentChart"></canvas>
@@ -1416,7 +1422,7 @@
           </div>
           <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
             <h3 class="font-bold mb-2 flex items-center gap-2 text-sm">
-              <i data-lucide="bar-chart" class="w-4 h-4 text-indigo-600"></i> Monthly Collection
+              <i data-lucide="bar-chart" class="w-4 h-4 text-indigo-600"></i> মাসিক Collection
             </h3>
             <div class="h-[250px] md:h-[280px]">
               <canvas id="collectionChart"></canvas>
@@ -1503,11 +1509,11 @@
     const months = [];
     const data = [];
     for (let i = 5; i >= 0; i--) {
-      const d = new Date();
+      const d = new তারিখ();
       d.setMonth(d.getMonth() - i);
       months.push(d.toLocaleDateString('en', { month: 'short' }));
-      const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
-      const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      const monthStart = new তারিখ(d.getFullYear(), d.getMonth(), 1);
+      const monthEnd = new তারিখ(d.getFullYear(), d.getMonth() + 1, 0);
       const amount = appState.bills
         .filter(b => {
           const bd = toDate(b.createdAt);
@@ -1558,11 +1564,11 @@
         <div class="flex flex-col sm:flex-row gap-3 justify-between">
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-customer" type="text" placeholder="Search customers..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none">
+            <input id="search-customer" type="text" placeholder="সার্চ customers..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] focus:ring-2 focus:ring-sky-500 outline-none">
           </div>
           ${(currentRole === 'admin' || currentRole === 'staff') ? `
           <button onclick="showCustomerForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold hover:shadow-lg flex items-center gap-2 whitespace-nowrap" type="button">
-            <i data-lucide="user-plus" class="w-5 h-5"></i> Add Customer
+            <i data-lucide="user-plus" class="w-5 h-5"></i> অ্যাড করুন কাস্টমার
           </button>
           ` : ''}
         </div>
@@ -1642,7 +1648,7 @@
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
             ${currentRole !== 'customer' ? `
-            <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="Create Invoice" type="button">
+            <button onclick="createInvoiceFor('${c.id}')" class="p-2 rounded-lg hover:bg-sky-500/20 text-sky-600" title="Create ইনভয়েস" type="button">
               <i data-lucide="file-text" class="w-4 h-4"></i>
             </button>
             <button onclick="sendWhatsApp('${c.whatsapp}','Payment reminder')" class="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-600" title="WhatsApp" type="button">
@@ -1668,26 +1674,26 @@
     
     showModal(`
       <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'এডিট' : 'অ্যাড করুন'} কাস্টমার ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
         <form id="customer-form">
           <div class="grid md:grid-cols-2 gap-4">
-            <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">নাম *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${customer?.mobile||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" id="customerZoneSelect" data-zone-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" id="customerAreaSelect" data-area-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">জোন *</label><select name="zone" id="customerZoneSelect" data-zone-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">সিলেক্ট করুন জোন</option>${zoneOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">এরিয়া *</label><select name="area" id="customerAreaSelect" data-area-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">সিলেক্ট করুন এরিয়া</option>${areaOptions}</select></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">প্যাকেজ</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">Assigned Staff</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Staff</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">প্যাকেজ</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">সিলেক্ট করুন প্যাকেজ</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">Assigned স্টাফ</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">সিলেক্ট করুন স্টাফ</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
             <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">ঠিকানা</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
             ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" id="customer-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
+            <button type="submit" id="customer-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">সেভ করুন কাস্টমার</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">বাতিল</button>
           </div>
         </form>
@@ -1717,16 +1723,16 @@
       let docCreated = false;
       
       try {
-        console.log('[Customer Create] Starting. Data:', data);
+        console.log('[কাস্টমার Create] Starting. Data:', data);
         if (id) {
           await updateDoc(doc(db, 'users', id), data);
-          await logActivity('Update Customer', `Updated customer: ${data.name}`);
-          showToast('Customer updated successfully', 'success');
+          await logActivity('Update কাস্টমার', `Updated customer: ${data.name}`);
+          showToast('কাস্টমার updated successfully', 'success');
         } else {
-          console.log('[Customer Create] Creating auth user for:', data.email);
+          console.log('[কাস্টমার Create] Creating auth user for:', data.email);
           const secondaryAut = initSecondaryAuth();
           userCred = await createUserWithEmailAndPassword(secondaryAut, data.email, data.password);
-          console.log('[Customer Create] Auth user created:', userCred.user.uid);
+          console.log('[কাস্টমার Create] Auth user created:', userCred.user.uid);
           
           delete data.password;
           const userData = {
@@ -1734,21 +1740,21 @@
             createdAt: serverTimestamp()
           };
           
-          console.log('[Customer Create] Creating Firestore doc');
+          console.log('[কাস্টমার Create] Creating Firestore doc');
           await setDoc(doc(db, 'users', userCred.user.uid), userData);
           docCreated = true;
-          console.log('[Customer Create] Firestore doc created');
+          console.log('[কাস্টমার Create] Firestore doc created');
           
-          await logActivity('Add Customer', `Added customer: ${data.name} (${data.status})`);
-          showToast(`Customer added ${data.status === 'pending' ? 'and pending approval' : 'successfully'}`, 'success');
+          await logActivity('অ্যাড করুন কাস্টমার', `Added customer: ${data.name} (${data.status})`);
+          showToast(`কাস্টমার added ${data.status === 'pending' ? 'and pending approval' : 'successfully'}`, 'success');
         }
         closeModal();
         setTimeout(() => renderCustomers(myCustomers), 500);
       } catch (err) {
-        console.error('[Customer Create] Error:', err);
+        console.error('[কাস্টমার Create] Error:', err);
         if (userCred && !docCreated && secondaryAuth?.currentUser?.uid === userCred.user.uid) {
           try {
-            console.log('[Customer Create] Rolling back auth user');
+            console.log('[কাস্টমার Create] Rolling back auth user');
             await deleteUser(userCred.user);
             showToast('Failed to create customer. Auth user rolled back.', 'error');
           } catch (deleteErr) {
@@ -1760,7 +1766,7 @@
         }
       } finally {
         submitBtn.classList.remove('btn-loading');
-        submitBtn.innerHTML = 'Save Customer';
+        submitBtn.innerHTML = 'সেভ করুন কাস্টমার';
         lucide.createIcons();
       }
     });
@@ -1771,7 +1777,7 @@
     const bills = appState.bills.filter(b => b.customerId === id);
     showModal(`
       <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">Customer Details</h3>
+        <h3 class="text-xl font-bold mb-6">কাস্টমার Details</h3>
         <div class="space-y-4">
           ${Object.entries(c).filter(([k,v])=>!['id','role','createdAt','password','status'].includes(k)&&v).map(([k,v])=>`
             <div class="flex justify-between py-2 border-b border-[rgb(var(--border))]">
@@ -1802,7 +1808,7 @@
     container.innerHTML = `
       <div class="space-y-4 fade-in">
         <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="user-plus" class="w-5 h-5"></i> Add Staff
+          <i data-lucide="user-plus" class="w-5 h-5"></i> অ্যাড করুন স্টাফ
         </button>
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff...</span></div>' : `
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
@@ -1813,7 +1819,7 @@
                   <th class="text-left p-4 font-semibold">নাম</th>
                   <th class="text-left p-4 font-semibold">Contact</th>
                   <th class="text-left p-4 font-semibold">স্ট্যাটাস</th>
-                  <th class="text-left p-4 font-semibold">Assigned Customers</th>
+                  <th class="text-left p-4 font-semibold">Assigned কাস্টমারগণ</th>
                   <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -1849,10 +1855,10 @@
     const staff = id ? appState.users.find(u => u.id === id) : null;
     showModal(`
       <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'এডিট' : 'অ্যাড করুন'} স্টাফ</h3>
         <form id="staff-form">
           <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">নাম *</label><input type="text" name="name" value="${staff?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${staff?.email||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
@@ -1861,7 +1867,7 @@
             ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">স্ট্যাটাস</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="pending" ${staff?.status === 'pending' ? 'selected' : ''}>Pending</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" id="staff-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
+            <button type="submit" id="staff-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">সেভ করুন স্টাফ</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">বাতিল</button>
           </div>
         </form>
@@ -1885,19 +1891,19 @@
       let docCreated = false;
       
       try {
-        console.log('[Staff Create] Starting. Email:', data.email);
+        console.log('[স্টাফ Create] Starting. Email:', data.email);
         if (id) {
           await updateDoc(doc(db, 'users', id), data);
-          await logActivity('Update Staff', `Updated staff: ${data.name}`);
-          showToast('Staff updated', 'success');
+          await logActivity('Update স্টাফ', `Updated staff: ${data.name}`);
+          showToast('স্টাফ updated', 'success');
           closeModal();
           renderStaff();
         } else {
-          console.log('[Staff Create] Initializing secondary auth');
+          console.log('[স্টাফ Create] Initializing secondary auth');
           const secondaryAut = initSecondaryAuth();
-          console.log('[Staff Create] Creating auth user');
+          console.log('[স্টাফ Create] Creating auth user');
           userCred = await createUserWithEmailAndPassword(secondaryAut, data.email, data.password);
-          console.log('[Staff Create] Auth user created UID:', userCred.user.uid);
+          console.log('[স্টাফ Create] Auth user created UID:', userCred.user.uid);
           
           delete data.password;
           const userData = {
@@ -1905,21 +1911,21 @@
             createdAt: serverTimestamp()
           };
           
-          console.log('[Staff Create] Creating Firestore doc');
+          console.log('[স্টাফ Create] Creating Firestore doc');
           await setDoc(doc(db, 'users', userCred.user.uid), userData);
           docCreated = true;
-          console.log('[Staff Create] Firestore doc created successfully');
+          console.log('[স্টাফ Create] Firestore doc created successfully');
           
-          await logActivity('Add Staff', `Added staff: ${data.name} (${data.status})`);
-          showToast('Staff created. Waiting for approval.', 'success');
+          await logActivity('অ্যাড করুন স্টাফ', `Added staff: ${data.name} (${data.status})`);
+          showToast('স্টাফ created. Waiting for approval.', 'success');
           closeModal();
           setTimeout(() => renderStaff(), 500);
         }
       } catch (err) {
-        console.error('[Staff Create] Error:', err);
+        console.error('[স্টাফ Create] Error:', err);
         if (userCred && !docCreated && secondaryAuth?.currentUser?.uid === userCred.user.uid) {
           try {
-            console.log('[Staff Create] Rolling back auth user');
+            console.log('[স্টাফ Create] Rolling back auth user');
             await deleteUser(userCred.user);
             showToast('Failed to create staff. Auth user rolled back.', 'error');
           } catch (deleteErr) {
@@ -1931,18 +1937,18 @@
         }
       } finally {
         submitBtn.classList.remove('btn-loading');
-        submitBtn.innerHTML = 'Save Staff';
+        submitBtn.innerHTML = 'সেভ করুন স্টাফ';
         lucide.createIcons();
       }
     });
   };
 
   window.deleteStaff = async (id) => {
-    if (!confirm('Delete this staff member?')) return;
+    if (!confirm('ডিলিট this staff member?')) return;
     try {
       await deleteDoc(doc(db, 'users', id));
-      await logActivity('Delete Staff', `Deleted staff`);
-      showToast('Staff deleted', 'success');
+      await logActivity('ডিলিট স্টাফ', `Deleted staff`);
+      showToast('স্টাফ deleted', 'success');
       renderStaff();
     } catch (err) {
       showToast(err.message, 'error');
@@ -1956,7 +1962,7 @@
     container.innerHTML = `
       <div class="space-y-4 fade-in">
         <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
-          <i data-lucide="plus" class="w-5 h-5"></i> Add Package
+          <i data-lucide="plus" class="w-5 h-5"></i> অ্যাড করুন প্যাকেজ
         </button>
         ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading packages...</span></div>' : `
         <div class="grid md:grid-cols-3 gap-4">
@@ -1991,15 +1997,15 @@
     const pkg = id ? appState.packages.find(p => p.id === id) : null;
     showModal(`
       <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'এডিট' : 'অ্যাড করুন'} প্যাকেজ</h3>
         <form id="package-form">
           <div class="space-y-4">
-            <div><label class="text-sm font-medium mb-2 block">Package Name *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">প্যাকেজ নাম *</label><input type="text" name="name" value="${pkg?.name||''}" required placeholder="e.g. Basic Plan" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Speed *</label><input type="text" name="speed" value="${pkg?.speed||''}" required placeholder="e.g. 10 Mbps" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">সেভ করুন প্যাকেজ</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">বাতিল</button>
           </div>
         </form>
@@ -2014,12 +2020,12 @@
       try {
         if (id) {
           await updateDoc(doc(db, 'packages', id), data);
-          await logActivity('Update Package', `Updated package: ${data.name}`);
+          await logActivity('Update প্যাকেজ', `Updated package: ${data.name}`);
         } else {
           await addDoc(collection(db, 'packages'), { ...data, createdAt: serverTimestamp() });
-          await logActivity('Add Package', `Added package: ${data.name}`);
+          await logActivity('অ্যাড করুন প্যাকেজ', `Added package: ${data.name}`);
         }
-        showToast('Package saved', 'success');
+        showToast('প্যাকেজ saved', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -2028,11 +2034,11 @@
   };
 
   window.deletePackage = async (id) => {
-    if (!confirm('Delete this package?')) return;
+    if (!confirm('ডিলিট this package?')) return;
     try {
       await deleteDoc(doc(db, 'packages', id));
-      await logActivity('Delete Package', `Deleted package`);
-      showToast('Package deleted', 'success');
+      await logActivity('ডিলিট প্যাকেজ', `Deleted package`);
+      showToast('প্যাকেজ deleted', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -2052,7 +2058,7 @@
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <input id="search-bill" type="text" placeholder="সার্চ bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
     <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
@@ -2062,13 +2068,13 @@
         <option value="">All Areas</option>
     </select>
     <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Staff</option>
+        <option value="">All স্টাফ</option>
     </select>
-    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    <input type="text" id="billsFilterCustomer" placeholder="কাস্টমার name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
     <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
     <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Print Monthly
+        প্রিন্ট মাসিক
     </button>
 </div>
 
@@ -2137,8 +2143,8 @@
   window.markPaid = async (id) => {
     try {
       await updateDoc(doc(db, 'bills', id), { status: 'paid', paidAt: serverTimestamp() });
-      await logActivity('Bill Update', `Marked bill as paid`);
-      showToast('Bill marked as paid', 'success');
+      await logActivity('বিল Update', `Marked bill as paid`);
+      showToast('বিল marked as paid', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -2167,13 +2173,13 @@
         <div class="glass rounded-2xl p-6 border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-4">Filter Reports</h3>
           <div class="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div><label class="text-sm font-medium mb-2 block">From Date</label><input type="date" id="report-from" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
-            <div><label class="text-sm font-medium mb-2 block">To Date</label><input type="date" id="report-to" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
-            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">স্টাফ</label><select id="report-staff" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Staff</option>${staffOptions}</select></div>` : ''}
+            <div><label class="text-sm font-medium mb-2 block">From তারিখ</label><input type="date" id="report-from" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
+            <div><label class="text-sm font-medium mb-2 block">To তারিখ</label><input type="date" id="report-to" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
+            ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">স্টাফ</label><select id="report-staff" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All স্টাফ</option>${staffOptions}</select></div>` : ''}
             <div><label class="text-sm font-medium mb-2 block">এরিয়া</label><select id="report-area" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Areas</option>${areaOptions}</select></div>
             ${!isStaff ? `<div><label class="text-sm font-medium mb-2 block">জোন</label><select id="report-zone" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All Zones</option>${zoneOptions}</select></div>` : ''}
             <div><label class="text-sm font-medium mb-2 block">স্ট্যাটাস</label><select id="report-status" class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"><option value="">All</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div>
-            <div class="md:col-span-3 lg:col-span-6"><label class="text-sm font-medium mb-2 block">Customer Search</label><input type="text" id="report-customer" placeholder="Search by name or mobile..." class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
+            <div class="md:col-span-3 lg:col-span-6"><label class="text-sm font-medium mb-2 block">কাস্টমার সার্চ</label><input type="text" id="report-customer" placeholder="সার্চ by name or mobile..." class="w-full px-3 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] text-sm"></div>
             <div class="md:col-span-3 lg:col-span-6 flex gap-3">
               <button onclick="generateReport()" class="flex-1 py-2.5 rounded-xl bg-sky-500 text-white font-semibold" type="button">Generate Report</button>
               <button onclick="exportBillsCSV()" class="px-6 py-2.5 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="download" class="w-4 h-4"></i></button>
@@ -2197,10 +2203,10 @@
     let filtered = appState.bills;
     if (from) filtered = filtered.filter(b => {
       const d = toDate(b.createdAt);
-      return d && d >= new Date(from);
+      return d && d >= new তারিখ(from);
     });
     if (to) {
-      const toDateLimit = new Date(to);
+      const toDateLimit = new তারিখ(to);
       toDateLimit.setHours(23, 59, 999);
       filtered = filtered.filter(b => {
         const d = toDate(b.createdAt);
@@ -2233,7 +2239,7 @@
     
     $('#report-results').innerHTML = `
       <div class="grid md:grid-cols-3 gap-4 mb-6">
-        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Total Amount</p><p class="text-2xl font-bold">${formatCurrency(total)}</p></div>
+        <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Total টাকা</p><p class="text-2xl font-bold">${formatCurrency(total)}</p></div>
         <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Paid</p><p class="text-2xl font-bold text-emerald-600">${formatCurrency(paid)}</p></div>
         <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]"><p class="text-sm text-slate-500 mb-1">Unpaid</p><p class="text-2xl font-bold text-rose-600">${formatCurrency(unpaid)}</p></div>
       </div>
@@ -2251,14 +2257,14 @@
 
   window.exportBillsCSV = () => {
     const csv = [
-      ['Invoice', 'Customer', 'Mobile', 'Amount', 'Method', 'TrxID', 'Status', 'Date'].join(','),
+      ['ইনভয়েস', 'কাস্টমার', 'Mobile', 'টাকা', 'Method', 'TrxID', 'স্ট্যাটাস', 'তারিখ'].join(','),
       ...appState.bills.map(b => [b.invoiceNo, b.customerName, b.customerMobile, b.amount, b.paymentMethod, b.trxId||'', b.status, formatDate(b.createdAt)].join(','))
     ].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bills-${Date.now()}.csv`;
+    a.download = `bills-${তারিখ.now()}.csv`;
     a.click();
     showToast('CSV exported', 'success');
   };
@@ -2300,18 +2306,18 @@
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-6">Company Information</h3>
           <form id="company-form" class="grid md:grid-cols-2 gap-4">
-            <div><label class="text-sm font-medium mb-2 block">Company Name</label><input type="text" name="companyName" value="${companySettings.companyName||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+            <div><label class="text-sm font-medium mb-2 block">Company নাম</label><input type="text" name="companyName" value="${companySettings.companyName||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">WhatsApp</label><input type="tel" name="whatsapp" value="${companySettings.whatsapp||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">ঠিকানা</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${companySettings.address||''}</textarea></div>
             <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Logo URL</label><input type="url" name="logo" value="${companySettings.logo||''}" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div class="md:col-span-2"><button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Settings</button></div>
+            <div class="md:col-span-2"><button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">সেভ করুন Settings</button></div>
           </form>
         </div>
 
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="font-bold text-lg">Area Management</h3>
-            <button onclick="showAreaForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Area</button>
+            <h3 class="font-bold text-lg">এরিয়া Management</h3>
+            <button onclick="showAreaForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">অ্যাড করুন এরিয়া</button>
           </div>
           <div class="space-y-2">
             ${appState.areas?.map(a => `
@@ -2328,8 +2334,8 @@
 
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="font-bold text-lg">Zone Management</h3>
-            <button onclick="showZoneForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Zone</button>
+            <h3 class="font-bold text-lg">জোন Management</h3>
+            <button onclick="showZoneForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">অ্যাড করুন জোন</button>
           </div>
           <div class="space-y-2">
             ${appState.zones?.map(z => `
@@ -2347,7 +2353,7 @@
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <h3 class="font-bold text-lg mb-4">Firebase Security Rules</h3>
           <div class="text-sm text-slate-600 dark:text-slate-400 space-y-2">
-            <p><strong>Add these to Firestore Rules for full functionality (v2.2.4 requires status checks):</strong></p>
+            <p><strong>অ্যাড করুন these to Firestore Rules for full functionality (v2.2.4 requires status checks):</strong></p>
             <pre class="bg-[rgb(var(--border))] p-3 rounded-lg text-xs overflow-x-auto">
 rules_version = '2';
 service cloud.firestore {
@@ -2436,21 +2442,21 @@ service cloud.firestore {
     const area = id ? appState.areas.find(a => a.id === id) : null;
     showModal(`
       <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'এডিট' : 'অ্যাড করুন'} এরিয়া</h3>
         <form id="area-form">
           <div>
             
 <div class="mb-4">
-    <label class="block text-sm font-medium text-gray-300 mb-2">Zone *</label>
+    <label class="block text-sm font-medium text-gray-300 mb-2">জোন *</label>
     <select id="areaZoneSelect" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
-        <option value="">Select Zone</option>
+        <option value="">সিলেক্ট করুন জোন</option>
     </select>
 </div>
-<label class="text-sm font-medium mb-2 block">Area Name *</label>
+<label class="text-sm font-medium mb-2 block">এরিয়া নাম *</label>
             <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">সেভ করুন এরিয়া</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">বাতিল</button>
           </div>
         </form>
@@ -2464,12 +2470,12 @@ service cloud.firestore {
       try {
         if (id) {
           await updateDoc(doc(db, 'areas', id), data);
-          await logActivity('Update Area', `Updated area: ${data.name}`);
+          await logActivity('Update এরিয়া', `Updated area: ${data.name}`);
         } else {
           await addDoc(collection(db, 'areas'), { ...data, createdAt: serverTimestamp() });
-          await logActivity('Add Area', `Added area: ${data.name}`);
+          await logActivity('অ্যাড করুন এরিয়া', `Added area: ${data.name}`);
         }
-        showToast('Area saved', 'success');
+        showToast('এরিয়া saved', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -2478,11 +2484,11 @@ service cloud.firestore {
   };
 
   window.deleteArea = async (id) => {
-    if (!confirm('Delete this area?')) return;
+    if (!confirm('ডিলিট this area?')) return;
     try {
       await deleteDoc(doc(db, 'areas', id));
-      await logActivity('Delete Area', 'Deleted area');
-      showToast('Area deleted', 'success');
+      await logActivity('ডিলিট এরিয়া', 'Deleted area');
+      showToast('এরিয়া deleted', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -2492,13 +2498,13 @@ service cloud.firestore {
     const zone = id ? appState.zones.find(z => z.id === id) : null;
     showModal(`
       <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Zone</h3>
+        <h3 class="text-xl font-bold mb-6">${id ? 'এডিট' : 'অ্যাড করুন'} জোন</h3>
         <form id="zone-form">
           <div>
-            <label class="text-sm font-medium mb-2 block">Zone Name *</label>
+            <label class="text-sm font-medium mb-2 block">জোন নাম *</label>
             <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">সেভ করুন জোন</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">বাতিল</button>
           </div>
         </form>
@@ -2512,12 +2518,12 @@ service cloud.firestore {
       try {
         if (id) {
           await updateDoc(doc(db, 'zones', id), data);
-          await logActivity('Update Zone', `Updated zone: ${data.name}`);
+          await logActivity('Update জোন', `Updated zone: ${data.name}`);
         } else {
           await addDoc(collection(db, 'zones'), { ...data, createdAt: serverTimestamp() });
-          await logActivity('Add Zone', `Added zone: ${data.name}`);
+          await logActivity('অ্যাড করুন জোন', `Added zone: ${data.name}`);
         }
-        showToast('Zone saved', 'success');
+        showToast('জোন saved', 'success');
         closeModal();
       } catch (err) {
         showToast(err.message, 'error');
@@ -2526,11 +2532,11 @@ service cloud.firestore {
   };
 
   window.deleteZone = async (id) => {
-    if (!confirm('Delete this zone?')) return;
+    if (!confirm('ডিলিট this zone?')) return;
     try {
       await deleteDoc(doc(db, 'zones', id));
-      await logActivity('Delete Zone', 'Deleted zone');
-      showToast('Zone deleted', 'success');
+      await logActivity('ডিলিট জোন', 'Deleted zone');
+      showToast('জোন deleted', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -2572,7 +2578,7 @@ service cloud.firestore {
       <div class="glass rounded-2xl border border-[rgb(var(--border))] h-[calc(100vh-200px)] flex flex-col fade-in">
         <div class="p-4 border-b border-[rgb(var(--border))]">
           <h3 class="font-bold">Support Chat</h3>
-          <p class="text-xs text-slate-500">Chat with ${currentRole === 'customer' ? 'Staff & Admin' : 'Customer'}</p>
+          <p class="text-xs text-slate-500">Chat with ${currentRole === 'customer' ? 'স্টাফ & অ্যাডমিন' : 'কাস্টমার'}</p>
         </div>
         <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
           <div class="text-center text-slate-500 text-sm py-8">Start a conversation</div>
@@ -2607,10 +2613,10 @@ service cloud.firestore {
             All (${pendingUsers.length})
           </button>
           <button data-tab="staff" class="approval-tab px-4 py-2 font-medium text-sm border-b-2 ${activeTab === 'staff' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500'}" type="button">
-            Staff Accounts (${pendingStaff.length})
+            স্টাফ Accounts (${pendingStaff.length})
           </button>
           <button data-tab="customer" class="approval-tab px-4 py-2 font-medium text-sm border-b-2 ${activeTab === 'customer' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500'}" type="button">
-            Customers (${pendingCustomers.length})
+            কাস্টমারগণ (${pendingCustomers.length})
           </button>
         </div>
 
@@ -2725,7 +2731,7 @@ service cloud.firestore {
                 <i data-lucide="arrow-down-circle" class="w-6 h-6 text-emerald-600"></i>
               </div>
               <div>
-                <h3 class="font-bold">Deposit to Admin</h3>
+                <h3 class="font-bold">Deposit to অ্যাডমিন</h3>
                 <p class="text-sm text-slate-500">Pending: ${formatCurrency(pendingDeposit)}</p>
               </div>
             </div>
@@ -2780,9 +2786,9 @@ service cloud.firestore {
   window.showDepositForm = () => {
     showModal(`
       <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
+        <h3 class="text-xl font-bold mb-6">Deposit to অ্যাডমিন</h3>
         <form id="deposit-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">টাকা *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">সিলেক্ট করুন Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">বাতিল</button>
           </div>
@@ -2804,7 +2810,7 @@ service cloud.firestore {
           date: serverTimestamp(),
           status: 'pending'
         });
-        await logActivity('Staff Deposit', `Deposit request: ${formatCurrency(data.amount)} via ${data.method}`);
+        await logActivity('স্টাফ Deposit', `Deposit request: ${formatCurrency(data.amount)} via ${data.method}`);
         showToast('Deposit request submitted', 'success');
         closeModal();
       } catch (err) {
@@ -2818,7 +2824,7 @@ service cloud.firestore {
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Request Salary</h3>
         <form id="salary-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">টাকা *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">বাতিল</button>
           </div>
@@ -2876,7 +2882,7 @@ service cloud.firestore {
             <table class="w-full">
               <thead class="bg-[rgb(var(--border))] text-sm">
                 <tr>
-                  <th class="text-left p-4 font-semibold">Staff Name</th>
+                  <th class="text-left p-4 font-semibold">স্টাফ নাম</th>
                   <th class="text-left p-4 font-semibold">Collected</th>
                   <th class="text-left p-4 font-semibold">Deposited</th>
                   <th class="text-left p-4 font-semibold">Salary Paid</th>
@@ -2932,7 +2938,7 @@ service cloud.firestore {
     
     showModal(`
       <div class="modal-content p-6">
-        <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'} <span class="badge ${staff.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : staff.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">${staff.status || 'approved'}</span></h3>
+        <h3 class="text-xl font-bold mb-6">স্টাফ Account: ${staff?.name || '-'} <span class="badge ${staff.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : staff.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">${staff.status || 'approved'}</span></h3>
         
         <div class="mb-6">
           <h4 class="font-bold mb-3">Deposits</h4>
@@ -2997,7 +3003,7 @@ service cloud.firestore {
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
         <form id="pay-salary-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">সিলেক্ট করুন Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
             <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">বাতিল</button>
           </div>
@@ -3044,31 +3050,31 @@ service cloud.firestore {
     container.innerHTML = `
       <div class="max-w-4xl mx-auto space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="text-xl font-bold mb-6">ইনভয়েস তৈরি</h3>
+          <h3 class="text-xl font-bold mb-6">Generate ইনভয়েস</h3>
           <form id="invoice-form" class="space-y-4">
             <div class="grid md:grid-cols-2 gap-4">
               <div>
-                <label class="text-sm font-medium mb-2 block">Select Customer *</label>
+                <label class="text-sm font-medium mb-2 block">সিলেক্ট করুন কাস্টমার *</label>
                 <select id="invoiceCustomer" name="customerId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
                   <option value="">Choose customer</option>
                   ${customerOptions}
                 </select>
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block">Package *</label>
+                <label class="text-sm font-medium mb-2 block">প্যাকেজ *</label>
                 <select id="invoicePackage" name="packageId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">Select package</option>
+                  <option value="">সিলেক্ট করুন package</option>
                   ${packageOptions}
                 </select>
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block">Amount *</label>
+                <label class="text-sm font-medium mb-2 block">টাকা *</label>
                 <input type="number" id="invoiceAmount" name="amount" required readonly class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Payment Method *</label>
                 <select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">Select method</option>
+                  <option value="">সিলেক্ট করুন method</option>
                   <option value="Cash">Cash</option>
                   <option value="bKash">bKash</option>
                   <option value="Nagad">Nagad</option>
@@ -3076,7 +3082,7 @@ service cloud.firestore {
                 </select>
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block">Status *</label>
+                <label class="text-sm font-medium mb-2 block">স্ট্যাটাস *</label>
                 <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
                   <option value="paid">Paid</option>
                   <option value="unpaid">Unpaid</option>
@@ -3092,7 +3098,7 @@ service cloud.firestore {
               <textarea name="notes" rows="3" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea>
             </div>
             <div class="flex gap-3">
-              <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
+              <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create ইনভয়েস</button>
               <button type="button" onclick="previewInvoice()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
             </div>
           </form>
@@ -3132,7 +3138,7 @@ service cloud.firestore {
       const pkg = appState.packages.find(p => p.id === data.packageId);
       
       const invoiceData = {
-        invoiceId: 'INV-' + Date.now(),
+        invoiceId: 'INV-' + তারিখ.now(),
         customerId: data.customerId,
         customerName: customer?.name || '',
         customerMobile: customer?.mobile || '',
@@ -3148,11 +3154,11 @@ service cloud.firestore {
       };
       
       await addDoc(collection(db, 'bills'), invoiceData);
-      await logActivity('Invoice Created', `Invoice for ${customer?.name}: ${formatCurrency(data.amount)}`);
-      showToast('Invoice created successfully', 'success');
+      await logActivity('ইনভয়েস Created', `ইনভয়েস for ${customer?.name}: ${formatCurrency(data.amount)}`);
+      showToast('ইনভয়েস created successfully', 'success');
       e.target.reset();
     } catch (err) {
-      console.error('Invoice error:', err);
+      console.error('ইনভয়েস error:', err);
       showToast(err.message, 'error');
     }
   };
@@ -3167,15 +3173,15 @@ service cloud.firestore {
 
   const showInvoicePreview = (bill) => {
     const customer = bill.customer || appState.users.find(u => u.id === bill.customerId);
-    if (!customer) return showToast('Customer not found', 'error');
+    if (!customer) return showToast('কাস্টমার not found', 'error');
     
     const preview = `
       <div class="glass rounded-2xl p-6 border-[rgb(var(--border))]">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="font-bold text-lg">Invoice Preview</h3>
+          <h3 class="font-bold text-lg">ইনভয়েস Preview</h3>
           <div class="flex gap-2 no-print">
-            <button onclick="printInvoice('a4')" class="px-4 py-2 rounded-xl bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">Print A4</button>
-            <button onclick="printInvoice('thermal')" class="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-600 text-sm font-semibold" type="button">Print 58mm</button>
+            <button onclick="printInvoice('a4')" class="px-4 py-2 rounded-xl bg-sky-500/20 text-sky-600 text-sm font-semibold" type="button">প্রিন্ট A4</button>
+            <button onclick="printInvoice('thermal')" class="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-600 text-sm font-semibold" type="button">প্রিন্ট 58mm</button>
             <button onclick="sendInvoiceWhatsApp('${customer.whatsapp}','${bill.invoiceNo}')" class="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 text-sm font-semibold" type="button">WhatsApp</button>
           </div>
         </div>
@@ -3189,11 +3195,11 @@ service cloud.firestore {
           </div>
           <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
             <div>
-              <p><strong>Invoice No:</strong> ${bill.invoiceNo}</p>
-              <p><strong>Date:</strong> ${formatDate(bill.createdAt || new Date())}</p>
+              <p><strong>ইনভয়েস No:</strong> ${bill.invoiceNo}</p>
+              <p><strong>তারিখ:</strong> ${formatDate(bill.createdAt || new তারিখ())}</p>
             </div>
             <div class="text-right">
-              <p><strong>Customer:</strong> ${customer.name || '-'}</p>
+              <p><strong>কাস্টমার:</strong> ${customer.name || '-'}</p>
               <p><strong>Mobile:</strong> ${customer.mobile || '-'}</p>
             </div>
           <table class="w-full border border-black mb-4 text-sm">
@@ -3207,7 +3213,7 @@ service cloud.firestore {
           </table>
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div><p><strong>Payment Method:</strong> ${bill.paymentMethod || '-'}</p><p><strong>TrxID:</strong> ${bill.trxId || '-'}</p></div>
-            <div class="text-right"><p><strong>Status:</strong> ${bill.status?.toUpperCase() || '-'}</p></div>
+            <div class="text-right"><p><strong>স্ট্যাটাস:</strong> ${bill.status?.toUpperCase() || '-'}</p></div>
           </div>
           <div class="text-center mt-8 text-xs">Thank you for your business!</div>
         </div>
@@ -3221,17 +3227,17 @@ service cloud.firestore {
             <div class="border-t border-dashed my-1"></div>
           </div>
           <div class="text-[11px] space-y-0.5">
-            <div class="flex justify-between"><span>Invoice:</span><span>${bill.invoiceNo}</span></div>
-            <div class="flex justify-between"><span>Date:</span><span>${formatDate(bill.createdAt || new Date())}</span></div>
-            <div class="flex justify-between"><span>Name:</span><span>${(customer.name || '-').substring(0,15)}</span></div>
+            <div class="flex justify-between"><span>ইনভয়েস:</span><span>${bill.invoiceNo}</span></div>
+            <div class="flex justify-between"><span>তারিখ:</span><span>${formatDate(bill.createdAt || new তারিখ())}</span></div>
+            <div class="flex justify-between"><span>নাম:</span><span>${(customer.name || '-').substring(0,15)}</span></div>
             <div class="flex justify-between"><span>Mobile:</span><span>${customer.mobile || '-'}</span></div>
             <div class="flex justify-between"><span>PPPoE:</span><span>${customer.pppoeUser || '-'}</span></div>
             <div class="border-t border-dashed my-1"></div>
-            <div class="flex justify-between"><span>Package:</span><span>${customer.packageName || '-'}</span></div>
-            <div class="flex justify-between font-bold"><span>Amount:</span><span>${formatCurrency(bill.amount)}</span></div>
+            <div class="flex justify-between"><span>প্যাকেজ:</span><span>${customer.packageName || '-'}</span></div>
+            <div class="flex justify-between font-bold"><span>টাকা:</span><span>${formatCurrency(bill.amount)}</span></div>
             <div class="flex justify-between"><span>Method:</span><span>${bill.paymentMethod || '-'}</span></div>
             <div class="flex justify-between"><span>TrxID:</span><span>${bill.trxId || '-'}</span></div>
-            <div class="flex justify-between"><span>Status:</span><span>${bill.status?.toUpperCase() || '-'}</span></div>
+            <div class="flex justify-between"><span>স্ট্যাটাস:</span><span>${bill.status?.toUpperCase() || '-'}</span></div>
             <div class="border-t border-dashed my-1"></div>
           </div>
           <div class="text-center text-[10px] mt-2">ধন্যবাদ | Thank You</div>
@@ -3239,7 +3245,7 @@ service cloud.firestore {
 
         <div class="text-center py-8 text-slate-500 no-print">
           <i data-lucide="file-check" class="w-12 h-12 mx-auto mb-2 text-emerald-600"></i>
-          <p>Invoice ready. Use buttons above to print or send.</p>
+          <p>ইনভয়েস ready. Use buttons above to print or send.</p>
         </div>
       </div>
     `;
@@ -3288,25 +3294,25 @@ service cloud.firestore {
   const updateCommandPalette = () => {
     const commands = {
       admin: [
-        { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
-        { label: 'Add Customer', action: () => showCustomerForm(), icon: 'user-plus' },
-        { label: 'Add Staff', action: () => showStaffForm(), icon: 'user-cog' },
-        { label: 'Create Invoice', action: () => showView('invoice'), icon: 'file-text' },
+        { label: 'ড্যাশবোর্ড', action: () => showView('dashboard'), icon: 'layout-dashboard' },
+        { label: 'অ্যাড করুন কাস্টমার', action: () => showCustomerForm(), icon: 'user-plus' },
+        { label: 'অ্যাড করুন স্টাফ', action: () => showStaffForm(), icon: 'user-cog' },
+        { label: 'Create ইনভয়েস', action: () => showView('invoice'), icon: 'file-text' },
         { label: 'View Reports', action: () => showView('reports'), icon: 'bar-chart-3' },
-        { label: 'Staff Accounts', action: () => showView('staffaccounts'), icon: 'wallet' },
+        { label: 'স্টাফ Accounts', action: () => showView('staffaccounts'), icon: 'wallet' },
         { label: 'Approvals', action: () => showView('approvals'), icon: 'check-circle' },
         { label: 'Settings', action: () => showView('settings'), icon: 'settings' }
       ],
       staff: [
-        { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
-        { label: 'My Customers', action: () => showView('mycustomers'), icon: 'users' },
-        { label: 'Add Customer', action: () => showCustomerForm(), icon: 'user-plus' },
-        { label: 'Create Invoice', action: () => showView('invoice'), icon: 'file-text' },
+        { label: 'ড্যাশবোর্ড', action: () => showView('dashboard'), icon: 'layout-dashboard' },
+        { label: 'My কাস্টমারগণ', action: () => showView('mycustomers'), icon: 'users' },
+        { label: 'অ্যাড করুন কাস্টমার', action: () => showCustomerForm(), icon: 'user-plus' },
+        { label: 'Create ইনভয়েস', action: () => showView('invoice'), icon: 'file-text' },
         { label: 'My Wallet', action: () => showView('mywallet'), icon: 'wallet' },
         { label: 'View Bills', action: () => showView('bills'), icon: 'receipt' }
       ],
       customer: [
-        { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
+        { label: 'ড্যাশবোর্ড', action: () => showView('dashboard'), icon: 'layout-dashboard' },
         { label: 'My Bills', action: () => showView('mybills'), icon: 'receipt' },
         { label: 'Submit Complaint', action: () => handleComplaintSubmit(), icon: 'message-circle-warning' },
         { label: 'Chat Support', action: () => showView('chat'), icon: 'messages-square' }
@@ -3378,14 +3384,14 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     });
     
-    // 2. Zone -> Area Cascade for Add Customer
+    // 2. জোন -> এরিয়া Cascade for অ্যাড করুন কাস্টমার
     const customerZone = document.getElementById('customerZoneSelect');
     const customerArea = document.getElementById('customerAreaSelect');
     
     if (customerZone && customerArea) {
         customerZone.addEventListener('change', function() {
             const zone = this.value;
-            customerArea.innerHTML = '<option value="">Select Area</option>';
+            customerArea.innerHTML = '<option value="">সিলেক্ট করুন এরিয়া</option>';
             
             if (zone && ZONE_AREAS[zone]) {
                 customerArea.disabled = false;
@@ -3401,7 +3407,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
         });
     }
     
-    // 3. Invoice Generator - Auto-fill Package
+    // 3. ইনভয়েস Generator - Auto-fill প্যাকেজ
     const invoiceCustomer = document.getElementById('invoiceCustomer') || document.querySelector('select[name="customer"]');
     const invoicePackage = document.getElementById('invoicePackageField');
     const invoiceAmount = document.getElementById('invoiceAmount');
@@ -3432,14 +3438,14 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     
                     // Set due date to next month 10th
                     if (invoiceDueDate) {
-                        const nextMonth = new Date();
+                        const nextMonth = new তারিখ();
                         nextMonth.setMonth(nextMonth.getMonth() + 1);
                         nextMonth.setDate(10);
                         invoiceDueDate.value = nextMonth.toISOString().split('T')[0];
                     }
                 }
             } catch (err) {
-                console.error('Invoice auto-fill error:', err);
+                console.error('ইনভয়েস auto-fill error:', err);
             }
         });
     }
@@ -3452,7 +3458,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
     const billsFilterMonth = document.getElementById('billsFilterMonth');
     const billsPrintBtn = document.getElementById('billsPrintMonthly');
     
-    // Zone -> Area cascade for bills filter
+    // জোন -> এরিয়া cascade for bills filter
     if (billsFilterZone && billsFilterArea) {
         billsFilterZone.addEventListener('change', function() {
             const zone = this.value;
@@ -3491,7 +3497,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
     });
     billsFilterCustomer?.addEventListener('input', debounce(loadFilteredBills, 500));
     
-    // Monthly Print
+    // মাসিক প্রিন্ট
     if (billsPrintBtn) {
         billsPrintBtn.addEventListener('click', function() {
             const month = billsFilterMonth?.value;
@@ -3504,7 +3510,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             const billsTable = document.querySelector('#billsTable')?.outerHTML || '';
             printWindow.document.write(`
                 <html>
-                <head><title>Monthly Bills - ${month}</title>
+                <head><title>মাসিক Bills - ${month}</title>
                 <style>
                     body { font-family: Arial; padding: 20px; }
                     table { width: 100%; border-collapse: collapse; }
@@ -3514,83 +3520,45 @@ firebase.auth().onAuthStateChanged(async (user) => {
                 </style>
                 </head>
                 <body>
-                    <h1>Monthly Bills Report - ${month}</h1>
+                    <h1>মাসিক Bills Report - ${month}</h1>
                     ${billsTable}
                 <script>
-
-// Fixed: Area-Zone dropdown relationship
-function populateZonesByArea(areaId) {
-    const zoneSelect = document.getElementById('zone') || document.getElementById('zoneSelect') || document.querySelector('[name="zone"]');
-    if (!zoneSelect) return;
-    zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
-    if (!areaId) return;
-    const filteredZones = appData.zones.filter(z => z.areaId == areaId);
-    filteredZones.forEach(z => {
-        zoneSelect.innerHTML += `<option value="${z.id}">${z.name}</option>`;
-    });
-}
-
-// Hook to area select
-document.addEventListener('change', function(e) {
-    if (e.target.id === 'area' || e.target.id === 'areaSelect' || e.target.name === 'area') {
-        populateZonesByArea(e.target.value);
-    }
-});
-
-
-// Fixed: Auto-fill package on customer select in Generate Invoice
-document.addEventListener('change', function(e) {
-    if ((e.target.id === 'customer' || e.target.id === 'customerSelect' || e.target.name === 'customer') && e.target.closest('#generateInvoice, .generate-invoice, [data-page="generate-invoice"]')) {
-        const customerId = e.target.value;
-        const customer = appData.customers.find(c => c.id == customerId);
-        if (customer && customer.packageId) {
-            const pkg = appData.packages.find(p => p.id == customer.packageId);
-            if (pkg) {
-                const packageInput = document.getElementById('package') || document.getElementById('packageName') || document.querySelector('[name="package"]');
-                const priceInput = document.getElementById('price') || document.getElementById('amount') || document.querySelector('[name="price"]');
-                if (packageInput) packageInput.value = pkg.name;
-                if (priceInput) priceInput.value = pkg.price;
-            }
-        }
-    }
-});
-
-
-// Remove staff-wise bill filter from staff panel
+// Fix: এরিয়া to জোন dropdown dependency
 document.addEventListener('DOMContentLoaded', function() {
-    if (currentUser && currentUser.role === 'staff') {
-        const staffFilter = document.getElementById('staffFilter') || document.querySelector('[name="staff"]') || document.querySelector('select[id*="staff"]');
-        if (staffFilter && staffFilter.closest('.bill-page, #billPage, [data-page="bill"]')) {
-            staffFilter.parentElement.style.display = 'none';
-        }
-    }
-});
-
-
-// Customer Panel: Remove filters, fix month picker
-document.addEventListener('DOMContentLoaded', function() {
-    if (currentUser && currentUser.role === 'customer') {
-        // Hide area/zone/staff/customer filters
-        ['area','zone','staff','customer'].forEach(f => {
-            const el = document.getElementById(f+'Filter') || document.querySelector(`[name="${f}"]`) || document.querySelector(`select[id*="${f}"]`);
-            if (el && el.closest('.bill-page, #billPage, [data-page="bill"]')) {
-                el.parentElement.style.display = 'none';
+    const areaSelects = document.querySelectorAll('select[name="area"], #areaSelect');
+    areaSelects.forEach(areaSelect => {
+        areaSelect.addEventListener('change', function() {
+            const areaId = this.value;
+            const zoneSelect = document.querySelector('select[name="zone"], #zoneSelect');
+            if (zoneSelect && areaId) {
+                // Assume zones data is available in window.zonesData or fetch via API
+                const filteredZones = window.allZones ? window.allZones.filter(z => z.area_id == areaId) : [];
+                zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
+                filteredZones.forEach(zone => {
+                    zoneSelect.innerHTML += `<option value="${zone.id}">${zone.name}</option>`;
+                });
             }
         });
-        // Fix month picker
-        const monthInput = document.querySelector('input[type="month"], input[name="month"], #monthPicker');
-        if (monthInput) {
-            monthInput.type = 'month';
-            if (!monthInput.value) {
-                const now = new Date();
-                monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-            }
-        }
-    }
+    });
 });
-
-</script>
-</body>
+</script><script>
+// Fix: Auto-load customer package in ইনভয়েস
+document.addEventListener('DOMContentLoaded', function() {
+    const customerSelects = document.querySelectorAll('select[name="customer"], #customerSelect, #invoiceCustomer');
+    customerSelects.forEach(custSelect => {
+        custSelect.addEventListener('change', function() {
+            const custId = this.value;
+            const packageField = document.querySelector('#packageField, #invoicePackage, input[name="package"]');
+            if (packageField && custId && window.customersData) {
+                const customer = window.customersData.find(c => c.id == custId);
+                if (customer && customer.package) {
+                    packageField.value = customer.package;
+                }
+            }
+        });
+    });
+});
+</script></body>
                 </html>
             `);
             printWindow.document.close();
@@ -3613,8 +3581,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (staff) query = query.where('staffId', '==', staff);
         
         if (month) {
-            const start = new Date(month + '-01');
-            const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+            const start = new তারিখ(month + '-01');
+            const end = new তারিখ(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
             query = query.where('date', '>=', start).where('date', '<=', end);
         }
         
@@ -3653,78 +3621,40 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-
-// Fixed: Area-Zone dropdown relationship
-function populateZonesByArea(areaId) {
-    const zoneSelect = document.getElementById('zone') || document.getElementById('zoneSelect') || document.querySelector('[name="zone"]');
-    if (!zoneSelect) return;
-    zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
-    if (!areaId) return;
-    const filteredZones = appData.zones.filter(z => z.areaId == areaId);
-    filteredZones.forEach(z => {
-        zoneSelect.innerHTML += `<option value="${z.id}">${z.name}</option>`;
-    });
-}
-
-// Hook to area select
-document.addEventListener('change', function(e) {
-    if (e.target.id === 'area' || e.target.id === 'areaSelect' || e.target.name === 'area') {
-        populateZonesByArea(e.target.value);
-    }
-});
-
-
-// Fixed: Auto-fill package on customer select in Generate Invoice
-document.addEventListener('change', function(e) {
-    if ((e.target.id === 'customer' || e.target.id === 'customerSelect' || e.target.name === 'customer') && e.target.closest('#generateInvoice, .generate-invoice, [data-page="generate-invoice"]')) {
-        const customerId = e.target.value;
-        const customer = appData.customers.find(c => c.id == customerId);
-        if (customer && customer.packageId) {
-            const pkg = appData.packages.find(p => p.id == customer.packageId);
-            if (pkg) {
-                const packageInput = document.getElementById('package') || document.getElementById('packageName') || document.querySelector('[name="package"]');
-                const priceInput = document.getElementById('price') || document.getElementById('amount') || document.querySelector('[name="price"]');
-                if (packageInput) packageInput.value = pkg.name;
-                if (priceInput) priceInput.value = pkg.price;
-            }
-        }
-    }
-});
-
-
-// Remove staff-wise bill filter from staff panel
+// Fix: এরিয়া to জোন dropdown dependency
 document.addEventListener('DOMContentLoaded', function() {
-    if (currentUser && currentUser.role === 'staff') {
-        const staffFilter = document.getElementById('staffFilter') || document.querySelector('[name="staff"]') || document.querySelector('select[id*="staff"]');
-        if (staffFilter && staffFilter.closest('.bill-page, #billPage, [data-page="bill"]')) {
-            staffFilter.parentElement.style.display = 'none';
-        }
-    }
-});
-
-
-// Customer Panel: Remove filters, fix month picker
-document.addEventListener('DOMContentLoaded', function() {
-    if (currentUser && currentUser.role === 'customer') {
-        // Hide area/zone/staff/customer filters
-        ['area','zone','staff','customer'].forEach(f => {
-            const el = document.getElementById(f+'Filter') || document.querySelector(`[name="${f}"]`) || document.querySelector(`select[id*="${f}"]`);
-            if (el && el.closest('.bill-page, #billPage, [data-page="bill"]')) {
-                el.parentElement.style.display = 'none';
+    const areaSelects = document.querySelectorAll('select[name="area"], #areaSelect');
+    areaSelects.forEach(areaSelect => {
+        areaSelect.addEventListener('change', function() {
+            const areaId = this.value;
+            const zoneSelect = document.querySelector('select[name="zone"], #zoneSelect');
+            if (zoneSelect && areaId) {
+                // Assume zones data is available in window.zonesData or fetch via API
+                const filteredZones = window.allZones ? window.allZones.filter(z => z.area_id == areaId) : [];
+                zoneSelect.innerHTML = '<option value="">জোন সিলেক্ট করুন</option>';
+                filteredZones.forEach(zone => {
+                    zoneSelect.innerHTML += `<option value="${zone.id}">${zone.name}</option>`;
+                });
             }
         });
-        // Fix month picker
-        const monthInput = document.querySelector('input[type="month"], input[name="month"], #monthPicker');
-        if (monthInput) {
-            monthInput.type = 'month';
-            if (!monthInput.value) {
-                const now = new Date();
-                monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-            }
-        }
-    }
+    });
 });
-
-</script>
-</body>
+</script><script>
+// Fix: Auto-load customer package in ইনভয়েস
+document.addEventListener('DOMContentLoaded', function() {
+    const customerSelects = document.querySelectorAll('select[name="customer"], #customerSelect, #invoiceCustomer');
+    customerSelects.forEach(custSelect => {
+        custSelect.addEventListener('change', function() {
+            const custId = this.value;
+            const packageField = document.querySelector('#packageField, #invoicePackage, input[name="package"]');
+            if (packageField && custId && window.customersData) {
+                const customer = window.customersData.find(c => c.id == custId);
+                if (customer && customer.package) {
+                    packageField.value = customer.package;
+                }
+            }
+        });
+    });
+});
+</script></body>
 </html>
