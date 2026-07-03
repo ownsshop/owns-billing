@@ -647,9 +647,20 @@
       if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }, 'bills'));
 
-    let complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
-    if (currentRole === 'staff') complaintsQuery = query(complaintsQuery, where('assignedStaffId', '==', currentUser.uid));
-    if (currentRole === 'customer') complaintsQuery = query(complaintsQuery, where('customerId', '==', currentUser.uid));
+    let complaintsQuery;
+    if (currentRole === 'staff') {
+      complaintsQuery = query(collection(db, 'complaints'), 
+        where('assignedStaffId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+    } else if (currentRole === 'customer') {
+      complaintsQuery = query(collection(db, 'complaints'), 
+        where('customerId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+    } else {
+      complaintsQuery = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
+    }
     
     appState.unsubscribers.push(safeOnSnapshot(complaintsQuery, (snap) => {
       appState.complaints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -2016,7 +2027,7 @@
 
         // v2.2.4 FIX: Flexible customer data extraction
         // Works with both: users doc only OR users + customers collection
-        const customerId = currentUserData.customerId || currentUser.uid;
+        const customerId = currentUser.uid;
         const customerName = currentUserData.name || currentUser.email || 'Unknown Customer';
         const customerMobile = currentUserData.mobile || currentUserData.whatsapp || '';
         const assignedStaffId = currentUserData.assignedStaffId || currentUserData.assignedStaff || null;
@@ -2042,7 +2053,7 @@
         
         showToast('Complaint submitted successfully', 'success');
         closeModal();
-        setTimeout(() => renderComplaints(), 500);
+        // onSnapshot will auto-update, no manual render needed
         
       } catch (error) {
         console.error('[Complaint Submit v2.2.4] Error details:', error);
@@ -2355,10 +2366,8 @@ service cloud.firestore {
     });
   };
 
-window.showAreaForm = async (id = null) => {
+  window.showAreaForm = async (id = null) => {
     const area = id ? appState.areas?.find(a => a.id === id) : null;
-    
-    // Load zones fresh to avoid timing issues
     const zonesSnap = await getDocs(collection(db, 'zones'));
     const zones = zonesSnap.docs.map(d => ({id: d.id,...d.data()}));
     const zoneOptions = zones.map(z => 
@@ -2407,7 +2416,6 @@ window.showAreaForm = async (id = null) => {
         }
     });
 };
-
 
   window.deleteArea = async (id) => {
     if (!confirm('Delete this area?')) return;
