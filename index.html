@@ -1953,11 +1953,15 @@
     const list = currentRole === 'customer' 
       ? appState.complaints.filter(c => c.customerId === currentUser.uid)
       : currentRole === 'staff'
-      ? appState.complaints.filter(c => c.assignedStaffId === currentUser.uid || c.assignedStaffId === null)
+      ? appState.complaints.filter(c => c.assignedStaffId === currentUser.uid)
       : appState.complaints;
 
     const container = document.getElementById('view-complaints');
     if (!container) return;
+    
+    const staffOptions = appState.users.filter(u => u.role === 'staff' && u.status === 'approved').map(s => 
+      `<option value="${s.id}">${s.name}</option>`
+    ).join('');
 
     container.innerHTML = `
       <div class="space-y-4 fade-in">
@@ -1974,15 +1978,35 @@
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
                     <h4 class="font-bold">${c.subject || '-'}</h4>
-                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status || 'pending'}</span>
+                    <span class="px-2 py-1 rounded-lg text-xs font-semibold ${
+                      c.status === 'pending_admin' ? 'bg-yellow-500/20 text-yellow-600' : 
+                      c.status === 'assigned_staff' ? 'bg-blue-500/20 text-blue-600' : 
+                      c.status === 'replied_staff' ? 'bg-purple-500/20 text-purple-600' : 
+                      'bg-emerald-500/20 text-emerald-600'
+                    }">${c.status.replace(/_/g, ' ').toUpperCase()}</span>
                   </div>
-                  <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
+                  <p class="text-sm text-slate-400 mb-1">By: ${c.customerName} - ${c.customerMobile}</p>
+                  <p class="text-sm mb-2">${c.description}</p>
+                  ${c.assignedStaffId ? `<p class="text-xs text-blue-400">Assigned to: ${appState.users.find(u=>u.id===c.assignedStaffId)?.name||'Staff'}</p>` : ''}
+                  ${c.staffReply ? `<div class="mt-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30"><p class="text-xs font-semibold text-purple-400 mb-1">Staff Reply:</p><p class="text-sm">${c.staffReply}</p></div>` : ''}
+                  ${c.adminNotes ? `<div class="mt-2 p-3 rounded-lg bg-slate-500/10"><p class="text-xs font-semibold mb-1">Admin Notes:</p><p class="text-sm">${c.adminNotes}</p></div>` : ''}
                 </div>
               </div>
-              <div class="flex items-center justify-between text-xs text-slate-500">
-                <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
-                ${currentRole !== 'customer' && c.status !== 'resolved' ? `
-                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">Mark Resolved</button>
+              <div class="flex gap-2 flex-wrap">
+                ${currentRole === 'admin' && c.status === 'pending_admin' ? `
+                <select onchange="forwardComplaintToStaff('${c.id}', this.value)" class="px-3 py-1 rounded-lg bg-blue-500/20 text-blue-600 text-sm">
+                  <option value="">Forward to Staff...</option>
+                  ${staffOptions}
+                </select>
+                ` : ''}
+                ${currentRole === 'staff' && c.status === 'assigned_staff' && c.assignedStaffId === currentUser.uid ? `
+                <button onclick="replyToComplaint('${c.id}')" class="px-3 py-1 rounded-lg bg-purple-500/20 text-purple-600 font-semibold text-sm" type="button">Reply</button>
+                ` : ''}
+                ${currentRole === 'admin' && c.status === 'replied_staff' ? `
+                <button onclick="resolveComplaint('${c.id}')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold text-sm" type="button">Mark Resolved</button>
+                ` : ''}
+                ${currentRole === 'admin' && c.status !== 'resolved' ? `
+                <button onclick="addAdminNote('${c.id}')" class="px-3 py-1 rounded-lg bg-slate-500/20 text-slate-600 font-semibold text-sm" type="button">Add Note</button>
                 ` : ''}
               </div>
             </div>
@@ -1999,7 +2023,9 @@
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
         <form id="complaint-form" class="space-y-4">
-          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
+          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
+          <div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
+          <div class="flex gap-3 mt-6">
             <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
@@ -2018,55 +2044,49 @@
       const data = Object.fromEntries(formData);
       
       try {
-        console.log('[Complaint Submit v2.2.4] Starting submission');
-        console.log('[Complaint Submit] Current user data:', currentUserData);
+        console.log('[Complaint Submit] Starting submission');
         
         if (!currentUser || !currentUserData || currentUserData.role !== 'customer') {
           throw new Error('Only customers can submit complaints');
         }
-
-        // v2.2.4 FIX: Flexible customer data extraction
-        // Works with both: users doc only OR users + customers collection
-        const customerId = currentUser.uid;
-        const customerName = currentUserData.name || currentUser.email || 'Unknown Customer';
-        const customerMobile = currentUserData.mobile || currentUserData.whatsapp || '';
-        const assignedStaffId = currentUserData.assignedStaffId || currentUserData.assignedStaff || null;
+        
+        if (currentUserData.status !== 'approved') {
+          throw new Error('Your account is not approved yet. Contact admin.');
+        }
 
         const complaintData = {
           subject: data.subject.trim(),
           description: data.description.trim(),
-          customerId: customerId,
-          customerName: customerName,
-          customerMobile: customerMobile,
-          assignedStaffId: assignedStaffId,
-          status: 'pending',
+          customerId: currentUser.uid,
+          customerName: currentUserData.name || currentUser.email,
+          customerMobile: currentUserData.mobile || '',
+          customerEmail: currentUser.email,
+          assignedStaffId: null,
+          status: 'pending_admin',
+          staffReply: '',
+          adminNotes: '',
           createdAt: serverTimestamp(),
-          createdBy: currentUser.uid
+          createdBy: currentUser.uid,
+          updatedAt: serverTimestamp()
         };
 
-        console.log('[Complaint Submit v2.2.4] Final complaint data:', complaintData);
+        console.log('[Complaint Submit] Final complaint data:', complaintData);
         
         const docRef = await addDoc(collection(db, 'complaints'), complaintData);
         console.log('[Complaint Submit] Success! Doc ID:', docRef.id);
         
         await logActivity('Complaint', `New complaint: ${data.subject}`);
-        
         showToast('Complaint submitted successfully', 'success');
         closeModal();
-        // onSnapshot will auto-update, no manual render needed
         
       } catch (error) {
-        console.error('[Complaint Submit v2.2.4] Error details:', error);
-        console.error('[Complaint Submit] Error code:', error.code);
-        console.error('[Complaint Submit] Error message:', error.message);
-        
+        console.error('[Complaint Submit] Error:', error);
         let errorMsg = 'Failed to submit complaint';
         if (error.code === 'permission-denied') {
-          errorMsg = 'Permission denied. Please check your account status or contact admin.';
+          errorMsg = 'Permission denied. Make sure your account is approved.';
         } else if (error.message) {
           errorMsg = error.message;
         }
-        
         showToast(errorMsg, 'error');
       } finally {
         submitBtn.classList.remove('btn-loading');
@@ -2084,6 +2104,100 @@
     } catch (err) {
       showToast(err.message, 'error');
     }
+  };
+
+  
+  window.forwardComplaintToStaff = async (complaintId, staffId) => {
+    if (!staffId) return;
+    try {
+      await updateDoc(doc(db, 'complaints', complaintId), { 
+        assignedStaffId: staffId, 
+        status: 'assigned_staff',
+        updatedAt: serverTimestamp()
+      });
+      await logActivity('Complaint Forward', `Forwarded complaint to staff`);
+      showToast('Complaint forwarded to staff', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  window.replyToComplaint = (complaintId) => {
+    showModal(`
+      <div class="modal-content p-6">
+        <h3 class="text-xl font-bold mb-6">Reply to Complaint</h3>
+        <form id="reply-form">
+          <div><label class="text-sm font-medium mb-2 block">Your Reply *</label>
+          <textarea name="reply" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
+          <div class="flex gap-3 mt-6">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold">Send Reply</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `);
+    
+    $('#reply-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const reply = new FormData(e.target).get('reply');
+      try {
+        await updateDoc(doc(db, 'complaints', complaintId), { 
+          staffReply: reply,
+          status: 'replied_staff',
+          updatedAt: serverTimestamp()
+        });
+        await logActivity('Complaint Reply', `Staff replied to complaint`);
+        showToast('Reply sent to admin', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  };
+
+  window.resolveComplaint = async (complaintId) => {
+    if (!confirm('Mark this complaint as resolved?')) return;
+    try {
+      await updateDoc(doc(db, 'complaints', complaintId), { 
+        status: 'resolved',
+        updatedAt: serverTimestamp()
+      });
+      await logActivity('Complaint Resolved', `Complaint marked resolved`);
+      showToast('Complaint resolved', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  window.addAdminNote = (complaintId) => {
+    showModal(`
+      <div class="modal-content p-6">
+        <h3 class="text-xl font-bold mb-6">Add Admin Note</h3>
+        <form id="note-form">
+          <div><label class="text-sm font-medium mb-2 block">Note</label>
+          <textarea name="note" rows="3" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
+          <div class="flex gap-3 mt-6">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-slate-500 to-slate-600 text-white font-semibold">Save Note</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `);
+    
+    $('#note-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const note = new FormData(e.target).get('note');
+      try {
+        await updateDoc(doc(db, 'complaints', complaintId), { 
+          adminNotes: note,
+          updatedAt: serverTimestamp()
+        });
+        showToast('Note added', 'success');
+        closeModal();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
   };
 
   const renderReports = () => {
@@ -2507,25 +2621,59 @@ service cloud.firestore {
   const renderChat = () => {
     const container = document.getElementById('view-chat');
     if (!container) return;
-
-    container.innerHTML = `
-      <div class="glass rounded-2xl border border-[rgb(var(--border))] h-[calc(100vh-200px)] flex flex-col fade-in">
-        <div class="p-4 border-b border-[rgb(var(--border))]">
-          <h3 class="font-bold">Support Chat</h3>
-          <p class="text-xs text-slate-500">Chat with ${currentRole === 'customer' ? 'Staff & Admin' : 'Customer'}</p>
+    
+    const isCustomer = currentRole === 'customer';
+    const assignedStaff = isCustomer ? appState.users.find(u => u.id === currentUserData.assignedStaff) : null;
+    const adminUsers = appState.users.filter(u => u.role === 'admin');
+    
+    let chatOptions = '';
+    if (isCustomer) {
+      chatOptions = `
+        <div class="mb-4 flex gap-2">
+          <button onclick="selectChatRecipient('admin')" id="chat-admin-btn" class="px-4 py-2 rounded-lg bg-blue-500/20 text-blue-600 font-semibold text-sm">Chat with Admin</button>
+          ${assignedStaff ? `<button onclick="selectChatRecipient('${assignedStaff.id}')" id="chat-staff-btn" class="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold text-sm">Chat with ${assignedStaff.name}</button>` : ''}
         </div>
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
-          <div class="text-center text-slate-500 text-sm py-8">Start a conversation</div>
+      `;
+    }
+    
+    container.innerHTML = `
+      <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
+        <div class="p-4 border-b border-[rgb(var(--border))]">
+          <h3 class="font-bold text-lg">Support Chat</h3>
+          <p class="text-sm text-slate-400">${isCustomer ? 'Chat with Staff & Admin' : 'Customer Support'}</p>
+        </div>
+        ${chatOptions}
+        <div id="chat-messages" class="h-96 overflow-y-auto p-4 space-y-3 bg-[rgb(var(--bg))]">
+          <div class="text-center text-slate-500 py-8">Select a recipient to start conversation</div>
         </div>
         <div class="p-4 border-t border-[rgb(var(--border))]">
-          <form id="chat-form" class="flex gap-2">
-            <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-3 rounded-xl border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-            <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white"><i data-lucide="send" class="w-5 h-5"></i></button>
+          <form id="chat-form" class="flex gap-3">
+            <input type="text" id="chat-input" placeholder="Type a message..." disabled class="flex-1 px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <button type="submit" disabled id="chat-send-btn" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold disabled:opacity-50">
+              <i data-lucide="send" class="w-5 h-5"></i>
+            </button>
           </form>
         </div>
       </div>
     `;
+    
     lucide.createIcons();
+  };
+  
+  window.selectChatRecipient = (recipientType) => {
+    const input = $('#chat-input');
+    const btn = $('#chat-send-btn');
+    input.disabled = false;
+    btn.disabled = false;
+    input.placeholder = recipientType === 'admin' ? 'Message to Admin...' : 'Message to Staff...';
+    $('#chat-admin-btn')?.classList.toggle('bg-blue-500', recipientType === 'admin');
+    $('#chat-staff-btn')?.classList.toggle('bg-emerald-500', recipientType !== 'admin');
+    loadChatMessages(recipientType);
+  };
+  
+  window.loadChatMessages = (recipientType) => {
+    // Load messages from Firebase - simplified version
+    $('#chat-messages').innerHTML = '<div class="text-center text-slate-500 py-8">Chat loaded with ' + recipientType + '</div>';
   };
 
   const renderApprovals = () => {
@@ -3493,4 +3641,4 @@ firebase.auth().onAuthStateChanged(async (user) => {
 </script>
 
 </body>
-</html>
+</html
