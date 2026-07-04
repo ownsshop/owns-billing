@@ -2448,7 +2448,7 @@ service cloud.firestore {
             
 <div class="mb-4">
     <label class="block text-sm font-medium text-gray-300 mb-2">Zone *</label>
-    <select id="areaZoneSelect" class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
+    <select id="areaZoneSelect" name="zone" required class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
         <option value="">Select Zone</option>
     </select>
 </div>
@@ -2462,6 +2462,26 @@ service cloud.firestore {
         </form>
       </div>
     `);
+    
+    // Fix: Populate Zone dropdown with available zones
+    setTimeout(() => {
+      const zoneSelect = document.getElementById('areaZoneSelect');
+      if (zoneSelect && zoneSelect.options.length <= 1) {
+        // Use appState.zones if available, otherwise ZONE_AREAS
+        const zones = (appState.zones && appState.zones.length > 0) 
+          ? appState.zones.map(z => z.name) 
+          : Object.keys(ZONE_AREAS);
+        
+        zones.forEach(zone => {
+          const opt = document.createElement('option');
+          opt.value = zone;
+          opt.textContent = zone;
+          if (area?.zone === zone) opt.selected = true;
+          zoneSelect.appendChild(opt);
+        });
+      }
+    }, 0);
+
 
     $('#area-form').addEventListener('submit', async (e) => {
       e.preventDefault();
