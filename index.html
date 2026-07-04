@@ -119,19 +119,10 @@
 
 
 
-<script type="importmap">
-{
-  "imports": {
-    "firebase/app": "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js",
-    "firebase/auth": "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js",
-    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js"
-  }
-}
-</script>
 <script type="module">
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, collection, getDocs, query, where } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
@@ -146,11 +137,17 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Main login function - defined INSIDE module so it can access imports
+// Global Firebase access
+window._firebase = { auth, db, doc, getDoc, collection, getDocs, query, where };
+
+// Override login function
 window.login = async function() {
-  const email = document.querySelector('#loginScreen input[type="text"]')?.value?.trim() || '';
-  const password = document.querySelector('#loginScreen input[type="password"]')?.value || '';
-  const roleSelect = document.querySelector('#loginScreen select')?.value || 'admin';
+  const emailInput = document.querySelector('#loginScreen input[type="text"]') || document.querySelector('input[type="text"]');
+  const passwordInput = document.querySelector('#loginScreen input[type="password"]') || document.querySelector('input[type="password"]');
+  const roleSelect = document.querySelector('#loginScreen select') || document.querySelector('select');
+  
+  const email = emailInput ? emailInput.value.trim() : '';
+  const password = passwordInput ? passwordInput.value : '';
   
   if (!email || !password) {
     alert('ইমেইল এবং পাসওয়ার্ড দিন');
@@ -164,10 +161,10 @@ window.login = async function() {
   }
   
   try {
-    // This works because signInWithEmailAndPassword is in scope
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
+    // Get user doc from Firestore - matches your isApproved() rule
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
     
@@ -182,40 +179,107 @@ window.login = async function() {
     
     if (userData.status !== 'approved') {
       await signOut(auth);
-      alert('আপনার অ্যাকাউন্ট অ্যাপ্রুভ হয়নি। Status: ' + userData.status);
+      alert('আপনার অ্যাকাউন্ট এখনো অ্যাপ্রুভ হয়নি। Status: ' + userData.status);
       if(btn) { btn.disabled = false; btn.textContent = 'লগইন করুন'; }
       return;
     }
     
-    const currentUser = {
+    // Set global currentUser - this is what original code uses
+    window.currentUser = {
       uid: user.uid,
       email: user.email,
       name: userData.name || user.email,
       role: userData.role,
-      phone: userData.phone || ''
+      phone: userData.phone || '',
+      username: user.email
     };
     
-    localStorage.setItem('ownsUser', JSON.stringify(currentUser));
-    window.currentUser = currentUser;
-    if(typeof window.appData !== 'undefined') window.appData.currentUser = currentUser;
+    if(typeof appData !== 'undefined') {
+      appData.currentUser = window.currentUser;
+    }
+    
+    localStorage.setItem('ownsUser', JSON.stringify(window.currentUser));
     
     // Switch screens
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appScreen').style.display = 'block';
     
-    // Call original functions to build UI based on role
-    if(typeof window.setupSidebar === 'function') window.setupSidebar();
-    if(typeof window.loadDashboard === 'function') window.loadDashboard();
-    if(typeof window.loadPage === 'function') window.loadPage('dashboard');
+    // Update sidebar user info - FIX for hardcoded "অ্যাডমিন"
+    updateSidebarUserInfo();
+    
+    // Rebuild sidebar based on role - FIX for wrong menu
+    if(typeof window.setupSidebar === 'function') {
+      window.setupSidebar();
+    }
+    
+    // Load dashboard
+    if(typeof window.loadDashboard === 'function') {
+      window.loadDashboard();
+    }
+    if(typeof window.loadPage === 'function') {
+      window.loadPage('dashboard');
+    }
     
   } catch (error) {
     console.error('Login error:', error);
     let msg = 'লগইন এরর: ';
-    if (error.code === 'auth/invalid-credential') msg = 'ভুল ইমেইল বা পাসওয়ার্ড!';
-    else if (error.code === 'auth/too-many-requests') msg = 'অনেকবার ভুল চেষ্টা। পরে ট্রাই করুন।';
-    else msg += error.message;
+    if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      msg = 'ভুল ইমেইল বা পাসওয়ার্ড!';
+    } else if (error.code === 'auth/too-many-requests') {
+      msg = 'অনেকবার ভুল চেষ্টা করেছেন। পরে ট্রাই করুন।';
+    } else {
+      msg += error.message;
+    }
     alert(msg);
     if(btn) { btn.disabled = false; btn.textContent = 'লগইন করুন'; }
+  }
+}
+
+// Update sidebar user info dynamically
+window.updateSidebarUserInfo = function() {
+  if(!window.currentUser) return;
+  
+  // Find sidebar user name element - could be multiple selectors
+  const nameEls = document.querySelectorAll('#sidebarUserName, .user-name, [data-user-name]');
+  const roleEls = document.querySelectorAll('#sidebarUserRole, .user-role, [data-user-role]');
+  
+  const roleText = window.currentUser.role === 'admin' ? 'অ্যাডমিন' : 
+                   window.currentUser.role === 'staff' ? 'স্টাফ' : 'কাস্টমার';
+  
+  nameEls.forEach(el => { if(el) el.textContent = window.currentUser.name; });
+  roleEls.forEach(el => { if(el) el.textContent = roleText; });
+}
+
+// Fix loadPage to actually switch content divs
+const originalLoadPage = window.loadPage;
+window.loadPage = function(pageId) {
+  // Hide all page content divs
+  const pages = document.querySelectorAll('.page-content, [data-page]');
+  pages.forEach(p => p.style.display = 'none');
+  
+  // Show selected page
+  const targetPage = document.getElementById(pageId + 'Page') || 
+                     document.getElementById(pageId) || 
+                     document.querySelector(`[data-page="${pageId}"]`);
+  
+  if(targetPage) {
+    targetPage.style.display = 'block';
+  } else {
+    // Fallback to dashboard
+    const dash = document.getElementById('dashboardPage') || document.getElementById('dashboard');
+    if(dash) dash.style.display = 'block';
+  }
+  
+  // Update active menu item
+  document.querySelectorAll('.sidebar-menu-item, .nav-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  const activeItem = document.querySelector(`[data-page-id="${pageId}"]`);
+  if(activeItem) activeItem.classList.add('active');
+  
+  // Call original if exists
+  if(typeof originalLoadPage === 'function') {
+    try { originalLoadPage(pageId); } catch(e) { console.log('Original loadPage error:', e); }
   }
 }
 
@@ -226,21 +290,31 @@ onAuthStateChanged(auth, async (user) => {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists() && userDoc.data().status === 'approved') {
         const userData = userDoc.data();
-        const currentUser = {
+        window.currentUser = {
           uid: user.uid,
           email: user.email,
           name: userData.name || user.email,
-          role: userData.role
+          role: userData.role,
+          phone: userData.phone || '',
+          username: user.email
         };
-        localStorage.setItem('ownsUser', JSON.stringify(currentUser));
-        window.currentUser = currentUser;
-        if(typeof window.appData !== 'undefined') window.appData.currentUser = currentUser;
+        
+        if(typeof appData !== 'undefined') {
+          appData.currentUser = window.currentUser;
+        }
+        
+        localStorage.setItem('ownsUser', JSON.stringify(window.currentUser));
         
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('appScreen').style.display = 'block';
         
+        updateSidebarUserInfo();
+        
         if(typeof window.setupSidebar === 'function') window.setupSidebar();
         if(typeof window.loadDashboard === 'function') window.loadDashboard();
+        if(typeof window.loadPage === 'function') window.loadPage('dashboard');
+      } else {
+        await signOut(auth);
       }
     } catch(e) {
       console.error('Auto login failed:', e);
@@ -248,10 +322,88 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+// Logout
 window.logout = async function() {
   await signOut(auth);
   localStorage.removeItem('ownsUser');
+  window.currentUser = null;
   location.reload();
+}
+
+// Override setupSidebar to build role-based menu
+const originalSetupSidebar = window.setupSidebar;
+window.setupSidebar = function() {
+  if(!window.currentUser) return;
+  
+  const sidebar = document.querySelector('.sidebar-menu, #sidebarMenu, .nav-menu');
+  if(!sidebar) {
+    if(typeof originalSetupSidebar === 'function') originalSetupSidebar();
+    return;
+  }
+  
+  const role = window.currentUser.role;
+  let menuHTML = '';
+  
+  if(role === 'admin') {
+    menuHTML = `
+      <div class="sidebar-menu-item active" data-page-id="dashboard" onclick="loadPage('dashboard')">
+        <i class="fas fa-home"></i> ড্যাশবোর্ড
+      </div>
+      <div class="sidebar-menu-item" data-page-id="customers" onclick="loadPage('customers')">
+        <i class="fas fa-users"></i> কাস্টমার
+      </div>
+      <div class="sidebar-menu-item" data-page-id="bills" onclick="loadPage('bills')">
+        <i class="fas fa-file-invoice"></i> বিল
+      </div>
+      <div class="sidebar-menu-item" data-page-id="packages" onclick="loadPage('packages')">
+        <i class="fas fa-box"></i> প্যাকেজ
+      </div>
+      <div class="sidebar-menu-item" data-page-id="areas" onclick="loadPage('areas')">
+        <i class="fas fa-map"></i> এরিয়া
+      </div>
+      <div class="sidebar-menu-item" data-page-id="zones" onclick="loadPage('zones')">
+        <i class="fas fa-map-marker"></i> জোন
+      </div>
+      <div class="sidebar-menu-item" data-page-id="staff" onclick="loadPage('staff')">
+        <i class="fas fa-user-tie"></i> স্টাফ
+      </div>
+      <div class="sidebar-menu-item" data-page-id="reports" onclick="loadPage('reports')">
+        <i class="fas fa-chart-bar"></i> রিপোর্ট
+      </div>
+    `;
+  } else if(role === 'staff') {
+    menuHTML = `
+      <div class="sidebar-menu-item active" data-page-id="dashboard" onclick="loadPage('dashboard')">
+        <i class="fas fa-home"></i> ড্যাশবোর্ড
+      </div>
+      <div class="sidebar-menu-item" data-page-id="customers" onclick="loadPage('customers')">
+        <i class="fas fa-users"></i> কাস্টমার
+      </div>
+      <div class="sidebar-menu-item" data-page-id="bills" onclick="loadPage('bills')">
+        <i class="fas fa-file-invoice"></i> বিল
+      </div>
+      <div class="sidebar-menu-item" data-page-id="complaints" onclick="loadPage('complaints')">
+        <i class="fas fa-exclamation-circle"></i> অভিযোগ
+      </div>
+    `;
+  } else { // customer
+    menuHTML = `
+      <div class="sidebar-menu-item active" data-page-id="dashboard" onclick="loadPage('dashboard')">
+        <i class="fas fa-home"></i> ড্যাশবোর্ড
+      </div>
+      <div class="sidebar-menu-item" data-page-id="myBills" onclick="loadPage('myBills')">
+        <i class="fas fa-file-invoice"></i> আমার বিল
+      </div>
+      <div class="sidebar-menu-item" data-page-id="profile" onclick="loadPage('profile')">
+        <i class="fas fa-user"></i> প্রোফাইল
+      </div>
+    `;
+  }
+  
+  sidebar.innerHTML = menuHTML;
+  
+  // Update user info in sidebar
+  updateSidebarUserInfo();
 }
 </script>
 
