@@ -118,7 +118,6 @@
   </style>
 
 
-
 <script type="importmap">
 {
   "imports": {
@@ -131,7 +130,7 @@
 <script type="module">
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, collection, getDocs } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
@@ -146,11 +145,18 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Main login function - defined INSIDE module so it can access imports
+// Make available globally
+window._firebase = { auth, db, signInWithEmailAndPassword, signOut, onAuthStateChanged, doc, getDoc, collection, getDocs };
+
+// Override login function
 window.login = async function() {
-  const email = document.querySelector('#loginScreen input[type="text"]')?.value?.trim() || '';
-  const password = document.querySelector('#loginScreen input[type="password"]')?.value || '';
-  const roleSelect = document.querySelector('#loginScreen select')?.value || 'admin';
+  const emailInput = document.querySelector('#loginScreen input[type="text"]') || document.querySelector('input[type="text"]');
+  const passwordInput = document.querySelector('#loginScreen input[type="password"]') || document.querySelector('input[type="password"]');
+  const roleSelect = document.querySelector('#loginScreen select') || document.querySelector('select');
+  
+  const email = emailInput ? emailInput.value.trim() : '';
+  const password = passwordInput ? passwordInput.value : '';
+  const selectedRole = roleSelect ? roleSelect.value : 'admin';
   
   if (!email || !password) {
     alert('ইমেইল এবং পাসওয়ার্ড দিন');
@@ -164,10 +170,10 @@ window.login = async function() {
   }
   
   try {
-    // This works because signInWithEmailAndPassword is in scope
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
+    // Check Firestore users collection - matches your rules isApproved()
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
     
@@ -180,67 +186,69 @@ window.login = async function() {
     
     const userData = userDoc.data();
     
+    // Your rule: isApproved() requires status == 'approved'
     if (userData.status !== 'approved') {
       await signOut(auth);
-      alert('আপনার অ্যাকাউন্ট অ্যাপ্রুভ হয়নি। Status: ' + userData.status);
+      alert('আপনার অ্যাকাউন্ট এখনো অ্যাপ্রুভ হয়নি। Status: ' + userData.status + '. অ্যাডমিন অ্যাপ্রুভাল লাগবে।');
       if(btn) { btn.disabled = false; btn.textContent = 'লগইন করুন'; }
       return;
     }
     
+    // Role check - admin can access all
+    if (selectedRole !== userData.role && userData.role !== 'admin') {
+      await signOut(auth);
+      alert('আপনার রোল: ' + userData.role + '। সিলেক্ট করেছেন: ' + selectedRole);
+      if(btn) { btn.disabled = false; btn.textContent = 'লগইন করুন'; }
+      return;
+    }
+    
+    
+    // Success - save to localStorage and global vars
     const currentUser = {
       uid: user.uid,
       email: user.email,
       name: userData.name || user.email,
       role: userData.role,
-      phone: userData.phone || ''
+      phone: userData.phone || '',
+      username: user.email
     };
     
     localStorage.setItem('ownsUser', JSON.stringify(currentUser));
     window.currentUser = currentUser;
-    if(typeof window.appData !== 'undefined') window.appData.currentUser = currentUser;
+    
+    // IMPORTANT: Set appData.currentUser if the original code uses it
+    if(typeof appData !== 'undefined') {
+      appData.currentUser = currentUser;
+    }
     
     // Switch screens
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display = 'block';
+    const loginScr = document.getElementById('loginScreen');
+    const appScr = document.getElementById('appScreen');
+    if(loginScr) loginScr.style.display = 'none';
+    if(appScr) appScr.style.display = 'block';
     
-    // Call original functions to build UI based on role
-    if(typeof window.setupSidebar === 'function') window.setupSidebar();
-    if(typeof window.loadDashboard === 'function') window.loadDashboard();
-    if(typeof window.loadPage === 'function') window.loadPage('dashboard');
+    // Update UI elements
+    const nameEl = document.getElementById('currentUserName') || document.getElementById('userName');
+    const roleEl = document.getElementById('currentUserRole') || document.getElementById('userRole');
+    if(nameEl) nameEl.textContent = currentUser.name;
+    if(roleEl) roleEl.textContent = currentUser.role === 'admin' ? 'অ্যাডমিন' : currentUser.role === 'staff' ? 'স্টাফ' : 'কাস্টমার';
     
-  } catch (error) {
-    console.error('Login error:', error);
-    let msg = 'লগইন এরর: ';
-    if (error.code === 'auth/invalid-credential') msg = 'ভুল ইমেইল বা পাসওয়ার্ড!';
-    else if (error.code === 'auth/too-many-requests') msg = 'অনেকবার ভুল চেষ্টা। পরে ট্রাই করুন।';
-    else msg += error.message;
-    alert(msg);
-    if(btn) { btn.disabled = false; btn.textContent = 'লগইন করুন'; }
-  }
-}
+    // CRITICAL: Rebuild sidebar based on role - call original functions
+    if(typeof window.setupSidebar === 'function') {
+      window.setupSidebar();
+    }
+    if(typeof window.loadDashboard === 'function') {
+      window.loadDashboard();
+    }
+    if(typeof window.loadPage === 'function') {
+      window.loadPage('dashboard');
+    }
+    if(typeof window.initApp === 'function') {
+      window.initApp(currentUser);
+    }
 
-// Auto-login check
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    try {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists() && userDoc.data().status === 'approved') {
-        const userData = userDoc.data();
-        const currentUser = {
-          uid: user.uid,
-          email: user.email,
-          name: userData.name || user.email,
-          role: userData.role
-        };
-        localStorage.setItem('ownsUser', JSON.stringify(currentUser));
-        window.currentUser = currentUser;
-        if(typeof window.appData !== 'undefined') window.appData.currentUser = currentUser;
-        
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('appScreen').style.display = 'block';
-        
-        if(typeof window.setupSidebar === 'function') window.setupSidebar();
-        if(typeof window.loadDashboard === 'function') window.loadDashboard();
+    else {
+        await signOut(auth);
       }
     } catch(e) {
       console.error('Auto login failed:', e);
@@ -248,13 +256,13 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+// Logout
 window.logout = async function() {
   await signOut(auth);
   localStorage.removeItem('ownsUser');
   location.reload();
 }
 </script>
-
 
 
 </head>
