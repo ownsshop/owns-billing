@@ -3255,7 +3255,20 @@ service cloud.firestore {
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Billing Month *</label>
-                <input type="month" name="billingMonth" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" value="${new Date().toISOString().slice(0,7)}" type="month">
+                <div class="relative">
+                  <input 
+                    type="month" 
+                    id="billingMonthPicker" 
+                    name="billingMonth" 
+                    required 
+                    class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] opacity-0 absolute inset-0 cursor-pointer z-10" 
+                    value="${new Date().toISOString().slice(0,7)}"
+                  >
+                  <div class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] flex items-center justify-between pointer-events-none">
+                    <span id="billingMonthDisplay" class="text-[rgb(var(--text))]"></span>
+                    <i data-lucide="calendar" class="w-5 h-5 text-slate-400"></i>
+                  </div>
+                </div>
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Transaction ID</label>
@@ -3295,6 +3308,27 @@ service cloud.firestore {
     
     document.getElementById('invoice-form')?.addEventListener('submit', handleInvoiceSubmit);
     lucide.createIcons();
+
+    // Billing Month picker display fix for Staff/Admin consistency
+    const monthPicker = document.getElementById('billingMonthPicker');
+    const monthDisplay = document.getElementById('billingMonthDisplay');
+    
+    if (monthPicker && monthDisplay) {
+      const formatMonthYear = (value) => {
+        if (!value) return '';
+        const [year, month] = value.split('-');
+        const date = new Date(year, month - 1);
+        return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+      };
+      
+      // Set initial display
+      monthDisplay.textContent = formatMonthYear(monthPicker.value);
+      
+      // Update display on change
+      monthPicker.addEventListener('input', (e) => {
+        monthDisplay.textContent = formatMonthYear(e.target.value);
+      });
+    }
   };
   
   window.handleInvoiceSubmit = async (e) => {
