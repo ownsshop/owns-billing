@@ -3350,8 +3350,10 @@ service cloud.firestore {
         amount: parseFloat(data.amount),
         method: data.method,
         status: data.status,
+        billingMonth: data.billingMonth || '',
         transactionId: data.transactionId || '',
         notes: data.notes || '',
+        staffId: currentUser.uid,
         createdAt: serverTimestamp(),
         createdBy: currentUser.uid
       };
