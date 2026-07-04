@@ -2170,6 +2170,9 @@
           </div>
         </div>
         <div class="flex gap-3 mt-6">
+                    <button onclick="exportCustomerBillsCSV()" class="px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold">
+            <i data-lucide="download" class="w-4 h-4 inline mr-1"></i>Export CSV
+          </button>
           <button onclick="printBill('${bill.id}')" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold"><i data-lucide="printer" class="w-4 h-4 inline mr-2"></i>Print</button>
           <button onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Close</button>
         </div>
@@ -3241,6 +3244,10 @@ service cloud.firestore {
                   <option value="paid">Paid</option>
                   <option value="unpaid">Unpaid</option>
                 </select>
+              </div>
+              <div>
+                <label class="text-sm font-medium mb-2 block">Billing Month *</label>
+                <input type="month" name="billingMonth" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" value="${new Date().toISOString().slice(0,7)}">
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Transaction ID</label>
