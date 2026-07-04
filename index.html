@@ -1185,11 +1185,11 @@
           </nav>
 
           <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
-          Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
-          Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
         </div>
       </div>
@@ -2133,6 +2133,136 @@
         </div></td>
       </tr>
     `).join('');
+  };
+
+  
+  // Bill View and Print Functions - Fixed
+  window.viewBillDetails = (id) => {
+    const bill = appState.bills.find(b => b.id === id);
+    if (!bill) return showToast('Bill not found', 'error');
+    
+    const customer = appState.customers.find(c => c.id === bill.customerId);
+    const customerName = customer?.name || bill.customerName || 'N/A';
+    const customerPhone = customer?.mobile || bill.customerPhone || 'N/A';
+    
+    showModal(`
+      <div class="modal-content p-6 max-w-2xl">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold">Bill Details</h3>
+          <button onclick="closeModal()" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div><label class="text-sm text-slate-500">Invoice No</label><p class="font-semibold">${bill.invoiceNo || bill.id}</p></div>
+            <div><label class="text-sm text-slate-500">Date</label><p class="font-semibold">${bill.date ? new Date(bill.date).toLocaleDateString('en-GB') : 'N/A'}</p></div>
+            <div><label class="text-sm text-slate-500">Customer</label><p class="font-semibold">${customerName}</p></div>
+            <div><label class="text-sm text-slate-500">Phone</label><p class="font-semibold">${customerPhone}</p></div>
+            <div><label class="text-sm text-slate-500">Package</label><p class="font-semibold">${bill.package || 'N/A'}</p></div>
+            <div><label class="text-sm text-slate-500">Amount</label><p class="font-semibold text-sky-500">৳${bill.amount || 0}</p></div>
+            <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${bill.billingMonth || 'N/A'}</p></div>
+            <div><label class="text-sm text-slate-500">Status</label><p class="font-semibold"><span class="px-3 py-1 rounded-lg ${bill.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${bill.status}</span></p></div>
+            <div><label class="text-sm text-slate-500">Payment Method</label><p class="font-semibold">${bill.method || 'N/A'}</p></div>
+            <div><label class="text-sm text-slate-500">Paid Date</label><p class="font-semibold">${bill.paidAt ? new Date(bill.paidAt).toLocaleDateString('en-GB') : 'N/A'}</p></div>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button onclick="printBill('${bill.id}')" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold"><i data-lucide="printer" class="w-4 h-4 inline mr-2"></i>Print</button>
+          <button onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Close</button>
+        </div>
+      </div>
+    `);
+    setTimeout(() => lucide.createIcons(), 0);
+  };
+
+  window.printBill = (id) => {
+    const bill = appState.bills.find(b => b.id === id);
+    if (!bill) return showToast('Bill not found', 'error');
+    
+    const customer = appState.customers.find(c => c.id === bill.customerId);
+    const customerName = customer?.name || bill.customerName || 'N/A';
+    const customerPhone = customer?.mobile || bill.customerPhone || 'N/A';
+    const customerAddress = customer?.address || 'N/A';
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - ${bill.invoiceNo || bill.id}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+          .company { font-size: 28px; font-weight: bold; color: #0ea5e9; }
+          .info-row { display: flex; justify-content: space-between; margin: 20px 0; }
+          .info-box { width: 48%; }
+          .info-box h3 { margin: 0 0 10px 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+          table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+          th { background: #0ea5e9; color: white; }
+          .total { text-align: right; font-size: 20px; font-weight: bold; margin-top: 20px; }
+          .footer { margin-top: 50px; text-align: center; color: #666; font-size: 12px; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company">OwnsLink ISP</div>
+          <p>Internet Service Provider</p>
+        </div>
+        <div class="info-row">
+          <div class="info-box">
+            <h3>Bill To:</h3>
+            <p><strong>${customerName}</strong></p>
+            <p>Phone: ${customerPhone}</p>
+            <p>Address: ${customerAddress}</p>
+          </div>
+          <div class="info-box">
+            <h3>Invoice Details:</h3>
+            <p><strong>Invoice No:</strong> ${bill.invoiceNo || bill.id}</p>
+            <p><strong>Date:</strong> ${bill.date ? new Date(bill.date).toLocaleDateString('en-GB') : 'N/A'}</p>
+            <p><strong>Billing Month:</strong> ${bill.billingMonth || 'N/A'}</p>
+            <p><strong>Status:</strong> ${bill.status?.toUpperCase()}</p>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Description</th><th>Amount</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>${bill.package || 'Internet Service'} - ${bill.billingMonth || 'Monthly'}</td><td>৳${bill.amount || 0}</td></tr>
+          </tbody>
+        </table>
+        <div class="total">Total Amount: ৳${bill.amount || 0}</div>
+        <div class="footer">
+          <p>Thank you for your business!</p>
+          <p>Generated on ${new Date().toLocaleDateString('en-GB')}</p>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 250);
+  };
+
+  
+  window.exportCustomerBillsCSV = () => {
+    const myBills = appState.bills.filter(b => b.staffId === currentUser.uid || b.customerId === currentUser.uid);
+    if (myBills.length === 0) return showToast('No bills to export', 'error');
+    
+    let csv = 'Invoice No,Date,Billing Month,Amount,Method,Status\n';
+    myBills.forEach(b => {
+      const date = b.date ? new Date(b.date).toLocaleDateString('en-GB') : '';
+      csv += `"${b.invoiceNo || b.id}","${date}","${b.billingMonth || ''}","${b.amount || 0}","${b.method || ''}","${b.status || ''}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `my_bills_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    showToast('CSV exported successfully', 'success');
   };
 
   window.showInvoicePreviewFromBill = (id) => {
@@ -3543,4 +3673,4 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
                 </body>
-                </html>
+                </htm
