@@ -719,6 +719,10 @@
 
     // CRITICAL: Role detection
     const isCustomerView = currentRole === 'customer' || isMyBills;
+    const exportBtn = isCustomerView ? `
+      <button onclick="exportCustomerBillsCSV()" class="px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold">
+        <i data-lucide="download" class="w-4 h-4 inline mr-1"></i>Export CSV
+      </button>` : '';
     const isStaffView = currentRole === 'staff' && !isMyBills;
     const isAdminView = currentRole === 'admin' && !isMyBills;
     
