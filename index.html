@@ -260,11 +260,7 @@ window.firebaseDb = getFirestore(app);
   <script>
     // Data Structure - Keep existing structure intact
     let appData = {
-      users: [
-        { id: 1, name: 'অ্যাডমিন ইউজার', username: 'admin', password: 'admin123', role: 'admin', phone: '01700000000' },
-        { id: 2, name: 'স্টাফ ইউজার', username: 'staff', password: 'staff123', role: 'staff', phone: '01711111111' },
-        { id: 3, name: 'রহিম উদ্দিন', username: 'customer', password: 'cust123', role: 'customer', phone: '01722222222', area: 1, zone: 1, package: 1, staff: 2 }
-      ],
+      users: [],
       areas: [
         { id: 1, name: 'ঢাকা উত্তর' },
         { id: 2, name: 'ঢাকা দক্ষিণ' }
@@ -319,25 +315,110 @@ window.firebaseDb = getFirestore(app);
     }
 
     // Auth
-    function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const userType = document.getElementById('userType').value;
-
-      const user = appData.users.find(u => u.username === username && u.password === password && u.role === userType);
+    
+    // Firebase Auth Login - Replace demo login
+    async function login() {
+      const usernameInput = document.querySelector('input[type="text"]') || document.getElementById('username');
+      const passwordInput = document.querySelector('input[type="password"]') || document.getElementById('password');
+      const roleSelect = document.querySelector('select') || document.getElementById('role');
       
-      if (user) {
-        currentUser = user;
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('appScreen').classList.remove('hidden');
-        document.getElementById('loggedUserName').textContent = user.name;
-        document.getElementById('loggedUserRole').textContent = userType === 'admin' ? 'অ্যাডমিন' : userType === 'staff' ? 'স্টাফ' : 'কাস্টমার';
-        setupSidebar(userType);
-        loadPage('dashboard');
-      } else {
-        alert('ভুল ইউজারনেম বা পাসওয়ার্ড!');
+      const email = usernameInput ? usernameInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value : '';
+      const selectedRole = roleSelect ? roleSelect.value : 'admin';
+      
+      if (!email || !password) {
+        alert('ইমেইল এবং পাসওয়ার্ড দিন');
+        return;
+      }
+      
+      try {
+        // Show loading
+        const btn = document.querySelector('button[onclick*="login"]');
+        if(btn) btn.disabled = true;
+        
+        const userCredential = await window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth, email, password);
+        const user = userCredential.user;
+        
+        // Get user doc from Firestore
+        const userDocRef = window.firebaseDb.doc(window.firebaseDb, "users", user.uid);
+        const userDoc = await window.firebaseDb.getDoc(userDocRef);
+        
+        if (!userDoc.exists()) {
+          await window.firebaseAuth.signOut(window.firebaseAuth);
+          alert('ইউজার ডেটা পাওয়া যায়নি। Firestore এ /users/{uid} ডকুমেন্ট বানান।');
+          if(btn) btn.disabled = false;
+          return;
+        }
+        
+        const userData = userDoc.data();
+        
+        if (userData.status !== 'approved') {
+          await window.firebaseAuth.signOut(window.firebaseAuth);
+          alert('আপনার অ্যাকাউন্ট এখনো অ্যাপ্রুভ হয়নি। Status: ' + userData.status);
+          if(btn) btn.disabled = false;
+          return;
+        }
+        
+        // Check role match
+        if (selectedRole !== userData.role && userData.role !== 'admin') {
+          await window.firebaseAuth.signOut(window.firebaseAuth);
+          alert('আপনার রোল: ' + userData.role + '। সিলেক্ট করেছেন: ' + selectedRole);
+          if(btn) btn.disabled = false;
+          return;
+        }
+        
+        // Success - save to localStorage and reload
+        localStorage.setItem('ownsUser', JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          name: userData.name || user.email,
+          role: userData.role
+        }));
+        
+        // Hide login, show dashboard
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        document.getElementById('userName').textContent = userData.name || user.email;
+        document.getElementById('userRole').textContent = userData.role;
+        
+        // Load data
+        if(typeof loadDashboard === 'function') loadDashboard();
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+          alert('ভুল ইমেইল বা পাসওয়ার্ড!');
+        } else if (error.code === 'auth/too-many-requests') {
+          alert('অনেকবার ভুল পাসওয়ার্ড দিয়েছেন। পরে চেষ্টা করুন।');
+        } else {
+          alert('লগইন এরর: ' + error.message);
+        }
+        const btn = document.querySelector('button[onclick*="login"]');
+        if(btn) btn.disabled = false;
       }
     }
+    
+    // Auto-login check
+    window.firebaseAuth.onAuthStateChanged(window.firebaseAuth, async (user) => {
+      if (user) {
+        const userDoc = await window.firebaseDb.getDoc(window.firebaseDb.doc(window.firebaseDb, "users", user.uid));
+        if (userDoc.exists() && userDoc.data().status === 'approved') {
+          const userData = userDoc.data();
+          localStorage.setItem('ownsUser', JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            name: userData.name || user.email,
+            role: userData.role
+          }));
+          document.getElementById('loginPage').style.display = 'none';
+          document.getElementById('mainApp').style.display = 'block';
+          document.getElementById('userName').textContent = userData.name;
+          document.getElementById('userRole').textContent = userData.role;
+          if(typeof loadDashboard === 'function') loadDashboard();
+        }
+      }
+    });
+
 
     function logout() {
       currentUser = null;
@@ -1427,125 +1508,5 @@ window.firebaseDb = getFirestore(app);
     });
   </script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
-
-<script type="module">
-import { initializeApp } from "firebase/app";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBZUlhoH3pPZWBmBZko-SfIJpV6jBoefRM",
-  authDomain: "owns-billing.firebaseapp.com",
-  projectId: "owns-billing",
-  storageBucket: "owns-billing.firebasestorage.app",
-  messagingSenderId: "1036958677443",
-  appId: "1:1036958677443:web:5541baa54edc6e5f582576"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-window.firebaseApp = app;
-window.firebaseAuth = auth;
-window.firebaseDb = db;
-
-// Replace demo login function
-window.handleLogin = async function() {
-  const email = document.getElementById('email')?.value || document.querySelector('input[type="text"]')?.value;
-  const password = document.getElementById('password')?.value || document.querySelector('input[type="password"]')?.value;
-  const roleSelect = document.getElementById('role')?.value;
-  
-  if (!email || !password) {
-    alert('ইমেইল এবং পাসওয়ার্ড দিন');
-    return;
-  }
-  
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    // Check users collection for role and status
-    const userDocRef = doc(db, "users", user.uid);
-    const userDoc = await getDoc(userDocRef);
-    
-    if (!userDoc.exists()) {
-      await signOut(auth);
-      alert('ইউজার ডেটা পাওয়া যায়নি। অ্যাডমিনের সাথে যোগাযোগ করুন।');
-      return;
-    }
-    
-    const userData = userDoc.data();
-    
-    if (userData.status !== 'approved') {
-      await signOut(auth);
-      alert('আপনার অ্যাকাউন্ট এখনো অ্যাপ্রুভ হয়নি। অ্যাডমিন অ্যাপ্রুভালের জন্য অপেক্ষা করুন।');
-      return;
-    }
-    
-    // Check if selected role matches
-    if (roleSelect && userData.role !== roleSelect && roleSelect !== 'admin') {
-      if (userData.role !== 'admin') {
-        await signOut(auth);
-        alert('আপনার রোল ম্যাচ করেনি।');
-        return;
-      }
-    }
-    
-    // Store user data globally
-    window.currentUser = {
-      uid: user.uid,
-      email: user.email,
-      role: userData.role,
-      name: userData.name || user.email
-    };
-    
-    // Call original success function if exists, else reload
-    if (typeof window.onLoginSuccess === 'function') {
-      window.onLoginSuccess(window.currentUser);
-    } else {
-      alert('লগইন সফল! ' + window.currentUser.name);
-      location.reload();
-    }
-    
-  } catch (error) {
-    console.error(error);
-    if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-      alert('ভুল ইমেইল বা পাসওয়ার্ড!');
-    } else if (error.code === 'auth/user-not-found') {
-      alert('এই ইমেইলে কোন ইউজার নেই!');
-    } else {
-      alert('লগইন এরর: ' + error.message);
-    }
-  }
-}
-
-// Auto-check login state
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (userDoc.exists() && userDoc.data().status === 'approved') {
-      window.currentUser = {
-        uid: user.uid,
-        email: user.email,
-        role: userDoc.data().role,
-        name: userDoc.data().name || user.email
-      };
-      if (typeof window.showDashboard === 'function') {
-        window.showDashboard(window.currentUser);
-      }
-    }
-  }
-});
-
-// Replace old login button onclick
-document.addEventListener('DOMContentLoaded', () => {
-  const loginBtn = document.querySelector('button[onclick*="login"], button:contains("লগইন")');
-  if (loginBtn) {
-    loginBtn.onclick = window.handleLogin;
-  }
-});
-</script>
-
 </body>
 </html>
