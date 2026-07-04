@@ -3255,7 +3255,7 @@ service cloud.firestore {
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Billing Month *</label>
-                <input type="month" name="billingMonth" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" value="${new Date().toISOString().slice(0,7)}">
+                <input type="month" name="billingMonth" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]" value="${new Date().toISOString().slice(0,7)}" type="month">
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Transaction ID</label>
@@ -3692,4 +3692,4 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
                 </body>
-                </html
+                </html>
