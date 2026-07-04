@@ -266,7 +266,7 @@
 </style>
 
 </head>
-<body class="overflow-x-hidden" class="antialiased">
+<body class="antialiased">
 <div id="auth-loading" class="auth-loading">
   <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center animate-pulse">
     <span class="text-3xl font-bold text-white">O</span>
@@ -1176,7 +1176,7 @@
             </div>
           </header>
 
-          <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6 lg:ml-64 transition-all duration-300">
+          <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6">
             ${viewSections}
           </main>
 
@@ -3519,8 +3519,70 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     h1 { text-align: center; }
                 </style>
                 </head>
-                <body class="overflow-x-hidden">
+                <body>
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
                 </body>
                 </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        });
+    }
+    
+    // Load filtered bills function
+    async function loadFilteredBills() {
+        const zone = billsFilterZone?.value;
+        const area = billsFilterArea?.value;
+        const staff = billsFilterStaff?.value;
+        const customer = billsFilterCustomer?.value.toLowerCase();
+        const month = billsFilterMonth?.value;
+        
+        let query = firebase.firestore().collection('bills');
+        
+        if (zone) query = query.where('zone', '==', zone);
+        if (area) query = query.where('area', '==', area);
+        if (staff) query = query.where('staffId', '==', staff);
+        
+        if (month) {
+            const start = new Date(month + '-01');
+            const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+            query = query.where('date', '>=', start).where('date', '<=', end);
+        }
+        
+        try {
+            const snap = await query.get();
+            let bills = [];
+            snap.forEach(doc => bills.push({id: doc.id, ...doc.data()}));
+            
+            if (customer) {
+                bills = bills.filter(b => 
+                    b.customerName?.toLowerCase().includes(customer) || 
+                    b.customerMobile?.includes(customer)
+                );
+            }
+            
+            // Call your existing render function
+            if (typeof renderBillsTable === 'function') {
+                renderBillsTable(bills);
+            } else {
+                console.log('Filtered bills:', bills);
+            }
+        } catch (err) {
+            console.error('Bills filter error:', err);
+        }
+    }
+    
+    // Helper
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+});
+</script>
+
+</body>
+</html>
