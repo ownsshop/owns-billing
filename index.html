@@ -1728,6 +1728,14 @@
       
       try {
         console.log('[Customer Create] Starting. Data:', data);
+        // Validation: check required fields
+        if (!data.name || !data.email || !data.password) {
+          showToast('Name, Email and Password are required', 'error');
+          submitBtn.classList.remove('btn-loading');
+          submitBtn.innerHTML = 'Save Customer';
+          return;
+        }
+
         if (id) {
           await updateDoc(doc(db, 'users', id), data);
           await logActivity('Update Customer', `Updated customer: ${data.name}`);
