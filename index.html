@@ -1694,7 +1694,7 @@
             <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
             <div><label class="text-sm font-medium mb-2 block">Assigned Staff</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Staff</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
             <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
-            ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">PPPoE Password</label><input type="password" name="pppoePass" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+            ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
             <button type="submit" id="customer-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
@@ -1733,19 +1733,28 @@
           await logActivity('Update Customer', `Updated customer: ${data.name}`);
           showToast('Customer updated successfully', 'success');
         } else {
-          // Don't create Firebase Auth for customers - they use PPPoE
-          // Just save customer data to Firestore
-          const customerData = { ...data };
-          delete customerData.password; // Don't store password in Firestore
-          delete customerData.email; // Email not needed for PPPoE customers
+          console.log('[Customer Create] Creating auth user for:', data.email);
+          const secondaryAut = initSecondaryAuth();
+          userCred = await createUserWithEmailAndPassword(secondaryAut, data.email, data.password);
+          console.log('[Customer Create] Auth user created:', userCred.user.uid);
           
-          await addDoc(collection(db, 'customers'), { 
-            ...customerData, 
-            createdAt: serverTimestamp(),
-            role: 'customer'
-          });
-          await logActivity('Add Customer', `Added customer: ${data.name}`);
-        } catch (err) {
+          delete data.password;
+          const userData = {
+            ...data,
+            createdAt: serverTimestamp()
+          };
+          
+          console.log('[Customer Create] Creating Firestore doc');
+          await setDoc(doc(db, 'users', userCred.user.uid), userData);
+          docCreated = true;
+          console.log('[Customer Create] Firestore doc created');
+          
+          await logActivity('Add Customer', `Added customer: ${data.name} (${data.status})`);
+          showToast(`Customer added ${data.status === 'pending' ? 'and pending approval' : 'successfully'}`, 'success');
+        }
+        closeModal();
+        setTimeout(() => renderCustomers(myCustomers), 500);
+      } catch (err) {
         console.error('[Customer Create] Error:', err);
         if (userCred && !docCreated && secondaryAuth?.currentUser?.uid === userCred.user.uid) {
           try {
@@ -1858,7 +1867,7 @@
             <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
-            ${!id ? `<div><label class="text-sm font-medium mb-2 block">PPPoE Password</label><input type="password" name="pppoePass" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+            ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
             ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">Status</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="pending" ${staff?.status === 'pending' ? 'selected' : ''}>Pending</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
@@ -1894,19 +1903,29 @@
           closeModal();
           renderStaff();
         } else {
-          // Don't create Firebase Auth for customers - they use PPPoE
-          // Just save customer data to Firestore
-          const customerData = { ...data };
-          delete customerData.password; // Don't store password in Firestore
-          delete customerData.email; // Email not needed for PPPoE customers
+          console.log('[Staff Create] Initializing secondary auth');
+          const secondaryAut = initSecondaryAuth();
+          console.log('[Staff Create] Creating auth user');
+          userCred = await createUserWithEmailAndPassword(secondaryAut, data.email, data.password);
+          console.log('[Staff Create] Auth user created UID:', userCred.user.uid);
           
-          await addDoc(collection(db, 'customers'), { 
-            ...customerData, 
-            createdAt: serverTimestamp(),
-            role: 'customer'
-          });
-          await logActivity('Add Customer', `Added customer: ${data.name}`);
-        } catch (err) {
+          delete data.password;
+          const userData = {
+            ...data,
+            createdAt: serverTimestamp()
+          };
+          
+          console.log('[Staff Create] Creating Firestore doc');
+          await setDoc(doc(db, 'users', userCred.user.uid), userData);
+          docCreated = true;
+          console.log('[Staff Create] Firestore doc created successfully');
+          
+          await logActivity('Add Staff', `Added staff: ${data.name} (${data.status})`);
+          showToast('Staff created. Waiting for approval.', 'success');
+          closeModal();
+          setTimeout(() => renderStaff(), 500);
+        }
+      } catch (err) {
         console.error('[Staff Create] Error:', err);
         if (userCred && !docCreated && secondaryAuth?.currentUser?.uid === userCred.user.uid) {
           try {
