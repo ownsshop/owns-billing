@@ -3,10 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OwnsBill - ISP Reseller Billing v2</title>
+<title>OwnsBill - ISP Reseller Billing v3</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getDatabase, ref, onValue, set, push, update, remove, get } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  
+  window.firebaseModules = { initializeApp, getDatabase, ref, onValue, set, push, update, remove, get, getAuth, signInAnonymously, onAuthStateChanged };
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -61,7 +69,6 @@
 
   .card:hover {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
   }
 
   .chart-container {
@@ -87,6 +94,7 @@
   .nav-item {
     transition: all 0.2s ease;
     position: relative;
+    cursor: pointer;
   }
 
   .nav-item.active::before {
@@ -135,10 +143,35 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  .page-section {
+    display: none;
+  }
+
+  .page-section.active {
+    display: block;
+  }
+
+  .modal {
+    backdrop-filter: blur(8px);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-in {
+    animation: slideIn 0.3s ease;
+  }
+
   @media (max-width: 390px) {
     .stat-value {
       font-size: 1.5rem;
     }
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all;
   }
 </style>
 </head>
@@ -154,39 +187,51 @@
         </div>
         <div>
           <h1 class="text-xl font-bold text-white">OwnsBill</h1>
-          <p class="text-xs text-slate-400">ISP Reseller v2</p>
+          <p class="text-xs text-slate-400">ISP Reseller v3</p>
         </div>
       </div>
 
       <nav class="space-y-1">
-        <a href="#" class="nav-item active flex items-center gap-3 px-4 py-3 text-white rounded-lg" data-page="dashboard">
+        <a class="nav-item active flex items-center gap-3 px-4 py-3 text-white rounded-lg" data-page="dashboard">
           <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
           <span class="font-medium">Dashboard</span>
         </a>
-        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="customers">
+        <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="customers">
           <i data-lucide="users" class="w-5 h-5"></i>
           <span class="font-medium">Customers</span>
         </a>
-        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="bills">
+        <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="bills">
           <i data-lucide="receipt" class="w-5 h-5"></i>
           <span class="font-medium">Bills</span>
         </a>
-        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="packages">
+        <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="packages">
           <i data-lucide="package" class="w-5 h-5"></i>
           <span class="font-medium">Packages</span>
         </a>
-        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="payments">
+        <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="payments">
           <i data-lucide="credit-card" class="w-5 h-5"></i>
           <span class="font-medium">Payments</span>
         </a>
-        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="reports">
+        <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="staff">
+          <i data-lucide="user-cog" class="w-5 h-5"></i>
+          <span class="font-medium">Staff</span>
+        </a>
+        <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="approvals">
+          <i data-lucide="check-circle" class="w-5 h-5"></i>
+          <span class="font-medium">Approvals</span>
+        </a>
+        <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="invoice">
+          <i data-lucide="file-text" class="w-5 h-5"></i>
+          <span class="font-medium">Invoice Generator</span>
+        </a>
+        <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="reports">
           <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
           <span class="font-medium">Reports</span>
         </a>
       </nav>
 
       <div class="mt-8 pt-6 border-t border-slate-700">
-        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="settings">
+        <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg" data-page="settings">
           <i data-lucide="settings" class="w-5 h-5"></i>
           <span class="font-medium">Settings</span>
         </a>
@@ -208,14 +253,14 @@
               <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
             <div>
-              <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Dashboard</h2>
-              <p class="text-sm text-slate-500 hidden sm:block">Welcome back, manage your ISP business</p>
+              <h2 id="pageTitle" class="text-xl sm:text-2xl font-bold text-slate-900">Dashboard</h2>
+              <p id="pageSubtitle" class="text-sm text-slate-500 hidden sm:block">Welcome back, manage your ISP business</p>
             </div>
           </div>
           <div class="flex items-center gap-3">
             <button class="p-2 rounded-lg hover:bg-slate-100 relative">
               <i data-lucide="bell" class="w-5 h-5 text-slate-600"></i>
-              <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              <span id="notificationCount" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
             <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
               <div class="hidden sm:block text-right">
@@ -233,127 +278,426 @@
 
     <!-- Content Wrapper -->
     <div class="content-wrapper px-4 sm:px-6 lg:px-8 py-6">
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
-        <div class="stat-card card p-6 text-white" style="--grad-from: #3b82f6; --grad-to: #2563eb;">
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <i data-lucide="users" class="w-6 h-6"></i>
+      
+      <!-- Dashboard Page -->
+      <div id="dashboard" class="page-section active">
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+          <div class="stat-card card p-6 text-white" style="--grad-from: #3b82f6; --grad-to: #2563eb;">
+            <div class="relative z-10">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">+12%</span>
               </div>
-              <span class="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">+12%</span>
+              <p class="text-sm text-white/80 mb-1">Total Customers</p>
+              <h3 id="totalCustomers" class="stat-value text-3xl font-bold">1,284</h3>
             </div>
-            <p class="text-sm text-white/80 mb-1">Total Customers</p>
-            <h3 class="stat-value text-3xl font-bold">1,284</h3>
+          </div>
+
+          <div class="stat-card card p-6 text-white" style="--grad-from: #10b981; --grad-to: #059669;">
+            <div class="relative z-10">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">+8%</span>
+              </div>
+              <p class="text-sm text-white/80 mb-1">Monthly Revenue</p>
+              <h3 id="monthlyRevenue" class="stat-value text-3xl font-bold">$42,580</h3>
+            </div>
+          </div>
+
+          <div class="stat-card card p-6 text-white" style="--grad-from: #f59e0b; --grad-to: #d97706;">
+            <div class="relative z-10">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">-3%</span>
+              </div>
+              <p class="text-sm text-white/80 mb-1">Pending Bills</p>
+              <h3 id="pendingBills" class="stat-value text-3xl font-bold">86</h3>
+            </div>
+          </div>
+
+          <div class="stat-card card p-6 text-white" style="--grad-from: #8b5cf6; --grad-to: #7c3aed;">
+            <div class="relative z-10">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <i data-lucide="trending-up" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">+15%</span>
+              </div>
+              <p class="text-sm text-white/80 mb-1">Active Packages</p>
+              <h3 id="activePackages" class="stat-value text-3xl font-bold">964</h3>
+            </div>
           </div>
         </div>
 
-        <div class="stat-card card p-6 text-white" style="--grad-from: #10b981; --grad-to: #059669;">
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+          <div class="card p-6 lg:col-span-2">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-lg font-bold text-slate-900">Revenue Overview</h3>
+                <p class="text-sm text-slate-500">Monthly collection statistics</p>
               </div>
-              <span class="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">+8%</span>
+              <select id="revenuePeriod" class="text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="6m">Last 6 Months</option>
+                <option value="1y">Last Year</option>
+              </select>
             </div>
-            <p class="text-sm text-white/80 mb-1">Monthly Revenue</p>
-            <h3 class="stat-value text-3xl font-bold">$42,580</h3>
+            <div class="chart-container">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card p-6">
+            <div class="mb-6">
+              <h3 class="text-lg font-bold text-slate-900">Package Distribution</h3>
+              <p class="text-sm text-slate-500">Customer by package type</p>
+            </div>
+            <div class="chart-container">
+              <canvas id="packageChart"></canvas>
+            </div>
           </div>
         </div>
 
-        <div class="stat-card card p-6 text-white" style="--grad-from: #f59e0b; --grad-to: #d97706;">
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <i data-lucide="alert-circle" class="w-6 h-6"></i>
-              </div>
-              <span class="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">-3%</span>
-            </div>
-            <p class="text-sm text-white/80 mb-1">Pending Bills</p>
-            <h3 class="stat-value text-3xl font-bold">86</h3>
-          </div>
-        </div>
-
-        <div class="stat-card card p-6 text-white" style="--grad-from: #8b5cf6; --grad-to: #7c3aed;">
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <i data-lucide="trending-up" class="w-6 h-6"></i>
-              </div>
-              <span class="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">+15%</span>
-            </div>
-            <p class="text-sm text-white/80 mb-1">Active Packages</p>
-            <h3 class="stat-value text-3xl font-bold">964</h3>
-          </div>
-        </div>
-      </div>
-
-      <!-- Charts Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-        <div class="card p-6 lg:col-span-2">
-          <div class="flex items-center justify-between mb-6">
+        <!-- Recent Bills -->
+        <div class="card p-4 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h3 class="text-lg font-bold text-slate-900">Revenue Overview</h3>
-              <p class="text-sm text-slate-500">Monthly collection statistics</p>
+              <h3 class="text-lg font-bold text-slate-900">Recent Bills</h3>
+              <p class="text-sm text-slate-500">Latest billing transactions</p>
             </div>
-            <select class="text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-              <option>Last 6 Months</option>
-              <option>Last Year</option>
-            </select>
-          </div>
-          <div class="chart-container">
-            <canvas id="revenueChart"></canvas>
-          </div>
-        </div>
-
-        <div class="card p-6">
-          <div class="mb-6">
-            <h3 class="text-lg font-bold text-slate-900">Package Distribution</h3>
-            <p class="text-sm text-slate-500">Customer by package type</p>
-          </div>
-          <div class="chart-container">
-            <canvas id="packageChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Bills Table -->
-      <div class="card p-4 sm:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h3 class="text-lg font-bold text-slate-900">Recent Bills</h3>
-            <p class="text-sm text-slate-500">Latest billing transactions</p>
-          </div>
-          <div class="flex gap-2">
-            <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+            <button onclick="openModal('billModal')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
               <i data-lucide="plus" class="w-4 h-4"></i>
               <span>New Bill</span>
             </button>
           </div>
-        <div class="table-wrapper">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-slate-200">
-                <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Bill ID</th>
-                <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Customer</th>
-                <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Package</th>
-                <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Amount</th>
-                <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">Date</th>
-              </tr>
-            </thead>
-            <tbody id="billsTableBody">
-              <!-- Populated by JS -->
-            </tbody>
-          </table>
+          <div class="table-wrapper">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-slate-200">
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Bill ID</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Customer</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Package</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Amount</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">Date</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="billsTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
+
+      <!-- Customers Page -->
+      <div id="customers" class="page-section">
+        <div class="card p-4 sm:p-6 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Customer Management</h3>
+              <p class="text-sm text-slate-500">Manage all your ISP customers</p>
+            </div>
+            <button onclick="openModal('customerModal')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Add Customer</span>
+            </button>
+          </div>
+          <div class="mb-4 flex gap-2">
+            <input type="text" id="customerSearch" placeholder="Search customers..." class="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <select id="customerFilter" class="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+          <div class="table-wrapper">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-slate-200">
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Name</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Email</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Phone</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden lg:table-cell">Package</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="customersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bills Page -->
+      <div id="bills" class="page-section">
+        <div class="card p-4 sm:p-6 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Bills Management</h3>
+              <p class="text-sm text-slate-500">Track and manage all bills</p>
+            </div>
+            <button onclick="openModal('billModal')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Create Bill</span>
+            </button>
+          </div>
+          <div class="mb-4 flex flex-wrap gap-2">
+            <input type="text" id="billSearch" placeholder="Search bills..." class="flex-1 min-w-[200px] px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <select id="billStatusFilter" class="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="all">All Status</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+              <option value="Overdue">Overdue</option>
+            </select>
+            <input type="month" id="billMonthFilter" class="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+          <div class="table-wrapper">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-slate-200">
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Bill #</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Customer</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Package</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Amount</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Due Date</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="allBillsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Packages Page -->
+      <div id="packages" class="page-section">
+        <div class="card p-4 sm:p-6 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Internet Packages</h3>
+              <p class="text-sm text-slate-500">Manage your service packages</p>
+            </div>
+            <button onclick="openModal('packageModal')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>New Package</span>
+            </button>
+          </div>
+          <div id="packagesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"></div>
+        </div>
+      </div>
+
+      <!-- Payments Page -->
+      <div id="payments" class="page-section">
+        <div class="card p-4 sm:p-6 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Payments</h3>
+              <p class="text-sm text-slate-500">Track all payment transactions</p>
+            </div>
+            <button onclick="openModal('paymentModal')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Record Payment</span>
+            </button>
+          </div>
+          <div class="table-wrapper">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-slate-200">
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Payment ID</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Customer</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Bill #</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Amount</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">Method</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Date</th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff Page -->
+      <div id="staff" class="page-section">
+        <div class="card p-4 sm:p-6 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Staff Management</h3>
+              <p class="text-sm text-slate-500">Manage your team members</p>
+            </div>
+            <button onclick="openModal('staffModal')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Add Staff</span>
+            </button>
+          </div>
+          <div class="table-wrapper">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-slate-200">
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Name</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Email</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Role</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                  <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="staffTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Approvals Page -->
+      <div id="approvals" class="page-section">
+        <div class="card p-4 sm:p-6 mb-6">
+          <div class="mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Pending Approvals</h3>
+            <p class="text-sm text-slate-500">Review and approve pending requests</p>
+          </div>
+          <div id="approvalsList" class="space-y-4"></div>
+        </div>
+      </div>
+
+      <!-- Invoice Generator Page -->
+      <div id="invoice" class="page-section">
+        <div class="card p-4 sm:p-6 mb-6">
+          <div class="mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Invoice Generator</h3>
+            <p class="text-sm text-slate-500">Create and download professional invoices</p>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Select Customer</label>
+                  <select id="invoiceCustomer" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="">Choose customer...</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Select Bill</label>
+                  <select id="invoiceBill" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="">Choose bill...</option>
+                  </select>
+                </div>
+                <button onclick="generateInvoice()" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                  <i data-lucide="file-text" class="w-4 h-4"></i>
+                  <span>Generate Invoice</span>
+                </button>
+              </div>
+            </div>
+            <div id="invoicePreview" class="border border-slate-200 rounded-lg p-6 bg-slate-50 min-h-[400px] flex items-center justify-center text-slate-400">
+              <div class="text-center">
+                <i data-lucide="file-text" class="w-16 h-16 mx-auto mb-4 opacity-20"></i>
+                <p>Invoice preview will appear here</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reports Page -->
+      <div id="reports" class="page-section">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div class="card p-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Revenue Report</h3>
+            <div class="chart-container">
+              <canvas id="reportRevenueChart"></canvas>
+            </div>
+          </div>
+          <div class="card p-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Customer Growth</h3>
+            <div class="chart-container">
+              <canvas id="reportCustomerChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="card p-4 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Generate Reports</h3>
+              <p class="text-sm text-slate-500">Export detailed reports</p>
+            </div>
+            <div class="flex gap-2">
+              <input type="month" id="reportMonth" class="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <button onclick="exportReport()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export</span>
+              </button>
+            </div>
+          </div>
+          <div id="reportSummary" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        </div>
+      </div>
+
+      <!-- Settings Page -->
+      <div id="settings" class="page-section">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="card p-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Company Settings</h3>
+            <form id="companySettingsForm" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Company Name</label>
+                <input type="text" id="companyName" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                <input type="email" id="companyEmail" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Phone</label>
+                <input type="tel" id="companyPhone" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Address</label>
+                <textarea id="companyAddress" rows="3" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+              </div>
+              <button type="submit" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Save Settings</button>
+            </form>
+          </div>
+          <div class="card p-6 lg:col-span-2">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">System Configuration</h3>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                <div>
+                  <p class="font-medium text-slate-900">Email Notifications</p>
+                  <p class="text-sm text-slate-500">Send email notifications to customers</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="emailNotifications" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                <div>
+                  <p class="font-medium text-slate-900">Auto Bill Generation</p>
+                  <p class="text-sm text-slate-500">Automatically generate monthly bills</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="autoBillGeneration" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Footer -->
     <footer class="footer bg-white border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-4 mt-auto">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-slate-500">
-        <p>&copy; 2024 OwnsBill - ISP Reseller Billing v2. All rights reserved.</p>
+        <p>&copy; 2024 OwnsBill - ISP Reseller Billing v3. All rights reserved.</p>
         <div class="flex gap-4">
           <a href="#" class="hover:text-blue-600 transition-colors">Privacy</a>
           <a href="#" class="hover:text-blue-600 transition-colors">Terms</a>
@@ -364,9 +708,340 @@
   </div>
 </div>
 
+<!-- Modals -->
+<!-- Customer Modal -->
+<div id="customerModal" class="modal fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto slide-in">
+    <div class="p-6 border-b border-slate-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-slate-900">Add Customer</h3>
+        <button onclick="closeModal('customerModal')" class="p-2 hover:bg-slate-100 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <form id="customerForm" class="p-6 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Full Name *</label>
+          <input type="text" id="customerName" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Email *</label>
+          <input type="email" id="customerEmail" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Phone *</label>
+          <input type="tel" id="customerPhone" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Package *</label>
+          <select id="customerPackage" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="">Select package...</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-slate-700 mb-2">Address</label>
+          <textarea id="customerAddress" rows="3" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="closeModal('customerModal')" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-colors">Cancel</button>
+        <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Save Customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bill Modal -->
+<div id="billModal" class="modal fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto slide-in">
+    <div class="p-6 border-b border-slate-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-slate-900">Create Bill</h3>
+        <button onclick="closeModal('billModal')" class="p-2 hover:bg-slate-100 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <form id="billForm" class="p-6 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Customer *</label>
+          <select id="billCustomer" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="">Select customer...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Amount *</label>
+          <input type="number" step="0.01" id="billAmount" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Due Date *</label>
+          <input type="date" id="billDueDate" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Status</label>
+          <select id="billStatus" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Overdue">Overdue</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="closeModal('billModal')" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-colors">Cancel</button>
+        <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Create Bill</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Package Modal -->
+<div id="packageModal" class="modal fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto slide-in">
+    <div class="p-6 border-b border-slate-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-slate-900">New Package</h3>
+        <button onclick="closeModal('packageModal')" class="p-2 hover:bg-slate-100 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <form id="packageForm" class="p-6 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Package Name *</label>
+          <input type="text" id="packageName" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Speed (Mbps) *</label>
+          <input type="number" id="packageSpeed" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Price *</label>
+          <input type="number" step="0.01" id="packagePrice" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Color</label>
+          <input type="color" id="packageColor" value="#3b82f6" class="w-full h-[42px] px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-slate-700 mb-2">Features (one per line)</label>
+          <textarea id="packageFeatures" rows="4" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="24/7 Support&#10;Free Installation&#10;Static IP"></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="closeModal('packageModal')" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-colors">Cancel</button>
+        <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Create Package</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="modal fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto slide-in">
+    <div class="p-6 border-b border-slate-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-slate-900">Record Payment</h3>
+        <button onclick="closeModal('paymentModal')" class="p-2 hover:bg-slate-100 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <form id="paymentForm" class="p-6 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Customer *</label>
+          <select id="paymentCustomer" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="">Select customer...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Bill *</label>
+          <select id="paymentBill" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="">Select bill...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Amount *</label>
+          <input type="number" step="0.01" id="paymentAmount" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Payment Method *</label>
+          <select id="paymentMethod" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="">Select method...</option>
+            <option value="Cash">Cash</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="Credit Card">Credit Card</option>
+            <option value="Mobile Payment">Mobile Payment</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-slate-700 mb-2">Notes</label>
+          <textarea id="paymentNotes" rows="2" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="closeModal('paymentModal')" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-colors">Cancel</button>
+        <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Record Payment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Staff Modal -->
+<div id="staffModal" class="modal fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto slide-in">
+    <div class="p-6 border-b border-slate-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-slate-900">Add Staff Member</h3>
+        <button onclick="closeModal('staffModal')" class="p-2 hover:bg-slate-100 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <form id="staffForm" class="p-6 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Full Name *</label>
+          <input type="text" id="staffName" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Email *</label>
+          <input type="email" id="staffEmail" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Phone</label>
+          <input type="tel" id="staffPhone" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Role *</label>
+          <select id="staffRole" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="">Select role...</option>
+            <option value="Admin">Admin</option>
+            <option value="Manager">Manager</option>
+            <option value="Support">Support</option>
+            <option value="Technician">Technician</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-slate-700 mb-2">Permissions</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2">
+              <input type="checkbox" id="permCustomers" class="w-4 h-4 text-blue-600 rounded">
+              <span class="text-sm text-slate-700">Manage Customers</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" id="permBills" class="w-4 h-4 text-blue-600 rounded">
+              <span class="text-sm text-slate-700">Manage Bills</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" id="permPayments" class="w-4 h-4 text-blue-600 rounded">
+              <span class="text-sm text-slate-700">Manage Payments</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="closeModal('staffModal')" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-colors">Cancel</button>
+        <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Add Staff</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script type="module">
   // Initialize Lucide icons
   lucide.createIcons();
+
+  // Firebase setup
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    databaseURL: "https://your-project.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  let db, app;
+  let appData = {
+    customers: {},
+    bills: {},
+    packages: {},
+    payments: {},
+    staff: {},
+    approvals: {},
+    settings: {}
+  };
+
+  // Charts instances
+  let revenueChart, packageChart, reportRevenueChart, reportCustomerChart;
+
+  // Initialize Firebase
+  try {
+    const { initializeApp, getDatabase, signInAnonymously, getAuth } = window.firebaseModules;
+    app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    const auth = getAuth(app);
+    signInAnonymously(auth);
+    loadDataFromFirebase();
+  } catch (error) {
+    console.error('Firebase init error:', error);
+    loadMockData();
+  }
+
+  function loadMockData() {
+    appData = {
+      customers: {
+        'cust1': { name: 'John Doe', email: 'john@example.com', phone: '+1234567890', package: 'Premium 100Mbps', status: 'active' },
+        'cust2': { name: 'Jane Smith', email: 'jane@example.com', phone: '+1234567891', package: 'Standard 50Mbps', status: 'active' },
+        'cust3': { name: 'Bob Johnson', email: 'bob@example.com', phone: '+1234567892', package: 'Basic 25Mbps', status: 'active' }
+      },
+      bills: {
+        'bill1': { id: 'BILL-001', customerId: 'cust1', amount: 89.99, status: 'Paid', dueDate: '2024-07-15' },
+        'bill2': { id: 'BILL-002', customerId: 'cust2', amount: 59.99, status: 'Pending', dueDate: '2024-07-20' },
+        'bill3': { id: 'BILL-003', customerId: 'cust3', amount: 39.99, status: 'Paid', dueDate: '2024-07-18' }
+      },
+      packages: {
+        'pkg1': { name: 'Basic 25Mbps', speed: 25, price: 39.99, color: '#f59e0b', features: ['Basic Support', 'Single Device'] },
+        'pkg2': { name: 'Standard 50Mbps', speed: 50, price: 59.99, color: '#10b981', features: ['Priority Support', '3 Devices'] },
+        'pkg3': { name: 'Premium 100Mbps', speed: 100, price: 89.99, color: '#3b82f6', features: ['24/7 Support', 'Unlimited Devices', 'Static IP'] }
+      },
+      payments: {
+        'pay1': { customerId: 'cust1', billId: 'bill1', amount: 89.99, method: 'Bank Transfer', date: '2024-07-14' },
+        'pay2': { customerId: 'cust3', billId: 'bill3', amount: 39.99, method: 'Credit Card', date: '2024-07-17' }
+      },
+      staff: {
+        'staff1': { name: 'Alice Admin', email: 'alice@ownsbill.com', role: 'Admin', status: 'active' },
+        'staff2': { name: 'Bob Support', email: 'bob@ownsbill.com', role: 'Support', status: 'active' }
+      },
+      approvals: {
+        'app1': { type: 'Customer', name: 'New Customer Request', customerId: 'cust4', status: 'pending' }
+      }
+    };
+    initializeApp();
+  }
+
+  function loadDataFromFirebase() {
+    const { ref, onValue } = window.firebaseModules;
+    onValue(ref(db, '/'), (snapshot) => {
+      const data = snapshot.val() || {};
+      appData = {
+        customers: data.customers || {},
+        bills: data.bills || {},
+        packages: data.packages || {},
+        payments: data.payments || {},
+        staff: data.staff || {},
+        approvals: data.approvals || {},
+        settings: data.settings || {}
+      };
+      initializeApp();
+    });
+  }
 
   // Mobile menu toggle
   const menuBtn = document.getElementById('menuBtn');
@@ -383,59 +1058,585 @@
     overlay.classList.add('hidden');
   });
 
-  // Navigation active state
+  // Page Navigation
+  const pageTitles = {
+    dashboard: { title: 'Dashboard', subtitle: 'Welcome back, manage your ISP business' },
+    customers: { title: 'Customers', subtitle: 'Manage all your ISP customers' },
+    bills: { title: 'Bills', subtitle: 'Track and manage all bills' },
+    packages: { title: 'Packages', subtitle: 'Manage your service packages' },
+    payments: { title: 'Payments', subtitle: 'Track all payment transactions' },
+    staff: { title: 'Staff', subtitle: 'Manage your team members' },
+    approvals: { title: 'Approvals', subtitle: 'Review pending requests' },
+    invoice: { title: 'Invoice Generator', subtitle: 'Create professional invoices' },
+    reports: { title: 'Reports', subtitle: 'View detailed analytics' },
+    settings: { title: 'Settings', subtitle: 'Configure your system' }
+  };
+
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      const page = item.getAttribute('data-page');
+      switchPage(page);
+      
+      document.querySelectorAll('.nav-item').forEach(i => {
+        i.classList.remove('active');
+        i.classList.remove('text-white');
+        i.classList.add('text-slate-300');
+      });
       item.classList.add('active');
+      item.classList.add('text-white');
+      item.classList.remove('text-slate-300');
+      
       if (window.innerWidth < 1024) {
         sidebar.classList.add('-translate-x-full');
         overlay.classList.add('hidden');
       }
+      lucide.createIcons();
     });
   });
 
-  // Mock data for bills table
-  const mockBills = [
-    { id: 'BILL-001', customer: 'John Doe', package: 'Premium 100Mbps', amount: 89.99, status: 'Paid', date: '2024-07-03' },
-    { id: 'BILL-002', customer: 'Jane Smith', package: 'Standard 50Mbps', amount: 59.99, status: 'Pending', date: '2024-07-03' },
-    { id: 'BILL-003', customer: 'Bob Johnson', package: 'Basic 25Mbps', amount: 39.99, status: 'Paid', date: '2024-07-02' },
-    { id: 'BILL-004', customer: 'Alice Williams', package: 'Premium 100Mbps', amount: 89.99, status: 'Overdue', date: '2024-07-01' },
-    { id: 'BILL-005', customer: 'Charlie Brown', package: 'Standard 50Mbps', amount: 59.99, status: 'Paid', date: '2024-07-01' }
-  ];
+  function switchPage(page) {
+    document.querySelectorAll('.page-section').forEach(section => {
+      section.classList.remove('active');
+    });
+    const targetPage = document.getElementById(page);
+    if (targetPage) {
+      targetPage.classList.add('active');
+      const pageInfo = pageTitles[page] || { title: page, subtitle: '' };
+      document.getElementById('pageTitle').textContent = pageInfo.title;
+      document.getElementById('pageSubtitle').textContent = pageInfo.subtitle;
+      
+      // Load page-specific data
+      if (page === 'customers') loadCustomers();
+      if (page === 'bills') loadFilteredBills();
+      if (page === 'packages') loadPackages();
+      if (page === 'payments') loadPayments();
+      if (page === 'staff') loadStaff();
+      if (page === 'approvals') loadApprovals();
+      if (page === 'invoice') loadInvoiceOptions();
+      if (page === 'reports') loadReports();
+    }
+  }
+
+  // Modal functions
+  window.openModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (modalId === 'billModal' || modalId === 'paymentModal') loadBillOptions();
+      if (modalId === 'customerModal' || modalId === 'billModal') loadPackageOptions();
+    }
+  };
+
+  window.closeModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  };
+
+  // Load data functions
+  function loadFilteredBills() {
+    const tbody = document.getElementById('billsTableBody');
+    const allTbody = document.getElementById('allBillsTableBody');
+    
+    let billsHTML = '';
+    Object.entries(appData.bills).forEach(([id, bill]) => {
+      const customer = appData.customers[bill.customerId];
+      const customerName = customer ? customer.name : 'Unknown';
+      const packageName = customer ? customer.package : 'N/A';
+      
+      const row = `
+        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+          <td class="py-3 px-4 text-sm font-medium text-slate-900">${bill.id}</td>
+          <td class="py-3 px-4 text-sm text-slate-700">${customerName}</td>
+          <td class="py-3 px-4 text-sm text-slate-600 hidden md:table-cell">${packageName}</td>
+          <td class="py-3 px-4 text-sm font-semibold text-slate-900">$${bill.amount}</td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bill.status)}">${bill.status}</span>
+          </td>
+          <td class="py-3 px-4 text-sm text-slate-600 hidden sm:table-cell">${bill.dueDate}</td>
+          <td class="py-3 px-4">
+            <button onclick="deleteBill('${id}')" class="text-red-600 hover:text-red-800 transition-colors">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+      
+      if (tbody) tbody.insertAdjacentHTML('beforeend', row);
+      billsHTML += row;
+    });
+    
+    if (allTbody) allTbody.innerHTML = billsHTML;
+    lucide.createIcons();
+    updateStats();
+  }
+
+  function loadCustomers() {
+    const tbody = document.getElementById('customersTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = Object.entries(appData.customers).map(([id, customer]) => `
+      <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+        <td class="py-3 px-4 text-sm font-medium text-slate-900">${customer.name}</td>
+        <td class="py-3 px-4 text-sm text-slate-700">${customer.email}</td>
+        <td class="py-3 px-4 text-sm text-slate-600 hidden md:table-cell">${customer.phone || 'N/A'}</td>
+        <td class="py-3 px-4 text-sm text-slate-600 hidden lg:table-cell">${customer.package || 'N/A'}</td>
+        <td class="py-3 px-4">
+          <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(customer.status)}">${customer.status}</span>
+        </td>
+        <td class="py-3 px-4">
+          <button onclick="deleteCustomer('${id}')" class="text-red-600 hover:text-red-800 transition-colors">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+    lucide.createIcons();
+  }
+
+  function loadPackages() {
+    const grid = document.getElementById('packagesGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = Object.entries(appData.packages).map(([id, pkg]) => `
+      <div class="card p-6" style="border-top: 4px solid ${pkg.color}">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h4 class="text-xl font-bold text-slate-900 mb-1">${pkg.name}</h4>
+            <p class="text-3xl font-bold" style="color: ${pkg.color}">${pkg.speed} Mbps</p>
+          </div>
+          <button onclick="deletePackage('${id}')" class="text-red-600 hover:text-red-800 transition-colors">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <p class="text-2xl font-bold text-slate-900 mb-4">$${pkg.price}<span class="text-sm font-normal text-slate-500">/month</span></p>
+        <ul class="space-y-2 mb-4">
+          ${pkg.features?.map(f => `<li class="flex items-center gap-2 text-sm text-slate-600"><i data-lucide="check" class="w-4 h-4 text-green-600"></i>${f}</li>`).join('') || ''}
+        </ul>
+      </div>
+    `).join('');
+    lucide.createIcons();
+  }
+
+  function loadPayments() {
+    const tbody = document.getElementById('paymentsTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = Object.entries(appData.payments).map(([id, payment]) => {
+      const customer = appData.customers[payment.customerId];
+      const bill = appData.bills[payment.billId];
+      return `
+        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+          <td class="py-3 px-4 text-sm font-medium text-slate-900">${id.substring(0, 8)}</td>
+          <td class="py-3 px-4 text-sm text-slate-700">${customer?.name || 'Unknown'}</td>
+          <td class="py-3 px-4 text-sm text-slate-600 hidden md:table-cell">${bill?.id || 'N/A'}</td>
+          <td class="py-3 px-4 text-sm font-semibold text-slate-900">$${payment.amount}</td>
+          <td class="py-3 px-4 text-sm text-slate-600 hidden sm:table-cell">${payment.method}</td>
+          <td class="py-3 px-4 text-sm text-slate-600">${payment.date}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function loadStaff() {
+    const tbody = document.getElementById('staffTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = Object.entries(appData.staff).map(([id, member]) => `
+      <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+        <td class="py-3 px-4 text-sm font-medium text-slate-900">${member.name}</td>
+        <td class="py-3 px-4 text-sm text-slate-700">${member.email}</td>
+        <td class="py-3 px-4 text-sm text-slate-600 hidden md:table-cell">${member.role}</td>
+        <td class="py-3 px-4">
+          <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(member.status)}">${member.status}</span>
+        </td>
+        <td class="py-3 px-4">
+          <button onclick="deleteStaff('${id}')" class="text-red-600 hover:text-red-800 transition-colors">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+    lucide.createIcons();
+  }
+
+  function loadApprovals() {
+    const list = document.getElementById('approvalsList');
+    if (!list) return;
+    
+    const pendingApprovals = Object.entries(appData.approvals).filter(([_, a]) => a.status === 'pending');
+    
+    if (pendingApprovals.length === 0) {
+      list.innerHTML = '<div class="text-center py-12 text-slate-400"><i data-lucide="check-circle" class="w-16 h-16 mx-auto mb-4 opacity-20"></i><p>No pending approvals</p></div>';
+      lucide.createIcons();
+      return;
+    }
+    
+    list.innerHTML = pendingApprovals.map(([id, approval]) => `
+      <div class="card p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+            <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+          </div>
+          <div>
+            <p class="font-semibold text-slate-900">${approval.type}</p>
+            <p class="text-sm text-slate-500">${approval.name}</p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="approveRequest('${id}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors">
+            Approve
+          </button>
+          <button onclick="rejectRequest('${id}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
+            Reject
+          </button>
+        </div>
+      </div>
+    `).join('');
+    lucide.createIcons();
+  }
+
+  function loadInvoiceOptions() {
+    const customerSelect = document.getElementById('invoiceCustomer');
+    const billSelect = document.getElementById('invoiceBill');
+    
+    if (customerSelect) {
+      customerSelect.innerHTML = '<option value="">Choose customer...</option>' + 
+        Object.entries(appData.customers).map(([id, c]) => `<option value="${id}">${c.name}</option>`).join('');
+    }
+    
+    if (billSelect) {
+      billSelect.innerHTML = '<option value="">Choose bill...</option>' + 
+        Object.entries(appData.bills).map(([id, b]) => {
+          const customer = appData.customers[b.customerId];
+          return `<option value="${id}">${b.id} - ${customer?.name || 'Unknown'} - $${b.amount}</option>`;
+        }).join('');
+    }
+  }
+
+  function loadBillOptions() {
+    const customerSelect = document.getElementById('billCustomer');
+    const paymentCustomer = document.getElementById('paymentCustomer');
+    
+    if (customerSelect) {
+      customerSelect.innerHTML = '<option value="">Select customer...</option>' + 
+        Object.entries(appData.customers).map(([id, c]) => `<option value="${id}">${c.name}</option>`).join('');
+    }
+    
+    if (paymentCustomer) {
+      paymentCustomer.innerHTML = '<option value="">Select customer...</option>' + 
+        Object.entries(appData.customers).map(([id, c]) => `<option value="${id}">${c.name}</option>`).join('');
+      
+      paymentCustomer.onchange = function() {
+        const billSelect = document.getElementById('paymentBill');
+        const customerId = this.value;
+        if (billSelect && customerId) {
+          const customerBills = Object.entries(appData.bills)
+            .filter(([_, b]) => b.customerId === customerId && b.status !== 'Paid')
+            .map(([id, b]) => `<option value="${id}">${b.id} - $${b.amount}</option>`);
+          billSelect.innerHTML = '<option value="">Select bill...</option>' + customerBills.join('');
+        }
+      };
+    }
+  }
+
+  function loadPackageOptions() {
+    const select = document.getElementById('customerPackage');
+    if (select) {
+      select.innerHTML = '<option value="">Select package...</option>' + 
+        Object.values(appData.packages).map(p => `<option value="${p.name}">${p.name} - $${p.price}</option>`).join('');
+    }
+  }
+
+  function loadReports() {
+    initReportCharts();
+    const summary = document.getElementById('reportSummary');
+    if (summary) {
+      const totalRevenue = Object.values(appData.bills)
+        .filter(b => b.status === 'Paid')
+        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+      
+      summary.innerHTML = `
+        <div class="p-4 bg-blue-50 rounded-xl">
+          <p class="text-sm text-blue-600 mb-1">Total Revenue</p>
+          <p class="text-2xl font-bold text-blue-900">$${totalRevenue.toFixed(2)}</p>
+        </div>
+        <div class="p-4 bg-green-50 rounded-xl">
+          <p class="text-sm text-green-600 mb-1">Total Customers</p>
+          <p class="text-2xl font-bold text-green-900">${Object.keys(appData.customers).length}</p>
+        </div>
+        <div class="p-4 bg-yellow-50 rounded-xl">
+          <p class="text-sm text-yellow-600 mb-1">Pending Bills</p>
+          <p class="text-2xl font-bold text-yellow-900">${Object.values(appData.bills).filter(b => b.status === 'Pending').length}</p>
+        </div>
+        <div class="p-4 bg-purple-50 rounded-xl">
+          <p class="text-sm text-purple-600 mb-1">Active Staff</p>
+          <p class="text-2xl font-bold text-purple-900">${Object.values(appData.staff).filter(s => s.status === 'active').length}</p>
+        </div>
+      `;
+    }
+  }
 
   function getStatusColor(status) {
     const colors = {
       'Paid': 'bg-green-100 text-green-700',
       'Pending': 'bg-yellow-100 text-yellow-700',
-      'Overdue': 'bg-red-100 text-red-700'
+      'Overdue': 'bg-red-100 text-red-700',
+      'active': 'bg-green-100 text-green-700',
+      'inactive': 'bg-slate-100 text-slate-700',
+      'suspended': 'bg-red-100 text-red-700'
     };
     return colors[status] || 'bg-slate-100 text-slate-700';
   }
 
-  function loadFilteredBills() {
-    const tbody = document.getElementById('billsTableBody');
-    tbody.innerHTML = mockBills.map(bill => `
-      <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-        <td class="py-3 px-4 text-sm font-medium text-slate-900">${bill.id}</td>
-        <td class="py-3 px-4 text-sm text-slate-700">${bill.customer}</td>
-        <td class="py-3 px-4 text-sm text-slate-600 hidden md:table-cell">${bill.package}</td>
-        <td class="py-3 px-4 text-sm font-semibold text-slate-900">$${bill.amount}</td>
-        <td class="py-3 px-4">
-          <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bill.status)}">${bill.status}</span>
-        </td>
-        <td class="py-3 px-4 text-sm text-slate-600 hidden sm:table-cell">${bill.date}</td>
-      </tr>
-    `).join('');
+  function updateStats() {
+    document.getElementById('totalCustomers').textContent = Object.keys(appData.customers).length;
+    document.getElementById('pendingBills').textContent = Object.values(appData.bills).filter(b => b.status === 'Pending').length;
+    document.getElementById('activePackages').textContent = Object.keys(appData.packages).filter(k => appData.packages[k]).length;
+    
+    const monthlyRev = Object.values(appData.bills)
+      .filter(b => b.status === 'Paid')
+      .reduce((sum, b) => sum + parseFloat(b.amount || 0), 0);
+    document.getElementById('monthlyRevenue').textContent = '$' + monthlyRev.toLocaleString();
   }
 
-  // Initialize charts with proper responsive config
+  // CRUD Operations
+  window.deleteBill = function(id) {
+    if (confirm('Delete this bill?')) {
+      delete appData.bills[id];
+      saveToFirebase('bills');
+      loadFilteredBills();
+    }
+  };
+
+  window.deleteCustomer = function(id) {
+    if (confirm('Delete this customer?')) {
+      delete appData.customers[id];
+      saveToFirebase('customers');
+      loadCustomers();
+    }
+  };
+
+  window.deletePackage = function(id) {
+    if (confirm('Delete this package?')) {
+      delete appData.packages[id];
+      saveToFirebase('packages');
+      loadPackages();
+    }
+  };
+
+  window.deleteStaff = function(id) {
+    if (confirm('Delete this staff member?')) {
+      delete appData.staff[id];
+      saveToFirebase('staff');
+      loadStaff();
+    }
+  };
+
+  window.approveRequest = function(id) {
+    appData.approvals[id].status = 'approved';
+    saveToFirebase('approvals');
+    loadApprovals();
+  };
+
+  window.rejectRequest = function(id) {
+    appData.approvals[id].status = 'rejected';
+    saveToFirebase('approvals');
+    loadApprovals();
+  };
+
+  window.generateInvoice = function() {
+    const customerId = document.getElementById('invoiceCustomer').value;
+    const billId = document.getElementById('invoiceBill').value;
+    
+    if (!customerId || !billId) {
+      alert('Please select both customer and bill');
+      return;
+    }
+    
+    const customer = appData.customers[customerId];
+    const bill = appData.bills[billId];
+    
+    const preview = document.getElementById('invoicePreview');
+    preview.className = 'border border-slate-200 rounded-lg p-6 bg-white min-h-[400px]';
+    preview.innerHTML = `
+      <div class="space-y-4">
+        <div class="text-center border-b pb-4">
+          <h2 class="text-2xl font-bold text-slate-900">INVOICE</h2>
+          <p class="text-sm text-slate-500">OwnsBill ISP Services</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="font-semibold text-slate-700">Bill To:</p>
+            <p class="text-slate-900">${customer.name}</p>
+            <p class="text-slate-600">${customer.email}</p>
+          </div>
+          <div class="text-right">
+            <p class="font-semibold text-slate-700">Invoice #: ${bill.id}</p>
+            <p class="text-slate-600">Date: ${new Date().toLocaleDateString()}</p>
+            <p class="text-slate-600">Due: ${bill.dueDate}</p>
+          </div>
+        </div>
+        <div class="border-t pt-4">
+          <div class="flex justify-between items-center text-lg font-bold">
+            <span>Total Amount:</span>
+            <span class="text-blue-600">$${bill.amount}</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-2">Status: <span class="font-medium ${bill.status === 'Paid' ? 'text-green-600' : 'text-yellow-600'}">${bill.status}</span></p>
+        </div>
+        <button onclick="window.print()" class="w-full mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+          Print Invoice
+        </button>
+      </div>
+    `;
+  };
+
+  window.exportReport = function() {
+    const month = document.getElementById('reportMonth').value || 'All Time';
+    alert(`Exporting report for ${month}...\n\nThis would generate a CSV/PDF file with:\n- Total Revenue\n- Customer Statistics\n- Bill Status Breakdown\n- Payment Methods Analysis`);
+  };
+
+  // Form submissions
+  document.getElementById('customerForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newCustomer = {
+      name: document.getElementById('customerName').value,
+      email: document.getElementById('customerEmail').value,
+      phone: document.getElementById('customerPhone').value,
+      package: document.getElementById('customerPackage').value,
+      address: document.getElementById('customerAddress').value,
+      status: 'active'
+    };
+    const id = 'cust' + Date.now();
+    appData.customers[id] = newCustomer;
+    await saveToFirebase('customers');
+    closeModal('customerModal');
+    e.target.reset();
+    loadCustomers();
+  });
+
+  document.getElementById('billForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const customerId = document.getElementById('billCustomer').value;
+    const billCount = Object.keys(appData.bills).length + 1;
+    const newBill = {
+      id: `BILL-${String(billCount).padStart(3, '0')}`,
+      customerId,
+      amount: parseFloat(document.getElementById('billAmount').value),
+      dueDate: document.getElementById('billDueDate').value,
+      status: document.getElementById('billStatus').value
+    };
+    const id = 'bill' + Date.now();
+    appData.bills[id] = newBill;
+    await saveToFirebase('bills');
+    closeModal('billModal');
+    e.target.reset();
+    loadFilteredBills();
+  });
+
+  document.getElementById('packageForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const features = document.getElementById('packageFeatures').value.split('\n').filter(f => f.trim());
+    const newPackage = {
+      name: document.getElementById('packageName').value,
+      speed: parseInt(document.getElementById('packageSpeed').value),
+      price: parseFloat(document.getElementById('packagePrice').value),
+      color: document.getElementById('packageColor').value,
+      features
+    };
+    const id = 'pkg' + Date.now();
+    appData.packages[id] = newPackage;
+    await saveToFirebase('packages');
+    closeModal('packageModal');
+    e.target.reset();
+    loadPackages();
+  });
+
+  document.getElementById('paymentForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPayment = {
+      customerId: document.getElementById('paymentCustomer').value,
+      billId: document.getElementById('paymentBill').value,
+      amount: parseFloat(document.getElementById('paymentAmount').value),
+      method: document.getElementById('paymentMethod').value,
+      notes: document.getElementById('paymentNotes').value,
+      date: new Date().toISOString().split('T')[0]
+    };
+    
+    // Update bill status to Paid
+    if (appData.bills[newPayment.billId]) {
+      appData.bills[newPayment.billId].status = 'Paid';
+    }
+    
+    const id = 'pay' + Date.now();
+    appData.payments[id] = newPayment;
+    await saveToFirebase('payments');
+    await saveToFirebase('bills');
+    closeModal('paymentModal');
+    e.target.reset();
+    loadPayments();
+    loadFilteredBills();
+  });
+
+  document.getElementById('staffForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const permissions = [];
+    if (document.getElementById('permCustomers').checked) permissions.push('customers');
+    if (document.getElementById('permBills').checked) permissions.push('bills');
+    if (document.getElementById('permPayments').checked) permissions.push('payments');
+    
+    const newStaff = {
+      name: document.getElementById('staffName').value,
+      email: document.getElementById('staffEmail').value,
+      phone: document.getElementById('staffPhone').value,
+      role: document.getElementById('staffRole').value,
+      permissions,
+      status: 'active'
+    };
+    const id = 'staff' + Date.now();
+    appData.staff[id] = newStaff;
+    await saveToFirebase('staff');
+    closeModal('staffModal');
+    e.target.reset();
+    loadStaff();
+  });
+
+  document.getElementById('companySettingsForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    appData.settings = {
+      companyName: document.getElementById('companyName').value,
+      email: document.getElementById('companyEmail').value,
+      phone: document.getElementById('companyPhone').value,
+      address: document.getElementById('companyAddress').value,
+      emailNotifications: document.getElementById('emailNotifications').checked,
+      autoBillGeneration: document.getElementById('autoBillGeneration').checked
+    };
+    await saveToFirebase('settings');
+    alert('Settings saved successfully!');
+  });
+
+  async function saveToFirebase(path) {
+    if (!db) {
+      console.log('Firebase not initialized, using local data only');
+      return;
+    }
+    try {
+      const { ref, set } = window.firebaseModules;
+      await set(ref(db, path), appData[path]);
+    } catch (error) {
+      console.error('Save error:', error);
+    }
+  }
+
+  // Charts
   function initCharts() {
-    // Revenue Chart - Bar
     const revenueCtx = document.getElementById('revenueChart');
     if (revenueCtx) {
-      new Chart(revenueCtx, {
+      revenueChart = new Chart(revenueCtx, {
         type: 'bar',
         data: {
           labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -453,9 +1654,7 @@
           responsive: true,
           maintainAspectRatio: true,
           plugins: {
-            legend: {
-              display: false
-            },
+            legend: { display: false },
             tooltip: {
               backgroundColor: '#1e293b',
               padding: 12,
@@ -470,34 +1669,32 @@
           scales: {
             y: {
               beginAtZero: true,
-              grid: {
-                color: 'rgba(0, 0, 0, 0.05)'
-              },
+              grid: { color: 'rgba(0, 0, 0, 0.05)' },
               ticks: {
                 callback: function(value) {
                   return '$' + value / 1000 + 'k';
                 }
               }
             },
-            x: {
-              grid: {
-                display: false
-              }
-            }
+            x: { grid: { display: false } }
           }
         }
       });
     }
 
-    // Package Distribution - Donut
     const packageCtx = document.getElementById('packageChart');
     if (packageCtx) {
-      new Chart(packageCtx, {
+      const packageCounts = {};
+      Object.values(appData.customers).forEach(c => {
+        packageCounts[c.package] = (packageCounts[c.package] || 0) + 1;
+      });
+      
+      packageChart = new Chart(packageCtx, {
         type: 'doughnut',
         data: {
-          labels: ['Premium', 'Standard', 'Basic'],
+          labels: Object.keys(packageCounts),
           datasets: [{
-            data: [456, 528, 300],
+            data: Object.values(packageCounts),
             backgroundColor: [
               'rgba(59, 130, 246, 0.9)',
               'rgba(16, 185, 129, 0.9)',
@@ -518,9 +1715,7 @@
                 padding: 15,
                 usePointStyle: true,
                 pointStyle: 'circle',
-                font: {
-                  size: 12
-                }
+                font: { size: 12 }
               }
             },
             tooltip: {
@@ -534,27 +1729,76 @@
     }
   }
 
-  // Generate report function example
-  function generateMonthlyBillsReport(month) {
-    const reportTitle = `Monthly Bills Report - ${month}`;
-    console.log(reportTitle);
-    return document.createElement('div');
+  function initReportCharts() {
+    const rrc = document.getElementById('reportRevenueChart');
+    if (rrc && !reportRevenueChart) {
+      reportRevenueChart = new Chart(rrc, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Revenue',
+            data: [32000, 35000, 38000, 36500, 41000, 42580],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    const rcc = document.getElementById('reportCustomerChart');
+    if (rcc && !reportCustomerChart) {
+      reportCustomerChart = new Chart(rcc, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Customers',
+            data: [1100, 1150, 1200, 1220, 1250, 1284],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: false }
+          }
+        }
+      });
+    }
   }
 
-  // Initialize everything on load
-  document.addEventListener('DOMContentLoaded', () => {
-    loadFilteredBills();
+  function initializeApp() {
     initCharts();
-  });
+    loadFilteredBills();
+    updateStats();
+    lucide.createIcons();
+  }
 
   // Handle resize for charts
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      Chart.helpers.each(Chart.instances, (instance) => {
-        instance.resize();
-      });
+      if (revenueChart) revenueChart.resize();
+      if (packageChart) packageChart.resize();
+      if (reportRevenueChart) reportRevenueChart.resize();
+      if (reportCustomerChart) reportCustomerChart.resize();
     }, 250);
   });
 </script>
