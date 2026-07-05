@@ -3812,18 +3812,42 @@ const showInvoicePreview = (bill) => {
     }
   });
 
+
+  // ISP Billing v13 - All Features Working
+  const ZONE_AREAS = {
+      'K. P. Bag': ['Biler Kani', 'Kola Bagan', 'Grameen Towar', 'Shahi Mosjid', 'Talukdar Bari Road', 'Pathan Bari', 'Hazi Bari', 'Bot Tola'],
+      'Uttara': ['Sector 1', 'Sector 3', 'Sector 7', 'Sector 10', 'Sector 12'],
+      'Mirpur': ['Mirpur 1', 'Mirpur 10', 'Mirpur 12', 'Kafrul', 'Pallabi'],
+      'Dhanmondi': ['Dhanmondi 27', 'Dhanmondi 32', 'Jigatola', 'Kalabagan']
+  };
+
+  // Wait for Firebase and DOM - Load zones after auth
+  onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+
+      // Load Zones for all dropdowns
+      const zoneSelects = document.querySelectorAll('#customerZoneSelect, #billsFilterZone, #areaZoneSelect');
+      zoneSelects.forEach(select => {
+          if (select && select.options.length <= 1) {
+              Object.keys(ZONE_AREAS).forEach(zone => {
+                  const opt = document.createElement('option');
+                  opt.value = zone;
+                  opt.textContent = zone;
+                  select.appendChild(opt);
+              });
+          }
+      });
+  });
+
   window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
 </script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
 
 
 
 
 
-<script>
 // ISP Billing v13 - All Features Working
-const ZONE_AREAS = {
     'K. P. Bag': ['Biler Kani', 'Kola Bagan', 'Grameen Towar', 'Shahi Mosjid', 'Talukdar Bari Road', 'Pathan Bari', 'Hazi Bari', 'Bot Tola'],
     'Uttara': ['Sector 1', 'Sector 3', 'Sector 7', 'Sector 10', 'Sector 12'],
     'Mirpur': ['Mirpur 1', 'Mirpur 10', 'Mirpur 12', 'Kafrul', 'Pallabi'],
