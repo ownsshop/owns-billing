@@ -1205,11 +1205,11 @@
           </nav>
 
           <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
-            Copyright © 2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
-            Copyright©2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
           </footer>
         </div>
       </div>
@@ -3478,6 +3478,7 @@ service cloud.firestore {
       const customer = appState.users.find(u => u.id === data.customerId);
       const pkg = appState.packages.find(p => p.id === data.packageId);
       
+      const staffData = appState.users.find(u => u.id === currentUser.uid);
       const invoiceData = {
         invoiceId: 'INV-' + Date.now(),
         customerId: data.customerId,
@@ -3492,6 +3493,7 @@ service cloud.firestore {
         transactionId: data.transactionId || '',
         notes: data.notes || '',
         staffId: currentUser.uid,
+        staffName: staffData?.name || currentUserData?.name || 'Unknown',
         createdAt: serverTimestamp(),
         createdBy: currentUser.uid
       };
