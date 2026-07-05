@@ -636,13 +636,29 @@
       if (!isLoadingData && ['customers','packages'].includes(currentView)) reRenderCurrentView();
     }, 'packages'));
 
-    let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
-    if (currentRole === 'staff') billsQuery = query(billsQuery, where('staffId', '==', currentUser.uid));
-    if (currentRole === 'customer') billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
+    let billsQuery = collection(db, 'bills');
+    if (currentRole === 'staff') {
+      console.log('[Listener] Setting up staff bills query for:', currentUser.uid);
+      billsQuery = query(billsQuery, where('staffId', '==', currentUser.uid));
+    } else if (currentRole === 'customer') {
+      billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
+    } else {
+      // Admin - get all bills, order by createdAt
+      billsQuery = query(billsQuery, orderBy('createdAt', 'desc'), limit(500));
+    }
     
     appState.unsubscribers.push(safeOnSnapshot(billsQuery, (snap) => {
-      appState.bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      console.log('[Listener] Bills updated:', appState.bills.length);
+      let bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sort manually for staff/customer since we can't use orderBy without index
+      if (currentRole !== 'admin') {
+        bills.sort((a, b) => {
+          const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+          const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+          return bTime - aTime;
+        });
+      }
+      appState.bills = bills;
+      console.log('[Listener] Bills updated:', appState.bills.length, 'Role:', currentRole, 'UID:', currentUser.uid);
       if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }, 'bills'));
 
@@ -1193,7 +1209,7 @@
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
-            Copyright©2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
           </footer>
         </div>
       </div>
