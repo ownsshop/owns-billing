@@ -754,8 +754,14 @@
       console.log('[Bills] STAFF VIEW - Bills:', list.length);
     }
     
-    // Apply month filter
+    // Apply ALL filters - Fixed v2
     const monthFilter = document.getElementById('billsFilterMonth')?.value;
+    const zoneFilter = document.getElementById('billsFilterZone')?.value;
+    const areaFilter = document.getElementById('billsFilterArea')?.value;
+    const staffFilter = document.getElementById('billsFilterStaff')?.value;
+    const customerFilter = document.getElementById('billsFilterCustomer')?.value?.toLowerCase().trim();
+    const searchFilter = document.getElementById('search-bill')?.value?.toLowerCase().trim();
+    
     if (monthFilter) {
       list = list.filter(b => {
         if (!b.createdAt?.toDate) return false;
@@ -764,6 +770,43 @@
         return d.getFullYear() == y && (d.getMonth() + 1) == parseInt(m);
       });
     }
+    
+    if (zoneFilter) {
+      list = list.filter(b => {
+        const customer = appState.customers.find(c => c.id === b.customerId);
+        return customer?.zone === zoneFilter;
+      });
+    }
+    
+    if (areaFilter) {
+      list = list.filter(b => {
+        const customer = appState.customers.find(c => c.id === b.customerId);
+        return customer?.area === areaFilter;
+      });
+    }
+    
+    if (staffFilter && isAdminView) {
+      list = list.filter(b => b.staffId === staffFilter);
+    }
+    
+    if (customerFilter) {
+      list = list.filter(b => {
+        const customer = appState.customers.find(c => c.id === b.customerId);
+        const nameMatch = (b.customerName || '').toLowerCase().includes(customerFilter);
+        const mobileMatch = (customer?.mobile || '').toLowerCase().includes(customerFilter);
+        return nameMatch || mobileMatch;
+      });
+    }
+    
+    if (searchFilter) {
+      list = list.filter(b => {
+        const invoice = (b.invoiceId || '').toLowerCase();
+        const customer = (b.customerName || '').toLowerCase();
+        const amount = String(b.amount || '');
+        return invoice.includes(searchFilter) || customer.includes(searchFilter) || amount.includes(searchFilter);
+      });
+    }
+
 
     // CUSTOMER VIEW: ONLY Search + Month + Print
     if (isCustomerView) {
