@@ -3399,12 +3399,12 @@ service cloud.firestore {
                     id="billingMonthPicker" 
                     name="billingMonth" 
                     required 
-                    class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] opacity-0 absolute inset-0 cursor-pointer z-10" 
+                    class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] opacity-0 absolute inset-0 cursor-pointer z-20" 
                     value="${new Date().toISOString().slice(0,7)}"
                   >
-                  <div class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] flex items-center justify-between pointer-events-none">
-                    <span id="billingMonthDisplay" class="text-[rgb(var(--text))]"></span>
-                    <i data-lucide="calendar" class="w-5 h-5 text-slate-400"></i>
+                  <div class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] flex items-center justify-between">
+                    <span id="billingMonthDisplay" class="text-[rgb(var(--text))] pointer-events-none"></span>
+                    <i data-lucide="calendar" class="w-5 h-5 text-slate-400 pointer-events-none"></i>
                   </div>
                 </div>
               </div>
@@ -3466,6 +3466,55 @@ service cloud.firestore {
       monthPicker.addEventListener('input', (e) => {
         monthDisplay.textContent = formatMonthYear(e.target.value);
       });
+
+    // Preview Invoice functionality
+    document.getElementById('preview-invoice-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const form = document.getElementById('invoice-form');
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData);
+      
+      const customer = appState.users.find(u => u.id === data.customerId);
+      const pkg = appState.packages.find(p => p.id === data.packageId);
+      const staffName = currentUserData?.name || 'Unknown';
+      
+      const formatBillingMonth = (value) => {
+        if (!value) return 'N/A';
+        const [year, month] = value.split('-');
+        const date = new Date(year, month - 1);
+        return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+      };
+      
+      showModal(`
+        <div class="modal-content p-6 max-w-2xl">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold">Invoice Preview</h3>
+            <button onclick="closeModal()" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </div>
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="text-sm text-slate-500">Invoice No</label><p class="font-semibold">INV-${Date.now()}</p></div>
+              <div><label class="text-sm text-slate-500">Date</label><p class="font-semibold">${new Date().toLocaleDateString('en-GB')}</p></div>
+              <div><label class="text-sm text-slate-500">Customer</label><p class="font-semibold">${customer?.name || 'N/A'}</p></div>
+              <div><label class="text-sm text-slate-500">Phone</label><p class="font-semibold">${customer?.mobile || 'N/A'}</p></div>
+              <div><label class="text-sm text-slate-500">Package</label><p class="font-semibold">${pkg?.name || 'N/A'}</p></div>
+              <div><label class="text-sm text-slate-500">Amount</label><p class="font-semibold text-sky-500">৳${data.amount || 0}</p></div>
+              <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${formatBillingMonth(data.billingMonth)}</p></div>
+              <div><label class="text-sm text-slate-500">Status</label><p class="font-semibold"><span class="px-3 py-1 rounded-lg ${data.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${data.status}</span></p></div>
+              <div><label class="text-sm text-slate-500">Payment Method</label><p class="font-semibold">${data.method || 'N/A'}</p></div>
+              <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${staffName}</p></div>
+              <div><label class="text-sm text-slate-500">Transaction ID</label><p class="font-semibold">${data.transactionId || 'N/A'}</p></div>
+              <div><label class="text-sm text-slate-500">Notes</label><p class="font-semibold">${data.notes || 'N/A'}</p></div>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-[rgb(var(--border))]">Close Preview</button>
+          </div>
+        </div>
+      `);
+      setTimeout(() => lucide.createIcons(), 0);
+    });
+
     }
   };
   
