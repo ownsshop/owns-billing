@@ -2250,7 +2250,7 @@
             <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${formatBillingMonth(bill.billingMonth)}</p></div>
             <div><label class="text-sm text-slate-500">Status</label><p class="font-semibold"><span class="px-3 py-1 rounded-lg ${bill.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${bill.status}</span></p></div>
             <div><label class="text-sm text-slate-500">Payment Method</label><p class="font-semibold">${bill.method || 'N/A'}</p></div>
-            <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${staffName}</p></div>
+            <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${staffName || appState.users.find(u => u.id === bill.createdBy)?.name || appState.users.find(u => u.id === bill.staffId)?.name || "N/A"}</p></div>
             <div><label class="text-sm text-slate-500">Transaction ID</label><p class="font-semibold">${bill.transactionId || 'N/A'}</p></div>
             <div><label class="text-sm text-slate-500">Notes</label><p class="font-semibold">${bill.notes || 'N/A'}</p></div>
           </div>
@@ -3399,7 +3399,7 @@ service cloud.firestore {
                     id="billingMonthPicker" 
                     name="billingMonth" 
                     required 
-                    class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] opacity-0 absolute inset-0 cursor-pointer z-20" 
+                    class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] opacity-0 absolute inset-0 cursor-pointer z-30" 
                     value="${new Date().toISOString().slice(0,7)}"
                   >
                   <div class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] flex items-center justify-between">
@@ -3502,7 +3502,7 @@ service cloud.firestore {
               <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${formatBillingMonth(data.billingMonth)}</p></div>
               <div><label class="text-sm text-slate-500">Status</label><p class="font-semibold"><span class="px-3 py-1 rounded-lg ${data.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${data.status}</span></p></div>
               <div><label class="text-sm text-slate-500">Payment Method</label><p class="font-semibold">${data.method || 'N/A'}</p></div>
-              <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${staffName}</p></div>
+              <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${staffName || appState.users.find(u => u.id === bill.createdBy)?.name || appState.users.find(u => u.id === bill.staffId)?.name || "N/A"}</p></div>
               <div><label class="text-sm text-slate-500">Transaction ID</label><p class="font-semibold">${data.transactionId || 'N/A'}</p></div>
               <div><label class="text-sm text-slate-500">Notes</label><p class="font-semibold">${data.notes || 'N/A'}</p></div>
             </div>
@@ -3529,6 +3529,14 @@ service cloud.firestore {
       
       const staffData = appState.users.find(u => u.id === currentUser.uid);
       const invoiceData = {
+      invoiceNo: (() => {
+        const today = new Date();
+        const dateStr = today.getFullYear().toString() + 
+                       (today.getMonth()+1).toString().padStart(2,'0') + 
+                       today.getDate().toString().padStart(2,'0');
+        const existingCount = appState.bills.filter(b => b.invoiceNo && b.invoiceNo.includes(dateStr)).length + 1;
+        return `INV-${dateStr}-${existingCount.toString().padStart(4,'0')}`;
+      })(),
         invoiceId: 'INV-' + Date.now(),
         customerId: data.customerId,
         customerName: customer?.name || '',
@@ -3563,6 +3571,36 @@ service cloud.firestore {
       $('#invoice-customer').value = customerId;
       $('#invoice-customer').dispatchEvent(new Event('change'));
     }, 100);
+  };
+
+  
+  window.previewInvoice = () => {
+    const form = document.getElementById('invoice-form');
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    const customer = appState.users.find(u => u.id === data.customerId);
+    const pkg = appState.packages.find(p => p.id === data.packageId);
+    const staffData = appState.users.find(u => u.id === currentUser.uid);
+    
+    const previewBill = {
+      invoiceNo: 'PREVIEW',
+      customerName: customer?.name || 'N/A',
+      customerPhone: customer?.mobile || 'N/A',
+      packageName: pkg?.name || 'N/A',
+      amount: data.amount,
+      billingMonth: data.billingMonth,
+      status: data.status,
+      method: data.method,
+      transactionId: data.transactionId || 'N/A',
+      notes: data.notes || 'N/A',
+      staffName: staffData?.name || currentUserData?.name || 'Unknown',
+      date: new Date().toISOString()
+    };
+    showInvoicePreview(previewBill);
   };
 
   const showInvoicePreview = (bill) => {
