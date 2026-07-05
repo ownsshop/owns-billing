@@ -755,7 +755,7 @@
     }
     
     // Apply ALL filters - Fixed v2
-    const monthFilter = document.getElementById('billsFilterMonth')?.value; // YYYY-MM format
+    const monthFilter = document.getElementById('billsFilterMonth')?.value;
     const zoneFilter = document.getElementById('billsFilterZone')?.value;
     const areaFilter = document.getElementById('billsFilterArea')?.value;
     const staffFilter = document.getElementById('billsFilterStaff')?.value;
@@ -984,27 +984,11 @@
     }
     
     setTimeout(() => {
-      document.getElementById('search-bill')?.addEventListener('input', () => reRenderCurrentView());
+      
       document.getElementById('billsFilterZone')?.addEventListener('change', () => reRenderCurrentView());
       document.getElementById('billsFilterArea')?.addEventListener('change', () => reRenderCurrentView());
       document.getElementById('billsFilterStaff')?.addEventListener('change', () => reRenderCurrentView());
-      const debounce = (func, delay) => {
-    let timeout;
-    return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), delay);
-    };
-};
-const updateBillsTable = () => {
-    const tbody = document.getElementById('bills-tbody');
-    if (tbody) {
-        const filtered = getFilteredBills();
-        tbody.innerHTML = renderBillsTable(filtered);
-        lucide.createIcons();
-    }
-};
-document.getElementById('billsFilterCustomer')?.addEventListener('input', debounce(updateBillsTable, 500));
-document.getElementById('search-bill')?.addEventListener('input', debounce(updateBillsTable, 500));
+      
       document.getElementById('billsFilterMonth')?.addEventListener('change', () => reRenderCurrentView());
       document.getElementById('billsPrintMonthly')?.addEventListener('click', printMonthlyBills);
     }, 100);
@@ -1377,7 +1361,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
           <button onclick="toggleTheme(); closeModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[rgb(var(--border))] text-left" type="button">
             <i data-lucide="${darkMode ? 'sun' : 'moon'}" class="w-5 h-5"></i> Toggle Theme
           </button>
-          <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-rose-500/10 text-rose-600 text-left" type="button">
+          <button id="logout-btn" data-action="logout" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-rose-500/10 text-rose-600 text-left" type="button">
             <i data-lucide="log-out" class="w-5 h-5"></i> Logout
           </button>
         </div>
@@ -2603,7 +2587,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <div class="flex items-center justify-between mb-6">
             <h3 class="font-bold text-lg">Area Management</h3>
-            <button onclick="showAreaForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Area</button>
+            <button id="add-area-btn" data-action="add-area" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Area</button>
           </div>
           <div class="space-y-2">
             ${appState.areas?.map(a => `
@@ -2621,7 +2605,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
           <div class="flex items-center justify-between mb-6">
             <h3 class="font-bold text-lg">Zone Management</h3>
-            <button onclick="showZoneForm()" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Zone</button>
+            <button id="add-zone-btn" data-action="add-zone" class="px-4 py-2 rounded-xl bg-sky-500 text-white text-sm font-semibold" type="button">Add Zone</button>
           </div>
           <div class="space-y-2">
             ${appState.zones?.map(z => `
