@@ -1274,7 +1274,7 @@ function printMonthlyBills() {
           </nav>
 
           <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
-            Copyright © 2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
@@ -3978,12 +3978,34 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     body { font-family: Arial; padding: 20px; }
                     table { width: 100%; border-collapse: collapse; }
                     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background: #f0f0f0; }
-                    h1 { text-align: center; }
+                    th { background: #0ea5e9; color: white; }
+                    h1 { text-align: center; color: #0ea5e9; }
                 </style>
                 </head>
-                <body class="overflow-x-hidden">
+                <body>
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
                 </body>
                 </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        });
+    }
+});
+
+// Make functions globally accessible
+window.showCustomerForm = showCustomerForm;
+window.viewCustomer = viewCustomer;
+window.showStaffForm = showStaffForm;
+window.showPackageForm = showPackageForm;
+window.showAreaForm = showAreaForm;
+window.showZoneForm = showZoneForm;
+window.viewBillDetails = viewBillDetails;
+window.showStaffAccountDetails = showStaffAccountDetails;
+window.handleLogout = handleLogout;
+window.printMonthlyBills = printMonthlyBills;
+window.updateCommandPalette = updateCommandPalette;
+</script>
+</body>
+</html>
