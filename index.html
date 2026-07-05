@@ -266,7 +266,7 @@
 </style>
 
 </head>
-<body class="overflow-x-hidden" class="antialiased">
+<body class="antialiased">
 <div id="auth-loading" class="auth-loading">
   <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center animate-pulse">
     <span class="text-3xl font-bold text-white">O</span>
@@ -343,6 +343,7 @@
     customers: [],
     packages: [],
     bills: [],
+    complaints: [],
     activities: [],
     zones: [],
     areas: [],
@@ -354,7 +355,7 @@
 
   const menuNames = {
     dashboard: 'Dashboard', customers: 'Customers', staff: 'Staff', packages: 'Packages',
-    bills: 'Bills', invoice: 'Invoice Generator', reports: 'Reports',
+    bills: 'Bills', invoice: 'Invoice Generator', complaints: 'Complaints', reports: 'Reports',
     activities: 'Activity Log', settings: 'Settings', mycustomers: 'My Customers',
     mybills: 'My Bills', profile: 'Profile', chat: 'Chat', approvals: 'Approvals',
     mywallet: 'My Wallet', staffaccounts: 'Staff Accounts'
@@ -636,29 +637,13 @@
       if (!isLoadingData && ['customers','packages'].includes(currentView)) reRenderCurrentView();
     }, 'packages'));
 
-    let billsQuery = collection(db, 'bills');
-    if (currentRole === 'staff') {
-      console.log('[Listener] Setting up staff bills query for:', currentUser.uid);
-      billsQuery = query(billsQuery, where('staffId', '==', currentUser.uid));
-    } else if (currentRole === 'customer') {
-      billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
-    } else {
-      // Admin - get all bills, order by createdAt
-      billsQuery = query(billsQuery, orderBy('createdAt', 'desc'), limit(500));
-    }
+    let billsQuery = query(collection(db, 'bills'), orderBy('createdAt', 'desc'), limit(500));
+    if (currentRole === 'staff') billsQuery = query(billsQuery, where('staffId', '==', currentUser.uid));
+    if (currentRole === 'customer') billsQuery = query(billsQuery, where('customerId', '==', currentUser.uid));
     
     appState.unsubscribers.push(safeOnSnapshot(billsQuery, (snap) => {
-      let bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      // Sort manually for staff/customer since we can't use orderBy without index
-      if (currentRole !== 'admin') {
-        bills.sort((a, b) => {
-          const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-          const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-          return bTime - aTime;
-        });
-      }
-      appState.bills = bills;
-      console.log('[Listener] Bills updated:', appState.bills.length, 'Role:', currentRole, 'UID:', currentUser.uid);
+      appState.bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      console.log('[Listener] Bills updated:', appState.bills.length);
       if (!isLoadingData && ['dashboard','bills','reports'].includes(currentView)) reRenderCurrentView();
     }, 'bills'));
 
@@ -729,295 +714,14 @@
   window.showView = showView;
 
   const reRenderCurrentView = () => {
-    const renderBills = (isMyBills = false) => {
-    const container = document.getElementById(isMyBills ? 'view-mybills' : 'view-bills');
-    if (!container) return;
-
-    // CRITICAL: Role detection
-    const isCustomerView = currentRole === 'customer' || isMyBills;
-    const exportBtn = isCustomerView ? `
-      <button onclick="exportCustomerBillsCSV()" class="px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold">
-        <i data-lucide="download" class="w-4 h-4 inline mr-1"></i>Export CSV
-      </button>` : '';
-    const isStaffView = currentRole === 'staff' && !isMyBills;
-    const isAdminView = currentRole === 'admin' && !isMyBills;
-    
-    let list = appState.bills || [];
-    
-    // FILTER BY ROLE FIRST
-    if (isCustomerView) {
-      list = list.filter(b => b.customerId === currentUser.uid);
-      console.log('[Bills] CUSTOMER VIEW - Bills:', list.length);
-    } else if (isStaffView) {
-      // Staff should see bills they created, not just assigned customers
-      // Firestore query already filtered by staffId, so no additional filter needed
-      console.log('[Bills] STAFF VIEW - Bills:', list.length);
-    }
-    
-    // Apply ALL filters - Fixed v2
-    const monthFilter = document.getElementById('billsFilterMonth')?.value; // YYYY-MM format
-    const zoneFilter = document.getElementById('billsFilterZone')?.value;
-    const areaFilter = document.getElementById('billsFilterArea')?.value;
-    const staffFilter = document.getElementById('billsFilterStaff')?.value;
-    const customerFilter = document.getElementById('billsFilterCustomer')?.value?.toLowerCase().trim();
-    const searchFilter = document.getElementById('search-bill')?.value?.toLowerCase().trim();
-    
-    if (monthFilter) {
-      list = list.filter(b => {
-        if (!b.createdAt?.toDate) return false;
-        const d = b.createdAt.toDate();
-        const [y, m] = monthFilter.split('-');
-        return d.getFullYear() == y && (d.getMonth() + 1) == parseInt(m);
-      });
-    }
-    
-    if (zoneFilter) {
-      list = list.filter(b => {
-        const customer = appState.customers.find(c => c.id === b.customerId);
-        return customer?.zone === zoneFilter;
-      });
-    }
-    
-    if (areaFilter) {
-      list = list.filter(b => {
-        const customer = appState.customers.find(c => c.id === b.customerId);
-        return customer?.area === areaFilter;
-      });
-    }
-    
-    if (staffFilter && isAdminView) {
-      list = list.filter(b => b.staffId === staffFilter);
-    }
-    
-    if (customerFilter) {
-      list = list.filter(b => {
-        const customer = appState.customers.find(c => c.id === b.customerId);
-        const nameMatch = (b.customerName || '').toLowerCase().includes(customerFilter);
-        const mobileMatch = (customer?.mobile || '').toLowerCase().includes(customerFilter);
-        return nameMatch || mobileMatch;
-      });
-    }
-    
-    if (searchFilter) {
-      list = list.filter(b => {
-        const invoice = (b.invoiceId || '').toLowerCase();
-        const customer = (b.customerName || '').toLowerCase();
-        const amount = String(b.amount || '');
-        return invoice.includes(searchFilter) || customer.includes(searchFilter) || amount.includes(searchFilter);
-      });
-    }
-
-
-    // CUSTOMER VIEW: ONLY Search + Month + Print
-    if (isCustomerView) {
-      container.innerHTML = `
-        <div class="space-y-4 fade-in">
-          <div class="flex flex-wrap gap-3 items-center">
-            <div class="relative flex-1 min-w-[200px]">
-              <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-            </div>
-            <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <i data-lucide="printer" class="w-4 h-4"></i> Print
-            </button>
-          </div>
-          <div class="glass rounded-2xl overflow-hidden border border-[rgb(var(--border))]">
-            <div class="overflow-x-auto">
-              <table class="w-full">
-                <thead class="bg-[rgb(var(--border))]">
-                  <tr>
-                    <th class="text-left p-4 font-semibold">Invoice</th>
-                    <th class="text-left p-4 font-semibold">Amount</th>
-                    <th class="text-left p-4 font-semibold">Method</th>
-                    <th class="text-left p-4 font-semibold">Status</th>
-                    <th class="text-left p-4 font-semibold">Date</th>
-                    <th class="text-left p-4 font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${list.length ? list.map(b => `
-                    <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/50">
-                      <td class="p-4 font-medium">${b.invoiceId || '-'}</td>
-                      <td class="p-4 text-sky-600 font-bold">${formatCurrency(b.amount)}</td>
-                      <td class="p-4">${b.method || '-'}</td>
-                      <td class="p-4"><span class="px-2 py-1 rounded-lg text-xs font-semibold ${b.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${b.status}</span></td>
-                      <td class="p-4">${b.createdAt?.toDate ? b.createdAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
-                      <td class="p-4">
-                        <button onclick="viewBillDetails('${b.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
-                        ${b.status === 'unpaid' ? `<button onclick="payBill('${b.id}')" class="ml-2 px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold text-sm" type="button">Pay</button>` : ''}
-                      </td>
-                    </tr>
-                  `).join('') : '<tr><td colspan="6" class="p-8 text-center text-slate-500">No bills found</td></tr>'}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-    } 
-    // STAFF VIEW: NO All Staff dropdown
-    else if (isStaffView) {
-      container.innerHTML = `
-        <div class="space-y-4 fade-in">
-          <div class="flex flex-wrap gap-3 items-center">
-            <div class="relative flex-1 min-w-[200px]">
-              <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-            </div>
-            <select id="billsFilterZone" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-              <option value="">All Zones</option>
-              ${(appState.zones || []).map(z => `<option value="${z.name}">${z.name}</option>`).join('')}
-            </select>
-            <select id="billsFilterArea" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-              <option value="">All Areas</option>
-              ${(appState.areas || []).map(a => `<option value="${a.name}">${a.name}</option>`).join('')}
-            </select>
-            <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <i data-lucide="printer" class="w-4 h-4"></i> Print
-            </button>
-            <button onclick="exportBillsCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <i data-lucide="download" class="w-4 h-4"></i> Export CSV
-            </button>
-          </div>
-          <div class="glass rounded-2xl overflow-hidden border border-[rgb(var(--border))]">
-            <div class="overflow-x-auto">
-              <table class="w-full">
-                <thead class="bg-[rgb(var(--border))]">
-                  <tr>
-                    <th class="text-left p-4 font-semibold">Invoice</th>
-                    <th class="text-left p-4 font-semibold">Customer</th>
-                    <th class="text-left p-4 font-semibold">Amount</th>
-                    <th class="text-left p-4 font-semibold">Method</th>
-                    <th class="text-left p-4 font-semibold">Status</th>
-                    <th class="text-left p-4 font-semibold">Date</th>
-                    <th class="text-left p-4 font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${list.length ? list.map(b => `
-                    <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/50">
-                      <td class="p-4 font-medium">${b.invoiceId || '-'}</td>
-                      <td class="p-4">${b.customerName || '-'}</td>
-                      <td class="p-4 text-sky-600 font-bold">${formatCurrency(b.amount)}</td>
-                      <td class="p-4">${b.method || '-'}</td>
-                      <td class="p-4"><span class="px-2 py-1 rounded-lg text-xs font-semibold ${b.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${b.status}</span></td>
-                      <td class="p-4">${b.createdAt?.toDate ? b.createdAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
-                      <td class="p-4">
-                        <button onclick="viewBillDetails('${b.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
-                      </td>
-                    </tr>
-                  `).join('') : '<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>'}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    // ADMIN VIEW: All filters
-    else {
-      container.innerHTML = `
-        <div class="space-y-4 fade-in">
-          <div class="flex flex-wrap gap-3 items-center">
-            <div class="relative flex-1 min-w-[200px]">
-              <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-            </div>
-            <select id="billsFilterZone" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-              <option value="">All Zones</option>
-              ${(appState.zones || []).map(z => `<option value="${z.name}">${z.name}</option>`).join('')}
-            </select>
-            <select id="billsFilterArea" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-              <option value="">All Areas</option>
-              ${(appState.areas || []).map(a => `<option value="${a.name}">${a.name}</option>`).join('')}
-            </select>
-            <select id="billsFilterStaff" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-              <option value="">All Staff</option>
-              ${appState.users.filter(u => u.role === 'staff').map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-            </select>
-            <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <i data-lucide="printer" class="w-4 h-4"></i> Print
-            </button>
-            <button onclick="exportBillsCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <i data-lucide="download" class="w-4 h-4"></i> Export CSV
-            </button>
-          </div>
-          <div class="glass rounded-2xl overflow-hidden border border-[rgb(var(--border))]">
-            <div class="overflow-x-auto">
-              <table class="w-full">
-                <thead class="bg-[rgb(var(--border))]">
-                  <tr>
-                    <th class="text-left p-4 font-semibold">Invoice</th>
-                    <th class="text-left p-4 font-semibold">Customer</th>
-                    <th class="text-left p-4 font-semibold">Amount</th>
-                    <th class="text-left p-4 font-semibold">Method</th>
-                    <th class="text-left p-4 font-semibold">Status</th>
-                    <th class="text-left p-4 font-semibold">Date</th>
-                    <th class="text-left p-4 font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${list.length ? list.map(b => `
-                    <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/50">
-                      <td class="p-4 font-medium">${b.invoiceId || '-'}</td>
-                      <td class="p-4">${b.customerName || '-'}</td>
-                      <td class="p-4 text-sky-600 font-bold">${formatCurrency(b.amount)}</td>
-                      <td class="p-4">${b.method || '-'}</td>
-                      <td class="p-4"><span class="px-2 py-1 rounded-lg text-xs font-semibold ${b.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${b.status}</span></td>
-                      <td class="p-4">${b.createdAt?.toDate ? b.createdAt.toDate().toLocaleDateString('en-GB') : '-'}</td>
-                      <td class="p-4">
-                        <button onclick="viewBillDetails('${b.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" type="button"><i data-lucide="eye" class="w-4 h-4"></i></button>
-                      </td>
-                    </tr>
-                  `).join('') : '<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>'}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    
-    setTimeout(() => {
-      document.getElementById('search-bill')?.addEventListener('input', () => reRenderCurrentView());
-      document.getElementById('billsFilterZone')?.addEventListener('change', () => reRenderCurrentView());
-      document.getElementById('billsFilterArea')?.addEventListener('change', () => reRenderCurrentView());
-      document.getElementById('billsFilterStaff')?.addEventListener('change', () => reRenderCurrentView());
-      const debounce = (func, delay) => {
-    let timeout;
-    return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), delay);
-    };
-};
-const updateBillsTable = () => {
-    const tbody = document.getElementById('bills-tbody');
-    if (tbody) {
-        const filtered = getFilteredBills();
-        tbody.innerHTML = renderBillsTable(filtered);
-        lucide.createIcons();
-    }
-};
-document.getElementById('billsFilterCustomer')?.addEventListener('input', debounce(updateBillsTable, 500));
-document.getElementById('search-bill')?.addEventListener('input', debounce(updateBillsTable, 500));
-      document.getElementById('billsFilterMonth')?.addEventListener('change', () => reRenderCurrentView());
-      document.getElementById('billsPrintMonthly')?.addEventListener('click', printMonthlyBills);
-    }, 100);
-    
-    lucide.createIcons();
-  };
-  const routes = {
+    const routes = {
       dashboard: renderDashboard,
       customers: renderCustomers,
       staff: renderStaff,
       packages: renderPackages,
       bills: renderBills,
       invoice: renderInvoice,
+      complaints: renderComplaints,
       reports: renderReports,
       activities: renderActivities,
       settings: renderSettings,
@@ -1103,6 +807,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
         { id: 'bills', label: 'Bills', icon: 'receipt' },
         { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
         { id: 'staffaccounts', label: 'Staff Accounts', icon: 'wallet' },
+        { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
         { id: 'reports', label: 'Reports', icon: 'bar-chart-3' },
         { id: 'activities', label: 'Activity Log', icon: 'history' },
         { id: 'settings', label: 'Settings', icon: 'settings' }
@@ -1113,12 +818,15 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
         { id: 'bills', label: 'Bills', icon: 'receipt' },
         { id: 'invoice', label: 'Invoice Generator', icon: 'file-text' },
         { id: 'mywallet', label: 'My Wallet', icon: 'wallet' },
+        { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
         { id: 'reports', label: 'Reports', icon: 'bar-chart-3' }
       ],
       customer: [
         { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
         { id: 'mybills', label: 'My Bills', icon: 'receipt' },
-        { id: 'profile', label: 'Profile', icon: 'user' }
+        { id: 'profile', label: 'Profile', icon: 'user' },
+        { id: 'complaints', label: 'Complaints', icon: 'message-circle-warning' },
+        { id: 'chat', label: 'Chat', icon: 'messages-square' }
       ]
     };
 
@@ -1255,7 +963,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
             </div>
           </header>
 
-          <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6 lg:ml-64 transition-all duration-300">
+          <main id="content" class="flex-1 overflow-y-auto p-3 md:p-6">
             ${viewSections}
           </main>
 
@@ -1264,11 +972,11 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
           </nav>
 
           <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
-            Copyright © 2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
-            Copyright©2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Website Developed by: P.M.Monir
           </footer>
         </div>
       </div>
@@ -1350,17 +1058,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
 
   window.showProfileMenu = () => {
     const userPhoto = currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <div class="flex items-center gap-4 mb-6">
           <img src="${userPhoto}" class="w-16 h-16 rounded-2xl">
@@ -1761,17 +1459,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
     const areaOptions = (appState.areas || []).map(a => `<option value="${a.name}" ${customer?.area===a.name?'selected':''}>${a.name}</option>`).join('');
     const zoneOptions = (appState.zones || []).map(z => `<option value="${z.name}" ${customer?.zone===z.name?'selected':''}>${z.name}</option>`).join('');
     
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
         <form id="customer-form">
@@ -1782,8 +1470,8 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
             <div><label class="text-sm font-medium mb-2 block">WhatsApp *</label><input type="tel" name="whatsapp" value="${customer?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Imo</label><input type="tel" name="imo" value="${customer?.imo||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">NID</label><input type="text" name="nid" value="${customer?.nid||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
-            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" id="customerZoneSelect" data-zone-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
-            <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" id="customerAreaSelect" data-area-select="true" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">Zone *</label><select name="zone" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Zone</option>${zoneOptions}</select></div>
+            <div><label class="text-sm font-medium mb-2 block">Area *</label><select name="area" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Area</option>${areaOptions}</select></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE User</label><input type="text" name="pppoeUser" value="${customer?.pppoeUser||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">PPPoE Pass</label><input type="text" name="pppoePass" value="${customer?.pppoePass||''}" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
@@ -1792,7 +1480,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
             ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" id="customer-submit-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
+            <button type="submit" id="customer-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -1823,14 +1511,6 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
       
       try {
         console.log('[Customer Create] Starting. Data:', data);
-        // Validation: check required fields
-        if (!data.name || !data.email || !data.password) {
-          showToast('Name, Email and Password are required', 'error');
-          submitBtn.classList.remove('btn-loading');
-          submitBtn.innerHTML = 'Save Customer';
-          return;
-        }
-
         if (id) {
           await updateDoc(doc(db, 'users', id), data);
           await logActivity('Update Customer', `Updated customer: ${data.name}`);
@@ -1882,17 +1562,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
   window.viewCustomer = (id) => {
     const c = appState.users.find(u => u.id === id);
     const bills = appState.bills.filter(b => b.customerId === id);
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Customer Details</h3>
         <div class="space-y-4">
@@ -1970,17 +1640,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
 
   window.showStaffForm = (id = null) => {
     const staff = id ? appState.users.find(u => u.id === id) : null;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff</h3>
         <form id="staff-form">
@@ -1994,7 +1654,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
             ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">Status</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="pending" ${staff?.status === 'pending' ? 'selected' : ''}>Pending</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" id="staff-submit-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
+            <button type="submit" id="staff-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -2122,17 +1782,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
 
   window.showPackageForm = (id = null) => {
     const pkg = id ? appState.packages.find(p => p.id === id) : null;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
         <form id="package-form">
@@ -2142,7 +1792,7 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
             <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -2197,24 +1847,6 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
             <input id="search-bill" type="text" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
-    <select id="billsFilterZone" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Zones</option>
-    </select>
-    <select id="billsFilterArea" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm" disabled>
-        <option value="">All Areas</option>
-    </select>
-    <select id="billsFilterStaff" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-        <option value="">All Staff</option>
-    </select>
-    <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Print Monthly
-    </button>
-</div>
-
           <button onclick="exportBillsCSV()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))] flex items-center gap-2" type="button">
             <i data-lucide="download" class="w-5 h-5"></i> Export CSV
           </button>
@@ -2272,155 +1904,6 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
     `).join('');
   };
 
-  
-  // Bill View and Print Functions - Fixed
-  window.viewBillDetails = (id) => {
-    const bill = appState.bills.find(b => b.id === id);
-    if (!bill) return showToast('Bill not found', 'error');
-    
-    const customer = appState.customers.find(c => c.id === bill.customerId);
-    const customerName = customer?.name || bill.customerName || 'N/A';
-    const customerPhone = customer?.mobile || bill.customerPhone || 'N/A';
-    
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
-      <div class="modal-content p-6 max-w-2xl">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-2xl font-bold">Bill Details</h3>
-          <button onclick="closeModal()" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]"><i data-lucide="x" class="w-5 h-5"></i></button>
-        </div>
-        <div class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div><label class="text-sm text-slate-500">Invoice No</label><p class="font-semibold">${bill.invoiceNo || bill.id}</p></div>
-            <div><label class="text-sm text-slate-500">Date</label><p class="font-semibold">${bill.date ? new Date(bill.date).toLocaleDateString('en-GB') : 'N/A'}</p></div>
-            <div><label class="text-sm text-slate-500">Customer</label><p class="font-semibold">${customerName}</p></div>
-            <div><label class="text-sm text-slate-500">Phone</label><p class="font-semibold">${customerPhone}</p></div>
-            <div><label class="text-sm text-slate-500">Package</label><p class="font-semibold">${bill.packageName || bill.package || 'N/A'}</p></div>
-            <div><label class="text-sm text-slate-500">Amount</label><p class="font-semibold text-sky-500">৳${bill.amount || 0}</p></div>
-            <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${formatBillingMonth(bill.billingMonth)}</p></div>
-            <div><label class="text-sm text-slate-500">Status</label><p class="font-semibold"><span class="px-3 py-1 rounded-lg ${bill.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${bill.status}</span></p></div>
-            <div><label class="text-sm text-slate-500">Payment Method</label><p class="font-semibold">${bill.method || 'N/A'}</p></div>
-            <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${(() => {
-              const creatorId = bill.createdBy || bill.staffId;
-              const creator = appState.users.find(u => u.id === creatorId);
-              return creator?.name || bill.staffName || 'N/A';
-            })()}</p></div>
-            <div><label class="text-sm text-slate-500">Transaction ID</label><p class="font-semibold">${bill.transactionId || 'N/A'}</p></div>
-            <div><label class="text-sm text-slate-500">Notes</label><p class="font-semibold">${bill.notes || 'N/A'}</p></div>
-          </div>
-        </div>
-        <div class="flex gap-3 mt-6">
-                    <button onclick="exportCustomerBillsCSV()" class="px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold">
-            <i data-lucide="download" class="w-4 h-4 inline mr-1"></i>Export CSV
-          </button>
-          <button onclick="printBill('${bill.id}')" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold"><i data-lucide="printer" class="w-4 h-4 inline mr-2"></i>Print</button>
-          <button onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Close</button>
-        </div>
-      </div>
-    `);
-    setTimeout(() => lucide.createIcons(), 0);
-  };
-
-  window.printBill = (id) => {
-    const bill = appState.bills.find(b => b.id === id);
-    if (!bill) return showToast('Bill not found', 'error');
-    
-    const customer = appState.customers.find(c => c.id === bill.customerId);
-    const customerName = customer?.name || bill.customerName || 'N/A';
-    const customerPhone = customer?.mobile || bill.customerPhone || 'N/A';
-    const customerAddress = customer?.address || 'N/A';
-    
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Invoice - ${bill.invoiceNo || bill.id}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-          .company { font-size: 28px; font-weight: bold; color: #0ea5e9; }
-          .info-row { display: flex; justify-content: space-between; margin: 20px 0; }
-          .info-box { width: 48%; }
-          .info-box h3 { margin: 0 0 10px 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-          table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-          th { background: #0ea5e9; color: white; }
-          .total { text-align: right; font-size: 20px; font-weight: bold; margin-top: 20px; }
-          .footer { margin-top: 50px; text-align: center; color: #666; font-size: 12px; }
-          @media print { body { padding: 20px; } }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="company">OwnsLink ISP</div>
-          <p>Internet Service Provider</p>
-        </div>
-        <div class="info-row">
-          <div class="info-box">
-            <h3>Bill To:</h3>
-            <p><strong>${customerName}</strong></p>
-            <p>Phone: ${customerPhone}</p>
-            <p>Address: ${customerAddress}</p>
-          </div>
-          <div class="info-box">
-            <h3>Invoice Details:</h3>
-            <p><strong>Invoice No:</strong> ${bill.invoiceNo || bill.id}</p>
-            <p><strong>Date:</strong> ${bill.date ? new Date(bill.date).toLocaleDateString('en-GB') : 'N/A'}</p>
-            <p><strong>Billing Month:</strong> ${bill.billingMonth || 'N/A'}</p>
-            <p><strong>Status:</strong> ${bill.status?.toUpperCase()}</p>
-          </div>
-        </div>
-        <table>
-          <thead>
-            <tr><th>Description</th><th>Amount</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>${bill.package || 'Internet Service'} - ${bill.billingMonth || 'Monthly'}</td><td>৳${bill.amount || 0}</td></tr>
-          </tbody>
-        </table>
-        <div class="total">Total Amount: ৳${bill.amount || 0}</div>
-        <div class="footer">
-          <p>Thank you for your business!</p>
-          <p>Generated on ${new Date().toLocaleDateString('en-GB')}</p>
-        </div>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    setTimeout(() => printWindow.print(), 250);
-  };
-
-  
-  window.exportCustomerBillsCSV = () => {
-    const myBills = appState.bills.filter(b => b.staffId === currentUser.uid || b.customerId === currentUser.uid);
-    if (myBills.length === 0) return showToast('No bills to export', 'error');
-    
-    let csv = 'Invoice No,Date,Billing Month,Amount,Method,Status\n';
-    myBills.forEach(b => {
-      const date = b.date ? new Date(b.date).toLocaleDateString('en-GB') : '';
-      csv += `"${b.invoiceNo || b.id}","${date}","${b.billingMonth || ''}","${b.amount || 0}","${b.method || ''}","${b.status || ''}"\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `my_bills_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    showToast('CSV exported successfully', 'success');
-  };
-
   window.showInvoicePreviewFromBill = (id) => {
     const bill = appState.bills.find(b => b.id === id);
     if (bill) showInvoicePreview(bill);
@@ -2437,12 +1920,142 @@ document.getElementById('search-bill')?.addEventListener('input', debounce(updat
   };
 
   // v2.2.3 FIX: v2.2.4 ENHANCED: Complaint submission with dual data structure support
-  
+  const renderComplaints = () => {
+    const list = currentRole === 'customer' 
+      ? appState.complaints.filter(c => c.customerId === currentUser.uid)
+      : currentRole === 'staff'
+      ? appState.complaints.filter(c => c.assignedStaffId === currentUser.uid || c.assignedStaffId === null)
+      : appState.complaints;
+
+    const container = document.getElementById('view-complaints');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="space-y-4 fade-in">
+        ${currentRole === 'customer' ? `
+        <button onclick="handleComplaintSubmit()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
+          <i data-lucide="plus" class="w-5 h-5"></i> New Complaint
+        </button>
+        ` : ''}
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading complaints...</span></div>' : `
+        <div class="space-y-3">
+          ${list.length ? list.map(c => `
+            <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-2">
+                    <h4 class="font-bold">${c.subject || '-'}</h4>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${c.status==='resolved'?'bg-emerald-500/20 text-emerald-600':c.status==='in_progress'?'bg-amber-500/20 text-amber-600':'bg-rose-500/20 text-rose-600'}">${c.status || 'pending'}</span>
+                  </div>
+                  <p class="text-sm text-slate-600 dark:text-slate-400">${c.description || '-'}</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between text-xs text-slate-500">
+                <span>By ${c.customerName || '-'} • ${formatDateTime(c.createdAt)}</span>
+                ${currentRole !== 'customer' && c.status !== 'resolved' ? `
+                <button onclick="updateComplaintStatus('${c.id}','resolved')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 font-semibold" type="button">Mark Resolved</button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('') : '<div class="glass rounded-2xl p-8 text-center text-slate-500">No complaints found</div>'}
+        </div>
+        `}
+      </div>
+    `;
+  };
 
   // v2.2.4 FIX: Handle both users doc and customers collection structures
-  
+  window.handleComplaintSubmit = () => {
+    showModal(`
+      <div class="modal-content p-6">
+        <h3 class="text-xl font-bold mb-6">Submit Complaint</h3>
+        <form id="complaint-form" class="space-y-4">
+          <div><label class="text-sm font-medium mb-2 block">Subject *</label><input type="text" name="subject" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><label class="text-sm font-medium mb-2 block">Description *</label><textarea name="description" rows="4" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
+            <button type="submit" id="complaint-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit</button>
+            <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `);
 
-  
+    $('#complaint-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = $('#complaint-submit-btn');
+      submitBtn.classList.add('btn-loading');
+      submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 inline mr-2"></i>Submitting...';
+      lucide.createIcons();
+
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      
+      try {
+        console.log('[Complaint Submit v2.2.4] Starting submission');
+        console.log('[Complaint Submit] Current user data:', currentUserData);
+        
+        if (!currentUser || !currentUserData || currentUserData.role !== 'customer') {
+          throw new Error('Only customers can submit complaints');
+        }
+
+        // v2.2.4 FIX: Flexible customer data extraction
+        // Works with both: users doc only OR users + customers collection
+        const customerId = currentUserData.customerId || currentUser.uid;
+        const customerName = currentUserData.name || currentUser.email || 'Unknown Customer';
+        const customerMobile = currentUserData.mobile || currentUserData.whatsapp || '';
+        const assignedStaffId = currentUserData.assignedStaffId || currentUserData.assignedStaff || null;
+
+        const complaintData = {
+          subject: data.subject.trim(),
+          description: data.description.trim(),
+          customerId: customerId,
+          customerName: customerName,
+          customerMobile: customerMobile,
+          assignedStaffId: assignedStaffId,
+          status: 'pending',
+          createdAt: serverTimestamp(),
+          createdBy: currentUser.uid
+        };
+
+        console.log('[Complaint Submit v2.2.4] Final complaint data:', complaintData);
+        
+        const docRef = await addDoc(collection(db, 'complaints'), complaintData);
+        console.log('[Complaint Submit] Success! Doc ID:', docRef.id);
+        
+        await logActivity('Complaint', `New complaint: ${data.subject}`);
+        
+        showToast('Complaint submitted successfully', 'success');
+        closeModal();
+        setTimeout(() => renderComplaints(), 500);
+        
+      } catch (error) {
+        console.error('[Complaint Submit v2.2.4] Error details:', error);
+        console.error('[Complaint Submit] Error code:', error.code);
+        console.error('[Complaint Submit] Error message:', error.message);
+        
+        let errorMsg = 'Failed to submit complaint';
+        if (error.code === 'permission-denied') {
+          errorMsg = 'Permission denied. Please check your account status or contact admin.';
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+        
+        showToast(errorMsg, 'error');
+      } finally {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.innerHTML = 'Submit';
+        lucide.createIcons();
+      }
+    });
+  };
+
+  window.updateComplaintStatus = async (id, status) => {
+    try {
+      await updateDoc(doc(db, 'complaints', id), { status, updatedAt: serverTimestamp() });
+      await logActivity('Complaint Update', `Status changed to ${status}`);
+      showToast('Status updated', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
 
   const renderReports = () => {
     const container = document.getElementById('view-reports');
@@ -2726,58 +2339,21 @@ service cloud.firestore {
 
   window.showAreaForm = (id = null) => {
     const area = id ? appState.areas.find(a => a.id === id) : null;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
         <form id="area-form">
           <div>
-            
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-300 mb-2">Zone *</label>
-    <select id="areaZoneSelect" name="zone" required class="w-full px-4 py-2.5 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
-        <option value="">Select Zone</option>
-    </select>
-</div>
-<label class="text-sm font-medium mb-2 block">Area Name *</label>
+            <label class="text-sm font-medium mb-2 block">Area Name *</label>
             <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
       </div>
     `);
-    
-    // Fix: Populate Zone dropdown with available zones
-    setTimeout(() => {
-      const zoneSelect = document.getElementById('areaZoneSelect');
-      if (zoneSelect && zoneSelect.options.length <= 1) {
-        // Use appState.zones if available, otherwise ZONE_AREAS
-        const zones = (appState.zones && appState.zones.length > 0) 
-          ? appState.zones.map(z => z.name) 
-          : Object.keys(ZONE_AREAS);
-        
-        zones.forEach(zone => {
-          const opt = document.createElement('option');
-          opt.value = zone;
-          opt.textContent = zone;
-          if (area?.zone === zone) opt.selected = true;
-          zoneSelect.appendChild(opt);
-        });
-      }
-    }, 0);
-
 
     $('#area-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -2812,17 +2388,7 @@ service cloud.firestore {
 
   window.showZoneForm = (id = null) => {
     const zone = id ? appState.zones.find(z => z.id === id) : null;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Zone</h3>
         <form id="zone-form">
@@ -2830,7 +2396,7 @@ service cloud.firestore {
             <label class="text-sm font-medium mb-2 block">Zone Name *</label>
             <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -3110,22 +2676,12 @@ service cloud.firestore {
   };
 
   window.showDepositForm = () => {
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
         <form id="deposit-form" class="space-y-4">
           <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
-            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -3156,22 +2712,12 @@ service cloud.firestore {
   };
 
   window.showSalaryRequestForm = () => {
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Request Salary</h3>
         <form id="salary-form" class="space-y-4">
           <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
-            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -3282,17 +2828,7 @@ service cloud.firestore {
     const deposits = appState.staffDeposits.filter(d => d.staffId === staffId);
     const salaries = appState.salaryRequests.filter(s => s.staffId === staffId);
     
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'} <span class="badge ${staff.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : staff.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">${staff.status || 'approved'}</span></h3>
         
@@ -3355,22 +2891,12 @@ service cloud.firestore {
   };
 
   window.paySalary = (id) => {
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
-    
-    const formatBillingMonth = (value) => {
-      if (!value) return 'N/A';
-      const [year, month] = value.split('-');
-      const date = new Date(year, month - 1);
-      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-    };
-    
-        showModal(`
+    showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
         <form id="pay-salary-form" class="space-y-4">
           <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
-            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -3399,234 +2925,108 @@ service cloud.firestore {
   };
 
   const renderInvoice = () => {
+    const customers = currentRole === 'staff' 
+      ? appState.users.filter(u => u.role === 'customer' && u.assignedStaff === currentUser.uid && (u.status === 'approved' || !u.status))
+      : appState.users.filter(u => u.role === 'customer' && (u.status === 'approved' || !u.status));
+
     const container = document.getElementById('view-invoice');
     if (!container) return;
-    
-    const customers = appState.users.filter(u => u.role === 'customer' && u.status === 'approved');
-    const packages = appState.packages || [];
-    
-    const customerOptions = customers.map(c => 
-      `<option value="${c.id}" data-package="${c.packageId || ''}" data-amount="${packages.find(p => p.id === c.packageId)?.price || 0}">${c.name} - ${c.mobile}</option>`
-    ).join('');
-    
-    const packageOptions = packages.map(p => 
-      `<option value="${p.id}" data-price="${p.price}">${p.name} - ${formatCurrency(p.price)}</option>`
-    ).join('');
 
     container.innerHTML = `
       <div class="max-w-4xl mx-auto space-y-6 fade-in">
         <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))]">
-          <h3 class="text-xl font-bold mb-6">Generate Invoice</h3>
+          <h3 class="font-bold text-lg mb-6">Generate Invoice</h3>
           <form id="invoice-form" class="space-y-4">
             <div class="grid md:grid-cols-2 gap-4">
               <div>
                 <label class="text-sm font-medium mb-2 block">Select Customer *</label>
-                <select id="invoiceCustomer" name="customerId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+                <select id="invoice-customer" name="customerId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
                   <option value="">Choose customer</option>
-                  ${customerOptions}
-                </select>
-              </div>
-              <div>
-                <label class="text-sm font-medium mb-2 block">Package *</label>
-                <select id="invoicePackage" name="packageId" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">Select package</option>
-                  ${packageOptions}
+                  ${customers.map(c => `<option value="${c.id}" data-customer='${JSON.stringify(c)}'>${c.name} - ${c.mobile}</option>`).join('')}
                 </select>
               </div>
               <div>
                 <label class="text-sm font-medium mb-2 block">Amount *</label>
-                <input type="number" id="invoiceAmount" name="amount" required readonly class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-              </div>
-              <div>
+                <input type="number" name="amount" id="invoice-amount" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div>
                 <label class="text-sm font-medium mb-2 block">Payment Method *</label>
-                <select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="">Select method</option>
-                  <option value="Cash">Cash</option>
-                  <option value="bKash">bKash</option>
-                  <option value="Nagad">Nagad</option>
-                  <option value="Bank">Bank Transfer</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-sm font-medium mb-2 block">Status *</label>
-                <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-                  <option value="paid">Paid</option>
-                  <option value="unpaid">Unpaid</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-sm font-medium mb-2 block">Billing Month *</label>
-                <div class="relative">
-                  <input 
-                    type="month" 
-                    id="billingMonthPicker" 
-                    name="billingMonth" 
-                    required 
-                    class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] opacity-0 absolute inset-0 cursor-pointer z-30" 
-                    value="${new Date().toISOString().slice(0,7)}"
-                  >
-                  <div class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] flex items-center justify-between">
-                    <span id="billingMonthDisplay" class="text-[rgb(var(--text))] pointer-events-none"></span>
-                    <i data-lucide="calendar" class="w-5 h-5 text-slate-400 pointer-events-none"></i>
-                  </div>
-                </div>
-              </div>
-              <div>
+                <select name="paymentMethod" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div>
                 <label class="text-sm font-medium mb-2 block">Transaction ID</label>
-                <input type="text" name="transactionId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
-              </div>
+                <input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div>
+                <label class="text-sm font-medium mb-2 block">Status *</label>
+                <select name="status" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select></div><div>
+                <label class="text-sm font-medium mb-2 block">Promise Date</label>
+                <input type="date" name="promiseDate" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="md:col-span-2">
+                <label class="text-sm font-medium mb-2 block">Notes</label>
+                <textarea name="notes" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div>
             </div>
-            <div>
-              <label class="text-sm font-medium mb-2 block">Notes</label>
-              <textarea name="notes" rows="3" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea>
+            <div class="flex gap-3">
+              <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
+              <button type="button" id="preview-invoice" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
             </div>
-            <div><button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button></div>
           </form>
         </div>
+        <div id="invoice-preview" class="hidden"></div>
       </div>
     `;
-    
-    // Auto-fill package and amount when customer selected
-    document.getElementById('invoiceCustomer')?.addEventListener('change', (e) => {
-      const opt = e.target.options[e.target.selectedIndex];
-      const pkgId = opt.getAttribute('data-package');
-      const amt = opt.getAttribute('data-amount');
-      if (pkgId) {
-        document.getElementById('invoicePackage').value = pkgId;
-        document.getElementById('invoiceAmount').value = amt;
+
+    $('#invoice-customer').addEventListener('change', (e) => {
+      const option = e.target.selectedOptions[0];
+      if (option.value) {
+        const customer = JSON.parse(option.dataset.customer);
+        $('#invoice-amount').value = customer.packagePrice || '';
       }
     });
-    
-    // Update amount when package changed
-    document.getElementById('invoicePackage')?.addEventListener('change', (e) => {
-      const opt = e.target.options[e.target.selectedIndex];
-      const price = opt.getAttribute('data-price');
-      document.getElementById('invoiceAmount').value = price || '';
-    });
-    
-    document.getElementById('invoice-form')?.addEventListener('submit', handleInvoiceSubmit);
-    lucide.createIcons();
 
-    // Billing Month picker display fix for Staff/Admin consistency
-    const monthPicker = document.getElementById('billingMonthPicker');
-    const monthDisplay = document.getElementById('billingMonthDisplay');
-    
-    if (monthPicker && monthDisplay) {
-      const formatMonthYear = (value) => {
-        if (!value) return '';
-        const [year, month] = value.split('-');
-        const date = new Date(year, month - 1);
-        return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-      };
-      
-      // Set initial display
-      monthDisplay.textContent = formatMonthYear(monthPicker.value);
-      
-      // Update display on change
-      monthPicker.addEventListener('input', (e) => {
-        monthDisplay.textContent = formatMonthYear(e.target.value);
-      });
-
-    // Preview Invoice functionality
-    document.getElementById('preview-invoice-btn')?.addEventListener('click', (e) => {
+    $('#invoice-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const form = document.getElementById('invoice-form');
-      const formData = new FormData(form);
+      const formData = new FormData(e.target);
       const data = Object.fromEntries(formData);
+      const customerOption = $('#invoice-customer').selectedOptions[0];
+      const customer = JSON.parse(customerOption.dataset.customer);
       
-      const customer = appState.users.find(u => u.id === data.customerId);
-      const pkg = appState.packages.find(p => p.id === data.packageId);
-      const staffName = currentUserData?.name || 'Unknown';
-      
-      const formatBillingMonth = (value) => {
-        if (!value) return 'N/A';
-        const [year, month] = value.split('-');
-        const date = new Date(year, month - 1);
-        return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
-      };
-      
-      showModal(`
-        <div class="modal-content p-6 max-w-2xl">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-bold">Invoice Preview</h3>
-            <button onclick="closeModal()" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]"><i data-lucide="x" class="w-5 h-5"></i></button>
-          </div>
-          <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div><label class="text-sm text-slate-500">Invoice No</label><p class="font-semibold">INV-${Date.now()}</p></div>
-              <div><label class="text-sm text-slate-500">Date</label><p class="font-semibold">${new Date().toLocaleDateString('en-GB')}</p></div>
-              <div><label class="text-sm text-slate-500">Customer</label><p class="font-semibold">${customer?.name || 'N/A'}</p></div>
-              <div><label class="text-sm text-slate-500">Phone</label><p class="font-semibold">${customer?.mobile || 'N/A'}</p></div>
-              <div><label class="text-sm text-slate-500">Package</label><p class="font-semibold">${pkg?.name || 'N/A'}</p></div>
-              <div><label class="text-sm text-slate-500">Amount</label><p class="font-semibold text-sky-500">৳${data.amount || 0}</p></div>
-              <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${formatBillingMonth(data.billingMonth)}</p></div>
-              <div><label class="text-sm text-slate-500">Status</label><p class="font-semibold"><span class="px-3 py-1 rounded-lg ${data.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${data.status}</span></p></div>
-              <div><label class="text-sm text-slate-500">Payment Method</label><p class="font-semibold">${data.method || 'N/A'}</p></div>
-              <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${(() => {
-              const creatorId = bill.createdBy || bill.staffId;
-              const creator = appState.users.find(u => u.id === creatorId);
-              return creator?.name || bill.staffName || 'N/A';
-            })()}</p></div>
-              <div><label class="text-sm text-slate-500">Transaction ID</label><p class="font-semibold">${data.transactionId || 'N/A'}</p></div>
-              <div><label class="text-sm text-slate-500">Notes</label><p class="font-semibold">${data.notes || 'N/A'}</p></div>
-            </div>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-[rgb(var(--border))]">Close Preview</button>
-          </div>
-        </div>
-      `);
-      setTimeout(() => lucide.createIcons(), 0);
+      try {
+        const billData = {
+          ...data,
+          amount: Number(data.amount),
+          customerId: data.customerId,
+          customerName: customer.name,
+          customerMobile: customer.mobile,
+          customerEmail: customer.email,
+          customerPPPoE: customer.pppoeUser,
+          packageName: customer.packageName,
+          staffId: customer.assignedStaff || currentUser.uid,
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp(),
+          promiseDate: data.promiseDate ? Timestamp.fromDate(new Date(data.promiseDate)) : null,
+          invoiceNo: `INV-${Date.now()}`
+        };
+        
+        const docRef = await addDoc(collection(db, 'bills'), billData);
+        
+        if (data.promiseDate) {
+          await updateDoc(doc(db, 'users', data.customerId), {
+            promiseDate: Timestamp.fromDate(new Date(data.promiseDate))
+          });
+        }
+        
+        await logActivity('Create Invoice', `Invoice for ${customer.name}: ${formatCurrency(data.amount)}`);
+        showToast('Invoice created successfully', 'success');
+        
+        showInvoicePreview({ ...billData, id: docRef.id });
+        e.target.reset();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
     });
 
-    }
-  };
-  
-  window.handleInvoiceSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
-    
-    try {
-      const customer = appState.users.find(u => u.id === data.customerId);
-      const pkg = appState.packages.find(p => p.id === data.packageId);
-      
-      const staffData = appState.users.find(u => u.id === currentUser.uid);
-      const invoiceData = {
-      invoiceNo: (() => {
-        const today = new Date();
-        const dateStr = today.getFullYear().toString() + 
-                       (today.getMonth()+1).toString().padStart(2,'0') + 
-                       today.getDate().toString().padStart(2,'0');
-        const existingCount = appState.bills.filter(b => b.invoiceNo && b.invoiceNo.includes(dateStr)).length + 1;
-        return `INV-${dateStr}-${existingCount.toString().padStart(4,'0')}`;
-      })(),
-        invoiceId: 'INV-' + Date.now(),
-        customerId: data.customerId,
-        customerName: customer?.name || '',
-        customerMobile: customer?.mobile || '',
-        packageId: data.packageId,
-        packageName: pkg?.name || '',
-        amount: parseFloat(data.amount),
-        method: data.method,
-        status: data.status,
-        billingMonth: data.billingMonth || '',
-        transactionId: data.transactionId || '',
-        notes: data.notes || '',
-        staffId: currentUser.uid,
-        staffName: staffData?.name || currentUserData?.name || 'Unknown',
-        createdAt: serverTimestamp(),
-        createdBy: currentUser.uid
-      };
-      
-      await addDoc(collection(db, 'bills'), invoiceData);
-      await logActivity('Invoice Created', `Invoice for ${customer?.name}: ${formatCurrency(data.amount)}`);
-      showToast('Invoice created successfully', 'success');
-      e.target.reset();
-    } catch (err) {
-      console.error('Invoice error:', err);
-      showToast(err.message, 'error');
-    }
+    $('#preview-invoice').addEventListener('click', () => {
+      const formData = new FormData($('#invoice-form'));
+      const data = Object.fromEntries(formData);
+      const customerOption = $('#invoice-customer').selectedOptions[0];
+      if (!customerOption.value) return showToast('Please select a customer', 'warning');
+      const customer = JSON.parse(customerOption.dataset.customer);
+      showInvoicePreview({ ...data, customer, invoiceNo: `INV-${Date.now()}` });
+    });
   };
 
   window.createInvoiceFor = (customerId) => {
@@ -3636,7 +3036,8 @@ service cloud.firestore {
       $('#invoice-customer').dispatchEvent(new Event('change'));
     }, 100);
   };
-const showInvoicePreview = (bill) => {
+
+  const showInvoicePreview = (bill) => {
     const customer = bill.customer || appState.users.find(u => u.id === bill.customerId);
     if (!customer) return showToast('Customer not found', 'error');
     
@@ -3819,173 +3220,5 @@ const showInvoicePreview = (bill) => {
 </script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
-
-
-
-
-<script>
-// ISP Billing v13 - All Features Working
-const ZONE_AREAS = {
-    'K. P. Bag': ['Biler Kani', 'Kola Bagan', 'Grameen Towar', 'Shahi Mosjid', 'Talukdar Bari Road', 'Pathan Bari', 'Hazi Bari', 'Bot Tola'],
-    'Uttara': ['Sector 1', 'Sector 3', 'Sector 7', 'Sector 10', 'Sector 12'],
-    'Mirpur': ['Mirpur 1', 'Mirpur 10', 'Mirpur 12', 'Kafrul', 'Pallabi'],
-    'Dhanmondi': ['Dhanmondi 27', 'Dhanmondi 32', 'Jigatola', 'Kalabagan']
-};
-
-// Wait for Firebase and DOM
-firebase.auth().onAuthStateChanged(async (user) => {
-    if (!user) return;
-    
-    // 1. Load Zones for all dropdowns
-    const zoneSelects = document.querySelectorAll('#customerZoneSelect, #billsFilterZone, #areaZoneSelect');
-    zoneSelects.forEach(select => {
-        if (select && select.options.length <= 1) {
-            Object.keys(ZONE_AREAS).forEach(zone => {
-                const opt = document.createElement('option');
-                opt.value = zone;
-                opt.textContent = zone;
-                select.appendChild(opt);
-            });
-        }
-    });
-    
-    // 2. Zone -> Area Cascade for Add Customer
-    const customerZone = document.getElementById('customerZoneSelect');
-    const customerArea = document.getElementById('customerAreaSelect');
-    
-    if (customerZone && customerArea) {
-        customerZone.addEventListener('change', function() {
-            const zone = this.value;
-            customerArea.innerHTML = '<option value="">Select Area</option>';
-            
-            if (zone && ZONE_AREAS[zone]) {
-                customerArea.disabled = false;
-                ZONE_AREAS[zone].forEach(area => {
-                    const opt = document.createElement('option');
-                    opt.value = area;
-                    opt.textContent = area;
-                    customerArea.appendChild(opt);
-                });
-            } else {
-                customerArea.disabled = true;
-            }
-        });
-    }
-    
-    // 3. Invoice Generator - Auto-fill Package
-    const invoiceCustomer = document.getElementById('invoiceCustomer') || document.querySelector('select[name="customer"]');
-    const invoicePackage = document.getElementById('invoicePackageField');
-    const invoiceAmount = document.getElementById('invoiceAmount');
-    const invoiceDueDate = document.getElementById('invoiceDueDateField');
-    
-    if (invoiceCustomer) {
-        invoiceCustomer.addEventListener('change', async function() {
-            const customerId = this.value;
-            if (!customerId) return;
-            
-            try {
-                const doc = await firebase.firestore().collection('customers').doc(customerId).get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    
-                    // Fill package
-                    if (invoicePackage && data.package) {
-                        invoicePackage.value = data.package;
-                    }
-                    
-                    // Fill amount from package
-                    if (data.package && invoiceAmount) {
-                        const pkgSnap = await firebase.firestore().collection('packages').where('name', '==', data.package).limit(1).get();
-                        if (!pkgSnap.empty) {
-                            invoiceAmount.value = pkgSnap.docs[0].data().price || '';
-                        }
-                    }
-                    
-                    // Set due date to next month 10th
-                    if (invoiceDueDate) {
-                        const nextMonth = new Date();
-                        nextMonth.setMonth(nextMonth.getMonth() + 1);
-                        nextMonth.setDate(10);
-                        invoiceDueDate.value = nextMonth.toISOString().split('T')[0];
-                    }
-                }
-            } catch (err) {
-                console.error('Invoice auto-fill error:', err);
-            }
-        });
-    }
-    
-    // 4. Bills Page Filters
-    const billsFilterZone = document.getElementById('billsFilterZone');
-    const billsFilterArea = document.getElementById('billsFilterArea');
-    const billsFilterStaff = document.getElementById('billsFilterStaff');
-    const billsFilterCustomer = document.getElementById('billsFilterCustomer');
-    const billsFilterMonth = document.getElementById('billsFilterMonth');
-    const billsPrintBtn = document.getElementById('billsPrintMonthly');
-    
-    // Zone -> Area cascade for bills filter
-    if (billsFilterZone && billsFilterArea) {
-        billsFilterZone.addEventListener('change', function() {
-            const zone = this.value;
-            billsFilterArea.innerHTML = '<option value="">All Areas</option>';
-            
-            if (zone && ZONE_AREAS[zone]) {
-                billsFilterArea.disabled = false;
-                ZONE_AREAS[zone].forEach(area => {
-                    const opt = document.createElement('option');
-                    opt.value = area;
-                    opt.textContent = area;
-                    billsFilterArea.appendChild(opt);
-                });
-            } else {
-                billsFilterArea.disabled = true;
-            }
-            loadFilteredBills();
-        });
-    }
-    
-    // Load staff for filter
-    if (billsFilterStaff) {
-        firebase.firestore().collection('staff').get().then(snap => {
-            snap.forEach(doc => {
-                const opt = document.createElement('option');
-                opt.value = doc.id;
-                opt.textContent = doc.data().name;
-                billsFilterStaff.appendChild(opt);
-            });
-        });
-    }
-    
-    // Filter change events
-    [billsFilterArea, billsFilterStaff, billsFilterMonth].forEach(el => {
-        el?.addEventListener('change', loadFilteredBills);
-    });
-    billsFilterCustomer?.addEventListener('input', debounce(loadFilteredBills, 500));
-    
-    // Monthly Print
-    if (billsPrintBtn) {
-        billsPrintBtn.addEventListener('click', function() {
-            const month = billsFilterMonth?.value;
-            if (!month) {
-                alert('Please select a month first');
-                return;
-            }
-            // Create printable version
-            const printWindow = window.open('', '_blank');
-            const billsTable = document.querySelector('#billsTable')?.outerHTML || '';
-            printWindow.document.write(`
-                <html>
-                <head><title>Monthly Bills - ${month}</title>
-                <style>
-                    body { font-family: Arial; padding: 20px; }
-                    table { width: 100%; border-collapse: collapse; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background: #f0f0f0; }
-                    h1 { text-align: center; }
-                </style>
-                </head>
-                <body class="overflow-x-hidden">
-                    <h1>Monthly Bills Report - ${month}</h1>
-                    ${billsTable}
-                </body>
-                </html>
+</body>
+</html>
