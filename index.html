@@ -733,9 +733,9 @@
       list = list.filter(b => b.customerId === currentUser.uid);
       console.log('[Bills] CUSTOMER VIEW - Bills:', list.length);
     } else if (isStaffView) {
-      const myCustomerIds = appState.users.filter(u => u.assignedStaff === currentUser.uid).map(u => u.id);
-      list = list.filter(b => myCustomerIds.includes(b.customerId));
-      console.log('[Bills] STAFF VIEW - My Customers:', myCustomerIds.length, 'Bills:', list.length);
+      // Staff should see bills they created, not just assigned customers
+      // Firestore query already filtered by staffId, so no additional filter needed
+      console.log('[Bills] STAFF VIEW - Bills:', list.length);
     }
     
     // Apply month filter
