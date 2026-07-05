@@ -1205,7 +1205,7 @@
           </nav>
 
           <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
-            Copyright © 2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
@@ -2250,7 +2250,11 @@
             <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${formatBillingMonth(bill.billingMonth)}</p></div>
             <div><label class="text-sm text-slate-500">Status</label><p class="font-semibold"><span class="px-3 py-1 rounded-lg ${bill.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${bill.status}</span></p></div>
             <div><label class="text-sm text-slate-500">Payment Method</label><p class="font-semibold">${bill.method || 'N/A'}</p></div>
-            <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${staffName || appState.users.find(u => u.id === bill.createdBy)?.name || appState.users.find(u => u.id === bill.staffId)?.name || "N/A"}</p></div>
+            <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${(() => {
+              const creatorId = bill.createdBy || bill.staffId;
+              const creator = appState.users.find(u => u.id === creatorId);
+              return creator?.name || bill.staffName || 'N/A';
+            })()}</p></div>
             <div><label class="text-sm text-slate-500">Transaction ID</label><p class="font-semibold">${bill.transactionId || 'N/A'}</p></div>
             <div><label class="text-sm text-slate-500">Notes</label><p class="font-semibold">${bill.notes || 'N/A'}</p></div>
           </div>
@@ -3502,7 +3506,11 @@ service cloud.firestore {
               <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${formatBillingMonth(data.billingMonth)}</p></div>
               <div><label class="text-sm text-slate-500">Status</label><p class="font-semibold"><span class="px-3 py-1 rounded-lg ${data.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${data.status}</span></p></div>
               <div><label class="text-sm text-slate-500">Payment Method</label><p class="font-semibold">${data.method || 'N/A'}</p></div>
-              <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${staffName || appState.users.find(u => u.id === bill.createdBy)?.name || appState.users.find(u => u.id === bill.staffId)?.name || "N/A"}</p></div>
+              <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${(() => {
+              const creatorId = bill.createdBy || bill.staffId;
+              const creator = appState.users.find(u => u.id === creatorId);
+              return creator?.name || bill.staffName || 'N/A';
+            })()}</p></div>
               <div><label class="text-sm text-slate-500">Transaction ID</label><p class="font-semibold">${data.transactionId || 'N/A'}</p></div>
               <div><label class="text-sm text-slate-500">Notes</label><p class="font-semibold">${data.notes || 'N/A'}</p></div>
             </div>
@@ -3582,15 +3590,25 @@ service cloud.firestore {
     }
     const formData = new FormData(form);
     const data = Object.fromEntries(formData);
-    const customer = appState.users.find(u => u.id === data.customerId);
+    
+    // Fix: Get customer ID from select, then find in users array
+    const customerId = data.customerId;
+    const customer = appState.users.find(u => u.id === customerId);
+    if (!customer) {
+      showToast('Customer not found', 'error');
+      return;
+    }
+    
     const pkg = appState.packages.find(p => p.id === data.packageId);
     const staffData = appState.users.find(u => u.id === currentUser.uid);
     
     const previewBill = {
       invoiceNo: 'PREVIEW',
-      customerName: customer?.name || 'N/A',
-      customerPhone: customer?.mobile || 'N/A',
+      customerName: customer.name || 'N/A',
+      customerPhone: customer.mobile || 'N/A',
+      customer: customer,
       packageName: pkg?.name || 'N/A',
+      package: pkg?.name || 'N/A',
       amount: data.amount,
       billingMonth: data.billingMonth,
       status: data.status,
@@ -3598,6 +3616,8 @@ service cloud.firestore {
       transactionId: data.transactionId || 'N/A',
       notes: data.notes || 'N/A',
       staffName: staffData?.name || currentUserData?.name || 'Unknown',
+      createdBy: currentUser.uid,
+      staffId: currentUser.uid,
       date: new Date().toISOString()
     };
     showInvoicePreview(previewBill);
