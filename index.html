@@ -755,7 +755,7 @@
     }
     
     // Apply ALL filters - Fixed v2
-    const monthFilter = document.getElementById('billsFilterMonth')?.value;
+    const monthFilter = document.getElementById('billsFilterMonth')?.value; // YYYY-MM format
     const zoneFilter = document.getElementById('billsFilterZone')?.value;
     const areaFilter = document.getElementById('billsFilterArea')?.value;
     const staffFilter = document.getElementById('billsFilterStaff')?.value;
@@ -988,7 +988,23 @@
       document.getElementById('billsFilterZone')?.addEventListener('change', () => reRenderCurrentView());
       document.getElementById('billsFilterArea')?.addEventListener('change', () => reRenderCurrentView());
       document.getElementById('billsFilterStaff')?.addEventListener('change', () => reRenderCurrentView());
-      document.getElementById('billsFilterCustomer')?.addEventListener('input', () => reRenderCurrentView());
+      const debounce = (func, delay) => {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+};
+const updateBillsTable = () => {
+    const tbody = document.getElementById('bills-tbody');
+    if (tbody) {
+        const filtered = getFilteredBills();
+        tbody.innerHTML = renderBillsTable(filtered);
+        lucide.createIcons();
+    }
+};
+document.getElementById('billsFilterCustomer')?.addEventListener('input', debounce(updateBillsTable, 500));
+document.getElementById('search-bill')?.addEventListener('input', debounce(updateBillsTable, 500));
       document.getElementById('billsFilterMonth')?.addEventListener('change', () => reRenderCurrentView());
       document.getElementById('billsPrintMonthly')?.addEventListener('click', printMonthlyBills);
     }, 100);
