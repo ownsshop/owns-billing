@@ -1205,11 +1205,11 @@
           </nav>
 
           <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
-            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
-            Copyright © 2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
           </footer>
         </div>
       </div>
@@ -1291,7 +1291,17 @@
 
   window.showProfileMenu = () => {
     const userPhoto = currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`;
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <div class="flex items-center gap-4 mb-6">
           <img src="${userPhoto}" class="w-16 h-16 rounded-2xl">
@@ -1692,7 +1702,17 @@
     const areaOptions = (appState.areas || []).map(a => `<option value="${a.name}" ${customer?.area===a.name?'selected':''}>${a.name}</option>`).join('');
     const zoneOptions = (appState.zones || []).map(z => `<option value="${z.name}" ${customer?.zone===z.name?'selected':''}>${z.name}</option>`).join('');
     
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
         <form id="customer-form">
@@ -1803,7 +1823,17 @@
   window.viewCustomer = (id) => {
     const c = appState.users.find(u => u.id === id);
     const bills = appState.bills.filter(b => b.customerId === id);
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Customer Details</h3>
         <div class="space-y-4">
@@ -1881,7 +1911,17 @@
 
   window.showStaffForm = (id = null) => {
     const staff = id ? appState.users.find(u => u.id === id) : null;
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff</h3>
         <form id="staff-form">
@@ -2023,7 +2063,17 @@
 
   window.showPackageForm = (id = null) => {
     const pkg = id ? appState.packages.find(p => p.id === id) : null;
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
         <form id="package-form">
@@ -2173,7 +2223,17 @@
     const customerName = customer?.name || bill.customerName || 'N/A';
     const customerPhone = customer?.mobile || bill.customerPhone || 'N/A';
     
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6 max-w-2xl">
         <div class="flex justify-between items-center mb-6">
           <h3 class="text-2xl font-bold">Bill Details</h3>
@@ -2185,12 +2245,14 @@
             <div><label class="text-sm text-slate-500">Date</label><p class="font-semibold">${bill.date ? new Date(bill.date).toLocaleDateString('en-GB') : 'N/A'}</p></div>
             <div><label class="text-sm text-slate-500">Customer</label><p class="font-semibold">${customerName}</p></div>
             <div><label class="text-sm text-slate-500">Phone</label><p class="font-semibold">${customerPhone}</p></div>
-            <div><label class="text-sm text-slate-500">Package</label><p class="font-semibold">${bill.package || 'N/A'}</p></div>
+            <div><label class="text-sm text-slate-500">Package</label><p class="font-semibold">${bill.packageName || bill.package || 'N/A'}</p></div>
             <div><label class="text-sm text-slate-500">Amount</label><p class="font-semibold text-sky-500">৳${bill.amount || 0}</p></div>
-            <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${bill.billingMonth || 'N/A'}</p></div>
+            <div><label class="text-sm text-slate-500">Billing Month</label><p class="font-semibold">${formatBillingMonth(bill.billingMonth)}</p></div>
             <div><label class="text-sm text-slate-500">Status</label><p class="font-semibold"><span class="px-3 py-1 rounded-lg ${bill.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">${bill.status}</span></p></div>
             <div><label class="text-sm text-slate-500">Payment Method</label><p class="font-semibold">${bill.method || 'N/A'}</p></div>
-            <div><label class="text-sm text-slate-500">Paid Date</label><p class="font-semibold">${bill.paidAt ? new Date(bill.paidAt).toLocaleDateString('en-GB') : 'N/A'}</p></div>
+            <div><label class="text-sm text-slate-500">Created By</label><p class="font-semibold">${staffName}</p></div>
+            <div><label class="text-sm text-slate-500">Transaction ID</label><p class="font-semibold">${bill.transactionId || 'N/A'}</p></div>
+            <div><label class="text-sm text-slate-500">Notes</label><p class="font-semibold">${bill.notes || 'N/A'}</p></div>
           </div>
         </div>
         <div class="flex gap-3 mt-6">
@@ -2601,7 +2663,17 @@ service cloud.firestore {
 
   window.showAreaForm = (id = null) => {
     const area = id ? appState.areas.find(a => a.id === id) : null;
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
         <form id="area-form">
@@ -2677,7 +2749,17 @@ service cloud.firestore {
 
   window.showZoneForm = (id = null) => {
     const zone = id ? appState.zones.find(z => z.id === id) : null;
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Zone</h3>
         <form id="zone-form">
@@ -2965,7 +3047,17 @@ service cloud.firestore {
   };
 
   window.showDepositForm = () => {
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
         <form id="deposit-form" class="space-y-4">
@@ -3001,7 +3093,17 @@ service cloud.firestore {
   };
 
   window.showSalaryRequestForm = () => {
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Request Salary</h3>
         <form id="salary-form" class="space-y-4">
@@ -3117,7 +3219,17 @@ service cloud.firestore {
     const deposits = appState.staffDeposits.filter(d => d.staffId === staffId);
     const salaries = appState.salaryRequests.filter(s => s.staffId === staffId);
     
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'} <span class="badge ${staff.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : staff.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">${staff.status || 'approved'}</span></h3>
         
@@ -3180,7 +3292,17 @@ service cloud.firestore {
   };
 
   window.paySalary = (id) => {
-    showModal(`
+    const staffUser = appState.users.find(u => u.id === bill.staffId);
+    const staffName = staffUser?.name || 'N/A';
+    
+    const formatBillingMonth = (value) => {
+      if (!value) return 'N/A';
+      const [year, month] = value.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    };
+    
+        showModal(`
       <div class="modal-content p-6">
         <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
         <form id="pay-salary-form" class="space-y-4">
