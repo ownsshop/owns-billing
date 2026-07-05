@@ -1205,7 +1205,7 @@
           </nav>
 
           <footer id="footer-desktop" class="hidden md:block glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-xs text-slate-500 no-print">
-            Copyright © 2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
+            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
@@ -1733,7 +1733,7 @@
             ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" id="customer-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
+            <button type="submit" id="customer-submit-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -1935,7 +1935,7 @@
             ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">Status</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="pending" ${staff?.status === 'pending' ? 'selected' : ''}>Pending</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" id="staff-submit-btn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
+            <button type="submit" id="staff-submit-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Staff</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -2083,7 +2083,7 @@
             <div><label class="text-sm font-medium mb-2 block">Price (৳) *</label><input type="number" name="price" value="${pkg?.price||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Package</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -2263,7 +2263,7 @@
                     <button onclick="exportCustomerBillsCSV()" class="px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-semibold">
             <i data-lucide="download" class="w-4 h-4 inline mr-1"></i>Export CSV
           </button>
-          <button onclick="printBill('${bill.id}')" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold"><i data-lucide="printer" class="w-4 h-4 inline mr-2"></i>Print</button>
+          <button onclick="printBill('${bill.id}')" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold"><i data-lucide="printer" class="w-4 h-4 inline mr-2"></i>Print</button>
           <button onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Close</button>
         </div>
       </div>
@@ -2693,7 +2693,7 @@ service cloud.firestore {
             <input type="text" name="name" value="${area?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Area</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -2771,7 +2771,7 @@ service cloud.firestore {
             <label class="text-sm font-medium mb-2 block">Zone Name *</label>
             <input type="text" name="name" value="${zone?.name||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
           <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Zone</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -3066,7 +3066,7 @@ service cloud.firestore {
         <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
         <form id="deposit-form" class="space-y-4">
           <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Deposit</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -3112,7 +3112,7 @@ service cloud.firestore {
         <h3 class="text-xl font-bold mb-6">Request Salary</h3>
         <form id="salary-form" class="space-y-4">
           <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Submit Request</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -3311,7 +3311,7 @@ service cloud.firestore {
         <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
         <form id="pay-salary-form" class="space-y-4">
           <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Confirm Payment</button>
             <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Cancel</button>
           </div>
         </form>
@@ -3421,10 +3421,7 @@ service cloud.firestore {
               <label class="text-sm font-medium mb-2 block">Notes</label>
               <textarea name="notes" rows="3" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea>
             </div>
-            <div class="flex gap-3">
-              <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button>
-              <button type="button" onclick="previewInvoice()" class="px-6 py-3 rounded-xl border border-[rgb(var(--border))]">Preview</button>
-            </div>
+            <div><button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Create Invoice</button></div>
           </form>
         </div>
       </div>
@@ -3580,50 +3577,7 @@ service cloud.firestore {
       $('#invoice-customer').dispatchEvent(new Event('change'));
     }, 100);
   };
-
-  
-  window.previewInvoice = () => {
-    const form = document.getElementById('invoice-form');
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
-    
-    // Fix: Get customer ID from select, then find in users array
-    const customerId = data.customerId;
-    const customer = appState.users.find(u => u.id === customerId);
-    if (!customer) {
-      showToast('Customer not found', 'error');
-      return;
-    }
-    
-    const pkg = appState.packages.find(p => p.id === data.packageId);
-    const staffData = appState.users.find(u => u.id === currentUser.uid);
-    
-    const previewBill = {
-      invoiceNo: 'PREVIEW',
-      customerName: customer.name || 'N/A',
-      customerPhone: customer.mobile || 'N/A',
-      customer: customer,
-      packageName: pkg?.name || 'N/A',
-      package: pkg?.name || 'N/A',
-      amount: data.amount,
-      billingMonth: data.billingMonth,
-      status: data.status,
-      method: data.method,
-      transactionId: data.transactionId || 'N/A',
-      notes: data.notes || 'N/A',
-      staffName: staffData?.name || currentUserData?.name || 'Unknown',
-      createdBy: currentUser.uid,
-      staffId: currentUser.uid,
-      date: new Date().toISOString()
-    };
-    showInvoicePreview(previewBill);
-  };
-
-  const showInvoicePreview = (bill) => {
+const showInvoicePreview = (bill) => {
     const customer = bill.customer || appState.users.find(u => u.id === bill.customerId);
     if (!customer) return showToast('Customer not found', 'error');
     
