@@ -773,14 +773,14 @@
     
     if (zoneFilter) {
       list = list.filter(b => {
-        const customer = appState.customers.find(c => c.id === b.customerId);
+        const customer = appState.users.find(c => c.id === b.customerId);
         return customer?.zone === zoneFilter;
       });
     }
     
     if (areaFilter) {
       list = list.filter(b => {
-        const customer = appState.customers.find(c => c.id === b.customerId);
+        const customer = appState.users.find(c => c.id === b.customerId);
         return customer?.area === areaFilter;
       });
     }
@@ -791,7 +791,7 @@
     
     if (customerFilter) {
       list = list.filter(b => {
-        const customer = appState.customers.find(c => c.id === b.customerId);
+        const customer = appState.users.find(c => c.id === b.customerId);
         const nameMatch = (b.customerName || '').toLowerCase().includes(customerFilter);
         const mobileMatch = (customer?.mobile || '').toLowerCase().includes(customerFilter);
         return nameMatch || mobileMatch;
@@ -1019,6 +1019,12 @@ function printMonthlyBills() {
       document.getElementById('billsPrintMonthly')?.addEventListener('click', printMonthlyBills);
     }, 100);
     
+    
+    ['billsFilterZone', 'billsFilterArea', 'billsFilterStaff', 'billsFilterMonth'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', debounce(() => {
+        reRenderCurrentView();
+      }, 100));
+    });
     lucide.createIcons();
   };
   const routes = {
