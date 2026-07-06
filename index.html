@@ -4019,6 +4019,47 @@ window.updateCommandPalette = updateCommandPalette;
       window.renderStaffBills();
     }
   };
+
+  // Event delegation for staff bills filters - survives re-renders
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.placeholder === 'Customer name/mobile') {
+      filterStaffBills();
+    }
+  });
+  
+  document.addEventListener('change', function(e) {
+    if (e.target && (e.target.id === 'staffBillMonth' || 
+                     e.target.id === 'billsFilterZone' || 
+                     e.target.id === 'billsFilterArea')) {
+      filterStaffBills();
+    }
+  });
+
+
+  // Fixed event handlers - prevent month picker from opening on other inputs
+  document.addEventListener('click', function(e) {
+    // Prevent month picker from triggering on other inputs
+    if (e.target && e.target.tagName === 'INPUT' && e.target.type !== 'month') {
+      e.stopPropagation();
+    }
+  }, true);
+  
+  // Specific handler for customer search
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.id === 'billsFilterCustomer') {
+      e.stopPropagation();
+      filterStaffBills();
+    }
+  });
+  
+  // Specific handler for month
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'staffBillMonth') {
+      e.stopPropagation();
+      filterStaffBills();
+    }
+  });
+
 </script>
 
 
