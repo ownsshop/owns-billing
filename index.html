@@ -1782,7 +1782,7 @@ function printMonthlyBills() {
         showModal(`
       <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
-        <form id="customer-form">
+        <form id="customer-form" data-customer-id="${id || ''}">
           <div class="grid md:grid-cols-2 gap-4">
             <div><label class="text-sm font-medium mb-2 block">Name *</label><input type="text" name="name" value="${customer?.name||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Email *</label><input type="email" name="email" value="${customer?.email||''}" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
@@ -1831,7 +1831,10 @@ function printMonthlyBills() {
       
       try {
         console.log('[Customer Create] Starting. Data:', data);
-        // Validation: check required fields
+        // Get customer ID from form dataset
+        const customerId = e.target.dataset.customerId;
+        const isEdit = customerId && customerId !== '';
+        
         // Validation: check required fields
         if (!data.name || !data.email) {
           showToast('Name and Email are required', 'error');
@@ -1839,8 +1842,9 @@ function printMonthlyBills() {
           submitBtn.innerHTML = 'Save Customer';
           return;
         }
+        
         // Password only required for new customers
-        if (!id && !data.password) {
+        if (!isEdit && !data.password) {
           showToast('Password is required for new customers', 'error');
           const passwordField = document.querySelector('input[name="password"]');
           if (passwordField) {
@@ -1852,7 +1856,7 @@ function printMonthlyBills() {
           return;
         }
 
-        if (id) {
+        if (isEdit) {
           await updateDoc(doc(db, 'users', id), data);
           await logActivity('Update Customer', `Updated customer: ${data.name}`);
           showToast('Customer updated successfully', 'success');
@@ -2038,7 +2042,7 @@ function printMonthlyBills() {
       
       try {
         console.log('[Staff Create] Starting. Email:', data.email);
-        if (id) {
+        if (isEdit) {
           await updateDoc(doc(db, 'users', id), data);
           await logActivity('Update Staff', `Updated staff: ${data.name}`);
           showToast('Staff updated', 'success');
@@ -2173,7 +2177,7 @@ function printMonthlyBills() {
       const data = Object.fromEntries(formData);
       data.price = Number(data.price);
       try {
-        if (id) {
+        if (isEdit) {
           await updateDoc(doc(db, 'packages', id), data);
           await logActivity('Update Package', `Updated package: ${data.name}`);
         } else {
@@ -2800,7 +2804,7 @@ service cloud.firestore {
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData);
       try {
-        if (id) {
+        if (isEdit) {
           await updateDoc(doc(db, 'areas', id), data);
           await logActivity('Update Area', `Updated area: ${data.name}`);
         } else {
@@ -2857,7 +2861,7 @@ service cloud.firestore {
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData);
       try {
-        if (id) {
+        if (isEdit) {
           await updateDoc(doc(db, 'zones', id), data);
           await logActivity('Update Zone', `Updated zone: ${data.name}`);
         } else {
