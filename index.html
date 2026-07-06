@@ -733,7 +733,7 @@
     
   window.updateBillFilter = (key, value) => {
     appState.billFilters[key] = value;
-    renderBillsTable();
+    renderBills();
   };
   
   window.debounce = (func, wait) => {
@@ -742,95 +742,6 @@
       clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), wait);
     };
-  };
-
-  
-  const renderBillsTable = () => {
-    let list = appState.bills || [];
-    
-    // Apply filters from state
-    const { zone, area, staff, month, customer, search } = appState.billFilters;
-    
-    if (month) {
-      list = list.filter(b => {
-        if (!b.createdAt?.toDate) return false;
-        const d = b.createdAt.toDate();
-        const [y, m] = month.split('-');
-        return d.getFullYear() == y && (d.getMonth() + 1) == parseInt(m);
-      });
-    }
-    
-    if (zone) {
-      list = list.filter(b => {
-        const c = appState.users.find(u => u.id === b.customerId);
-        return c?.zone === zone;
-      });
-    }
-    
-    if (area) {
-      list = list.filter(b => {
-        const c = appState.users.find(u => u.id === b.customerId);
-        return c?.area === area;
-      });
-    }
-    
-    if (staff && currentRole === 'admin') {
-      list = list.filter(b => b.staffId === staff);
-    }
-    
-    if (customer) {
-      const q = customer.toLowerCase().trim();
-      list = list.filter(b => {
-        const c = appState.users.find(u => u.id === b.customerId);
-        const nameMatch = (b.customerName || '').toLowerCase().includes(q);
-        const mobileMatch = (c?.mobile || '').toLowerCase().includes(q);
-        return nameMatch || mobileMatch;
-      });
-    }
-    
-    if (search) {
-      const q = search.toLowerCase().trim();
-      list = list.filter(b => {
-        const invoice = (b.invoiceId || '').toLowerCase();
-        const customerName = (b.customerName || '').toLowerCase();
-        const amount = String(b.amount || '');
-        return invoice.includes(q) || customerName.includes(q) || amount.includes(q);
-      });
-    }
-    
-    const tbody = document.getElementById('bills-tbody');
-    if (tbody) {
-      tbody.innerHTML = renderBillsRows(list);
-      renderBillsTable();
-    lucide.createIcons();
-    }
-  };
-  
-  const renderBillsRows = (list) => {
-    if (!list.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
-    return list.map(b => {
-      const c = appState.users.find(u => u.id === b.customerId);
-      const date = b.createdAt?.toDate ? b.createdAt.toDate().toLocaleDateString('en-GB') : '-';
-      return `
-      <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-        <td class="p-4 font-medium">${b.invoiceId || '-'}</td>
-        <td class="p-4">${b.customerName || c?.name || '-'}</td>
-        <td class="p-4 text-sky-600 font-semibold">${formatCurrency(b.amount)}</td>
-        <td class="p-4 text-sm">${b.method || '-'}</td>
-        <td class="p-4">
-          <span class="badge ${b.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">
-            ${b.status}
-          </span>
-        </td>
-        <td class="p-4 text-sm">${date}</td>
-        <td class="p-4">
-          <button onclick="viewBill('${b.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View">
-            <i data-lucide="eye" class="w-4 h-4"></i>
-          </button>
-        </td>
-      </tr>
-      `;
-    }).join('');
   };
 
   const renderBills = (isMyBills = false) => {
@@ -939,7 +850,7 @@
                     <th class="text-left p-4 font-semibold">Actions</th>
                   </tr>
                 </thead>
-                <tbody id="bills-tbody">
+                <tbody>
                   ${list.length ? list.map(b => `
                     <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/50">
                       <td class="p-4 font-medium">${b.invoiceId || '-'}</td>
@@ -1000,7 +911,7 @@
                     <th class="text-left p-4 font-semibold">Actions</th>
                   </tr>
                 </thead>
-                <tbody id="bills-tbody">
+                <tbody>
                   ${list.length ? list.map(b => `
                     <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/50">
                       <td class="p-4 font-medium">${b.invoiceId || '-'}</td>
@@ -1065,7 +976,7 @@
                     <th class="text-left p-4 font-semibold">Actions</th>
                   </tr>
                 </thead>
-                <tbody id="bills-tbody">
+                <tbody>
                   ${list.length ? list.map(b => `
                     <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/50">
                       <td class="p-4 font-medium">${b.invoiceId || '-'}</td>
@@ -1104,7 +1015,7 @@ function printMonthlyBills() {
     printWindow.document.write('<style>body{font-family:Arial;padding:20px;} table{width:100%;border-collapse:collapse;margin-top:20px;} th,td{border:1px solid #ddd;padding:12px;text-align:left;} th{background:#0ea5e9;color:white;} h1{color:#0ea5e9;}</style>');
     printWindow.document.write('</head><body><h1>Monthly Bills Report - ' + month + '</h1>');
     printWindow.document.write('<p><strong>Total Bills:</strong> ' + bills.length + '</p>');
-    printWindow.document.write('<table><thead><tr><th>Invoice No</th><th>Customer Name</th><th>Amount</th><th>Status</th><th>Paid Date</th></tr></thead><tbody id="bills-tbody">');
+    printWindow.document.write('<table><thead><tr><th>Invoice No</th><th>Customer Name</th><th>Amount</th><th>Status</th><th>Paid Date</th></tr></thead><tbody>');
     bills.forEach(b => {
         printWindow.document.write(`<tr><td>${b.invoiceNo || '-'}</td><td>${b.customerName || '-'}</td><td>৳${b.amount || 0}</td><td>${b.status || '-'}</td><td>${b.paidDate || '-'}</td></tr>`);
     });
@@ -1581,7 +1492,7 @@ function printMonthlyBills() {
     const dashboardHTML = `
       <div class="dashboard-grid space-y-0 fade-in">
         <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-          ${renderBillsRows([])}stats.map(() => `
+          ${isLoadingData ? stats.map(() => `
             <div class="glass rounded-xl p-3 md:p-4 border border-[rgb(var(--border))]">
               <div class="skeleton h-16 rounded-lg"></div>
             </div>
@@ -1643,7 +1554,7 @@ function printMonthlyBills() {
             <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-600"></i> Today's Promise (${todayPromise.length})
           </h3>
           <div class="space-y-2 overflow-y-auto max-h-[200px]">
-            ${renderBillsRows([])}'<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading...</span></div>' : todayPromise.length ? todayPromise.map(c => `
+            ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading...</span></div>' : todayPromise.length ? todayPromise.map(c => `
               <div class="flex items-center justify-between p-2.5 rounded-lg bg-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/70">
                 <div class="flex-1 min-w-0">
                   <p class="font-semibold text-sm truncate">${c.name}</p>
@@ -1797,8 +1708,8 @@ function printMonthlyBills() {
                   <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody id="bills-tbody">
-                ${renderBillsRows([])}'<tr><td colspan="7" class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading customers...</span></td></tr>' : renderCustomersRows(list)}
+              <tbody id="customers-tbody">
+                ${isLoadingData ? '<tr><td colspan="7" class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading customers...</span></td></tr>' : renderCustomersRows(list)}
               </tbody>
             </table>
           </div>
@@ -2063,7 +1974,7 @@ function printMonthlyBills() {
         <button onclick="showStaffForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="user-plus" class="w-5 h-5"></i> Add Staff
         </button>
-        ${renderBillsRows([])}'<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff...</span></div>' : `
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff...</span></div>' : `
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
           <div class="table-container">
             <table class="w-full">
@@ -2076,7 +1987,7 @@ function printMonthlyBills() {
                   <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody id="bills-tbody">
+              <tbody>
                 ${list.length ? list.map(s => {
                   const assignedCount = appState.users.filter(u => u.assignedStaff === s.id && (u.status === 'approved' || !u.status)).length;
                   return `
@@ -2226,7 +2137,7 @@ function printMonthlyBills() {
         <button onclick="showPackageForm()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold flex items-center gap-2" type="button">
           <i data-lucide="plus" class="w-5 h-5"></i> Add Package
         </button>
-        ${renderBillsRows([])}'<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading packages...</span></div>' : `
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading packages...</span></div>' : `
         <div class="grid md:grid-cols-3 gap-4">
           ${appState.packages.map(p => `
             <div class="glass rounded-2xl p-6 border border-[rgb(var(--border))] hover:shadow-lg transition">
@@ -2318,7 +2229,7 @@ function printMonthlyBills() {
   
   window.updateBillFilter = (key, value) => {
     appState.billFilters[key] = value;
-    renderBillsTable();
+    renderBills();
   };
   
   window.debounce = (func, wait) => {
@@ -2327,94 +2238,6 @@ function printMonthlyBills() {
       clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), wait);
     };
-  };
-
-  
-  const renderBillsTable = () => {
-    let list = appState.bills || [];
-    
-    // Apply filters from state
-    const { zone, area, staff, month, customer, search } = appState.billFilters;
-    
-    if (month) {
-      list = list.filter(b => {
-        if (!b.createdAt?.toDate) return false;
-        const d = b.createdAt.toDate();
-        const [y, m] = month.split('-');
-        return d.getFullYear() == y && (d.getMonth() + 1) == parseInt(m);
-      });
-    }
-    
-    if (zone) {
-      list = list.filter(b => {
-        const c = appState.users.find(u => u.id === b.customerId);
-        return c?.zone === zone;
-      });
-    }
-    
-    if (area) {
-      list = list.filter(b => {
-        const c = appState.users.find(u => u.id === b.customerId);
-        return c?.area === area;
-      });
-    }
-    
-    if (staff && currentRole === 'admin') {
-      list = list.filter(b => b.staffId === staff);
-    }
-    
-    if (customer) {
-      const q = customer.toLowerCase().trim();
-      list = list.filter(b => {
-        const c = appState.users.find(u => u.id === b.customerId);
-        const nameMatch = (b.customerName || '').toLowerCase().includes(q);
-        const mobileMatch = (c?.mobile || '').toLowerCase().includes(q);
-        return nameMatch || mobileMatch;
-      });
-    }
-    
-    if (search) {
-      const q = search.toLowerCase().trim();
-      list = list.filter(b => {
-        const invoice = (b.invoiceId || '').toLowerCase();
-        const customerName = (b.customerName || '').toLowerCase();
-        const amount = String(b.amount || '');
-        return invoice.includes(q) || customerName.includes(q) || amount.includes(q);
-      });
-    }
-    
-    const tbody = document.getElementById('bills-tbody');
-    if (tbody) {
-      tbody.innerHTML = renderBillsRows(list);
-      lucide.createIcons();
-    }
-  };
-  
-  const renderBillsRows = (list) => {
-    if (!list.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
-    return list.map(b => {
-      const c = appState.users.find(u => u.id === b.customerId);
-      const date = b.createdAt?.toDate ? b.createdAt.toDate().toLocaleDateString('en-GB') : '-';
-      return `
-      <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-        <td class="p-4 font-medium">${b.invoiceId || '-'}</td>
-        <td class="p-4">${b.customerName || c?.name || '-'}</td>
-        <td class="p-4 text-sky-600 font-semibold">${formatCurrency(b.amount)}</td>
-        <td class="p-4 text-sm">${b.method || '-'}</td>
-        <td class="p-4">
-          <span class="badge ${b.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">
-            ${b.status}
-          </span>
-        </td>
-        <td class="p-4 text-sm">${date}</td>
-        <td class="p-4">
-          <button onclick="viewBill('${b.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View">
-            <i data-lucide="eye" class="w-4 h-4"></i>
-          </button>
-        </td>
-      </tr>
-      `;
-    }).join('');
   };
 
   const renderBills = (myBills = false) => {
@@ -2455,7 +2278,7 @@ function printMonthlyBills() {
             <i data-lucide="download" class="w-5 h-5"></i> Export CSV
           </button>
         </div>
-        ${renderBillsRows([])}'<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading bills...</span></div>' : `
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
           <div class="table-container">
             <table class="w-full">
@@ -2493,7 +2316,7 @@ function printMonthlyBills() {
   
   window.updateBillFilter = (key, value) => {
     appState.billFilters[key] = value;
-    renderBillsTable();
+    renderBills();
   };
   
   window.debounce = (func, wait) => {
@@ -2502,94 +2325,6 @@ function printMonthlyBills() {
       clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), wait);
     };
-  };
-
-  
-  const renderBillsTable = () => {
-    let list = appState.bills || [];
-    
-    // Apply filters from state
-    const { zone, area, staff, month, customer, search } = appState.billFilters;
-    
-    if (month) {
-      list = list.filter(b => {
-        if (!b.createdAt?.toDate) return false;
-        const d = b.createdAt.toDate();
-        const [y, m] = month.split('-');
-        return d.getFullYear() == y && (d.getMonth() + 1) == parseInt(m);
-      });
-    }
-    
-    if (zone) {
-      list = list.filter(b => {
-        const c = appState.users.find(u => u.id === b.customerId);
-        return c?.zone === zone;
-      });
-    }
-    
-    if (area) {
-      list = list.filter(b => {
-        const c = appState.users.find(u => u.id === b.customerId);
-        return c?.area === area;
-      });
-    }
-    
-    if (staff && currentRole === 'admin') {
-      list = list.filter(b => b.staffId === staff);
-    }
-    
-    if (customer) {
-      const q = customer.toLowerCase().trim();
-      list = list.filter(b => {
-        const c = appState.users.find(u => u.id === b.customerId);
-        const nameMatch = (b.customerName || '').toLowerCase().includes(q);
-        const mobileMatch = (c?.mobile || '').toLowerCase().includes(q);
-        return nameMatch || mobileMatch;
-      });
-    }
-    
-    if (search) {
-      const q = search.toLowerCase().trim();
-      list = list.filter(b => {
-        const invoice = (b.invoiceId || '').toLowerCase();
-        const customerName = (b.customerName || '').toLowerCase();
-        const amount = String(b.amount || '');
-        return invoice.includes(q) || customerName.includes(q) || amount.includes(q);
-      });
-    }
-    
-    const tbody = document.getElementById('bills-tbody');
-    if (tbody) {
-      tbody.innerHTML = renderBillsRows(list);
-      lucide.createIcons();
-    }
-  };
-  
-  const renderBillsRows = (list) => {
-    if (!list.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No bills found</td></tr>`;
-    return list.map(b => {
-      const c = appState.users.find(u => u.id === b.customerId);
-      const date = b.createdAt?.toDate ? b.createdAt.toDate().toLocaleDateString('en-GB') : '-';
-      return `
-      <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
-        <td class="p-4 font-medium">${b.invoiceId || '-'}</td>
-        <td class="p-4">${b.customerName || c?.name || '-'}</td>
-        <td class="p-4 text-sky-600 font-semibold">${formatCurrency(b.amount)}</td>
-        <td class="p-4 text-sm">${b.method || '-'}</td>
-        <td class="p-4">
-          <span class="badge ${b.status === 'paid' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-rose-500/20 text-rose-600'}">
-            ${b.status}
-          </span>
-        </td>
-        <td class="p-4 text-sm">${date}</td>
-        <td class="p-4">
-          <button onclick="viewBill('${b.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View">
-            <i data-lucide="eye" class="w-4 h-4"></i>
-          </button>
-        </td>
-      </tr>
-      `;
-    }).join('');
   };
 
   const renderBillsTable = (bills) => {
@@ -2721,7 +2456,7 @@ function printMonthlyBills() {
           <thead>
             <tr><th>Description</th><th>Amount</th></tr>
           </thead>
-          <tbody id="bills-tbody">
+          <tbody>
             <tr><td>${bill.package || 'Internet Service'} - ${bill.billingMonth || 'Monthly'}</td><td>৳${bill.amount || 0}</td></tr>
           </tbody>
         </table>
@@ -2870,7 +2605,7 @@ function printMonthlyBills() {
         <div class="table-container">
           <table class="w-full">
             <thead class="bg-[rgb(var(--border))]"><tr><th class="text-left p-4 text-sm">Invoice</th><th class="text-left p-4 text-sm">Customer</th><th class="text-left p-4 text-sm">Amount</th><th class="text-left p-4 text-sm">Status</th><th class="text-left p-4 text-sm">Date</th></tr></thead>
-            <tbody id="bills-tbody">${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo || '-'}</td><td class="p-4 text-sm">${b.customerName || '-'}<br><span class="text-xs text-slate-500">${b.customerMobile || '-'}</span></td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
+            <tbody>${filtered.map(b=>`<tr class="border-t border-[rgb(var(--border))]"><td class="p-4 text-sm font-mono">${b.invoiceNo || '-'}</td><td class="p-4 text-sm">${b.customerName || '-'}<br><span class="text-xs text-slate-500">${b.customerMobile || '-'}</span></td><td class="p-4 text-sm font-semibold">${formatCurrency(b.amount)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${b.status==='paid'?'bg-emerald-500/20 text-emerald-600':'bg-rose-500/20 text-rose-600'}">${b.status || '-'}</span></td><td class="p-4 text-sm">${formatDate(b.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-500">No data</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -2898,7 +2633,7 @@ function printMonthlyBills() {
 
     container.innerHTML = `
       <div class="space-y-3 fade-in">
-        ${renderBillsRows([])}'<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading activities...</span></div>' : (appState.activities.length ? appState.activities.map(a => `
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading activities...</span></div>' : (appState.activities.length ? appState.activities.map(a => `
           <div class="glass rounded-2xl p-4 border-[rgb(var(--border))]">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center flex-shrink-0">
@@ -3281,7 +3016,7 @@ service cloud.firestore {
           </button>
         </div>
 
-        ${renderBillsRows([])}'<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading approvals...</span></div>' : `
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading approvals...</span></div>' : `
         <div class="space-y-3">
           ${getFilteredPendingUsers(activeTab).length ? getFilteredPendingUsers(activeTab).map(u => `
             <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
@@ -3365,7 +3100,7 @@ service cloud.firestore {
 
     container.innerHTML = `
       <div class="space-y-6 fade-in">
-        ${renderBillsRows([])}'<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading wallet data...</span></div>' : `
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading wallet data...</span></div>' : `
         <div class="grid md:grid-cols-4 gap-4">
           <div class="glass rounded-2xl p-5 border border-[rgb(var(--border))]">
             <p class="text-sm text-slate-500 mb-1">Total Collected</p>
@@ -3555,7 +3290,7 @@ service cloud.firestore {
 
     container.innerHTML = `
       <div class="space-y-4 fade-in">
-        ${renderBillsRows([])}'<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff accounts...</span></div>' : `
+        ${isLoadingData ? '<div class="loading-state"><i data-lucide="loader-2" class="w-5 h-5"></i><span class="ml-2">Loading staff accounts...</span></div>' : `
         <div class="glass rounded-2xl border border-[rgb(var(--border))] overflow-hidden">
           <div class="table-container">
             <table class="w-full">
@@ -3570,7 +3305,7 @@ service cloud.firestore {
                   <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody id="bills-tbody">
+              <tbody>
                 ${staffData.map(data => `
                   <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
                     <td class="p-4">
@@ -4002,7 +3737,7 @@ const showInvoicePreview = (bill) => {
             <thead class="bg-gray-200">
               <tr><th class="border border-black p-2 text-left">Description</th><th class="border border-black p-2 text-right">Amount</th></tr>
             </thead>
-            <tbody id="bills-tbody">
+            <tbody>
               <tr><td class="border border-black p-2">${customer.packageName || 'Internet Service'}</td><td class="border border-black p-2 text-right">${formatCurrency(bill.amount)}</td></tr>
             </tbody>
             <tfoot><tr><td class="border border-black p-2 font-bold">Total</td><td class="border border-black p-2 text-right font-bold">${formatCurrency(bill.amount)}</td></tr></tfoot>
