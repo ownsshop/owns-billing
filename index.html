@@ -1680,8 +1680,10 @@ function printMonthlyBills() {
                   <th class="text-left p-4 font-semibold">Contact</th>
                   <th class="text-left p-4 font-semibold">Package</th>
                   <th class="text-left p-4 font-semibold">Area</th>
+                  <th class="text-left p-4 font-semibold">Zone</th>
+                  <th class="text-left p-4 font-semibold">Assigned Staff</th>
                   <th class="text-left p-4 font-semibold">Due</th>
-                  ${currentRole === 'staff' ? '<th class="text-left p-4 font-semibold">Status</th>' : ''}
+                  <th class="text-left p-4 font-semibold">Status</th>
                   <th class="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -1709,16 +1711,10 @@ function printMonthlyBills() {
   };
 
   const renderCustomersRows = (list) => {
-    if (!list.length) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">No customers found</td></tr>`;
+    if (!list.length) return `<tr><td colspan="9" class="p-8 text-center text-slate-500">No customers found</td></tr>`;
     return list.map(c => {
       const due = appState.bills.filter(b => b.customerId === c.id && b.status === 'unpaid').reduce((s,b)=>s+b.amount,0);
-      const statusBadge = currentRole === 'staff' ? `
-        <td class="p-4">
-          <span class="badge ${c.status === 'approved' || !c.status ? 'bg-emerald-500/20 text-emerald-600' : c.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
-            ${c.status || 'approved'}
-          </span>
-        </td>
-      ` : '';
+      const staffName = appState.users.find(u => u.id === c.assignedStaff && u.role === 'staff')?.name || '-';
       return `
       <tr class="border-t border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/30">
         <td class="p-4">
@@ -1734,12 +1730,18 @@ function printMonthlyBills() {
           <div class="text-xs text-slate-500">${c.packageSpeed || '-'}</div>
         </td>
         <td class="p-4 text-sm">${c.area || '-'}</td>
+        <td class="p-4 text-sm">${c.zone || '-'}</td>
+        <td class="p-4 text-sm">${staffName}</td>
         <td class="p-4">
           <span class="px-3 py-1 rounded-full text-xs font-semibold ${due > 0 ? 'bg-rose-500/20 text-rose-600' : 'bg-emerald-500/20 text-emerald-600'}">
             ${formatCurrency(due)}
           </span>
         </td>
-        ${statusBadge}
+        <td class="p-4">
+          <span class="badge ${c.status === 'approved' || !c.status ? 'bg-emerald-500/20 text-emerald-600' : c.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">
+            ${c.status || 'approved'}
+          </span>
+        </td>
         <td class="p-4">
           <div class="flex items-center justify-end gap-2">
             <button onclick="viewCustomer('${c.id}')" class="p-2 rounded-lg hover:bg-[rgb(var(--border))]" title="View" type="button">
