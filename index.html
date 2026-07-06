@@ -873,6 +873,7 @@
               <option value="">All Areas</option>
               ${(appState.areas || []).map(a => `<option value="${a.name}">${a.name}</option>`).join('')}
             </select>
+                <input type="month" id="staffBillMonth" class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white" onchange="filterStaffBills()" />
             <input type="text" id="billsFilterCustomer" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <input type="month" id="billsFilterMonth" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
@@ -3814,15 +3815,232 @@ const showInvoicePreview = (bill) => {
 
   window.appState = appState;
   window.showInvoicePreview = showInvoicePreview;
+
+// ISP Billing v13 - All Features Working
+const ZONE_AREAS = {
+    'K. P. Bag': ['Biler Kani', 'Kola Bagan', 'Grameen Towar', 'Shahi Mosjid', 'Talukdar Bari Road', 'Pathan Bari', 'Hazi Bari', 'Bot Tola'],
+    'Uttara': ['Sector 1', 'Sector 3', 'Sector 7', 'Sector 10', 'Sector 12'],
+    'Mirpur': ['Mirpur 1', 'Mirpur 10', 'Mirpur 12', 'Kafrul', 'Pallabi'],
+    'Dhanmondi': ['Dhanmondi 27', 'Dhanmondi 32', 'Jigatola', 'Kalabagan']
+};
+
+// Wait for Firebase and DOM
+onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+    
+    // 1. Load Zones for all dropdowns
+    const zoneSelects = document.querySelectorAll('#customerZoneSelect, #billsFilterZone, #areaZoneSelect');
+    zoneSelects.forEach(select => {
+        if (select && select.options.length <= 1) {
+            Object.keys(ZONE_AREAS).forEach(zone => {
+                const opt = document.createElement('option');
+                opt.value = zone;
+                opt.textContent = zone;
+                select.appendChild(opt);
+            });
+        }
+    });
+    
+    // 2. Zone -> Area Cascade for Add Customer
+    const customerZone = document.getElementById('customerZoneSelect');
+    const customerArea = document.getElementById('customerAreaSelect');
+    
+    if (customerZone && customerArea) {
+        customerZone.addEventListener('change', function() {
+            const zone = this.value;
+            customerArea.innerHTML = '<option value="">Select Area</option>';
+            
+            if (zone && ZONE_AREAS[zone]) {
+                customerArea.disabled = false;
+                ZONE_AREAS[zone].forEach(area => {
+                    const opt = document.createElement('option');
+                    opt.value = area;
+                    opt.textContent = area;
+                    customerArea.appendChild(opt);
+                });
+            } else {
+                customerArea.disabled = true;
+            }
+        });
+    }
+    
+    // 3. Invoice Generator - Auto-fill Package
+    const invoiceCustomer = document.getElementById('invoiceCustomer') || document.querySelector('select[name="customer"]');
+    const invoicePackage = document.getElementById('invoicePackageField');
+    const invoiceAmount = document.getElementById('invoiceAmount');
+    const invoiceDueDate = document.getElementById('invoiceDueDateField');
+    
+    if (invoiceCustomer) {
+        invoiceCustomer.addEventListener('change', async function() {
+            const customerId = this.value;
+            if (!customerId) return;
+            
+            try {
+                const doc = await collection(db, 'customers').doc(customerId).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // Fill package
+                    if (invoicePackage && data.package) {
+                        invoicePackage.value = data.package;
+                    }
+                    
+                    // Fill amount from package
+                    if (data.package && invoiceAmount) {
+                        const pkgSnap = await collection(db, 'packages').where('name', '==', data.package).limit(1).get();
+                        if (!pkgSnap.empty) {
+                            invoiceAmount.value = pkgSnap.docs[0].data().price || '';
+                        }
+                    }
+                    
+                    // Set due date to next month 10th
+                    if (invoiceDueDate) {
+                        const nextMonth = new Date();
+                        nextMonth.setMonth(nextMonth.getMonth() + 1);
+                        nextMonth.setDate(10);
+                        invoiceDueDate.value = nextMonth.toISOString().split('T')[0];
+                    }
+                }
+            } catch (err) {
+                console.error('Invoice auto-fill error:', err);
+            }
+        });
+    }
+    
+    // 4. Bills Page Filters
+    const billsFilterZone = document.getElementById('billsFilterZone');
+    const billsFilterArea = document.getElementById('billsFilterArea');
+    const billsFilterStaff = document.getElementById('billsFilterStaff');
+    const billsFilterCustomer = document.getElementById('billsFilterCustomer');
+    const billsFilterMonth = document.getElementById('billsFilterMonth');
+    const billsPrintBtn = document.getElementById('billsPrintMonthly');
+    
+    // Zone -> Area cascade for bills filter
+    if (billsFilterZone && billsFilterArea) {
+        billsFilterZone.addEventListener('change', function() {
+            const zone = this.value;
+            billsFilterArea.innerHTML = '<option value="">All Areas</option>';
+            
+            if (zone && ZONE_AREAS[zone]) {
+                billsFilterArea.disabled = false;
+                ZONE_AREAS[zone].forEach(area => {
+                    const opt = document.createElement('option');
+                    opt.value = area;
+                    opt.textContent = area;
+                    billsFilterArea.appendChild(opt);
+                });
+            } else {
+                billsFilterArea.disabled = true;
+            }
+            loadFilteredBills();
+        });
+    }
+    
+    // Load staff for filter
+    if (billsFilterStaff) {
+        collection(db, 'staff').get().then(snap => {
+            snap.forEach(doc => {
+                const opt = document.createElement('option');
+                opt.value = doc.id;
+                opt.textContent = doc.data().name;
+                billsFilterStaff.appendChild(opt);
+            });
+        });
+    }
+    
+    // Filter change events
+    [billsFilterArea, billsFilterStaff, billsFilterMonth].forEach(el => {
+        el?.addEventListener('change', loadFilteredBills);
+    });
+    billsFilterCustomer?.addEventListener('input', debounce(loadFilteredBills, 500));
+    
+    // Monthly Print
+    if (billsPrintBtn) {
+        billsPrintBtn.addEventListener('click', function() {
+            const month = billsFilterMonth?.value;
+            if (!month) {
+                alert('Please select a month first');
+                return;
+            }
+            // Create printable version
+            const printWindow = window.open('', '_blank');
+            const billsTable = document.querySelector('#billsTable')?.outerHTML || '';
+            printWindow.document.write(`
+                <html>
+                <head><title>Monthly Bills - ${month}</title>
+                <style>
+                    body { font-family: Arial; padding: 20px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background: #0ea5e9; color: white; }
+                    h1 { text-align: center; color: #0ea5e9; }
+                </style>
+                </head>
+                <body>
+                    <h1>Monthly Bills Report - ${month}</h1>
+                    ${billsTable}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        });
+    }
+});
+
+// Make functions globally accessible
+window.showCustomerForm = showCustomerForm;
+window.viewCustomer = viewCustomer;
+window.showStaffForm = showStaffForm;
+window.showPackageForm = showPackageForm;
+window.showAreaForm = showAreaForm;
+window.showZoneForm = showZoneForm;
+window.viewBillDetails = viewBillDetails;
+window.showStaffAccountDetails = showStaffAccountDetails;
+window.handleLogout = handleLogout;
+window.printMonthlyBills = printMonthlyBills;
+window.updateCommandPalette = updateCommandPalette;
 </script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();
+  // Staff Bills Live Filter
+  window.filterStaffBills = function() {
+    const searchInput = document.querySelector('input[placeholder*="Customer name/mobile"]');
+    const monthInput = document.getElementById('staffBillMonth');
+    const zoneSelect = document.querySelector('select[id*="Zone"]');
+    const areaSelect = document.querySelector('select[id*="Area"]');
+    
+    if (!window.appState) window.appState = {};
+    window.appState.staffFilters = {
+      searchTerm: searchInput ? searchInput.value.toLowerCase() : '',
+      monthFilter: monthInput ? monthInput.value : '',
+      zoneFilter: zoneSelect ? zoneSelect.value : '',
+      areaFilter: areaSelect ? areaSelect.value : ''
+    };
+    
+    if (typeof window.renderStaffBills === 'function') {
+      window.renderStaffBills();
+    }
+  };
+
+  // Event delegation for staff bills filters - survives re-renders
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.placeholder === 'Customer name/mobile') {
+      filterStaffBills();
+    }
+  });
+  
+  document.addEventListener('change', function(e) {
+    if (e.target && (e.target.id === 'staffBillMonth' || 
+                     e.target.id === 'billsFilterZone' || 
+                     e.target.id === 'billsFilterArea')) {
+      filterStaffBills();
+    }
+  });
+
+</script>
 
 
 
 
 
 <script>
-} // Auto-fixed missing braces
-</script>
-</body>
-</html>
