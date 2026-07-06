@@ -7,14 +7,14 @@
 <meta name="description" content="Modern ISP Reseller Management System with Firebase">
 <meta name="theme-color" content="#0ea5e9">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%230ea5e9'/><text x='50%' y='50%' font-size='64' fill='%23fff' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>O</text></svg>">
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com"><\/script>
 <script>
   tailwind.config = { darkMode: 'class' }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<\/script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"><\/script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"><\/script>
 <style>
   :root {
     --primary: 14, 165, 233;
@@ -3812,39 +3812,8 @@ const showInvoicePreview = (bill) => {
     }
   });
 
-  window.appState = appState;
-  window.showInvoicePreview = showInvoicePreview;
-</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
 
-
-
-
-
-<script>
-// ISP Billing v13 - All Features Working
-const ZONE_AREAS = {
-    'K. P. Bag': ['Biler Kani', 'Kola Bagan', 'Grameen Towar', 'Shahi Mosjid', 'Talukdar Bari Road', 'Pathan Bari', 'Hazi Bari', 'Bot Tola'],
-    'Uttara': ['Sector 1', 'Sector 3', 'Sector 7', 'Sector 10', 'Sector 12'],
-    'Mirpur': ['Mirpur 1', 'Mirpur 10', 'Mirpur 12', 'Kafrul', 'Pallabi'],
-    'Dhanmondi': ['Dhanmondi 27', 'Dhanmondi 32', 'Jigatola', 'Kalabagan']
-};
-
-// Wait for Firebase and DOM
-onAuthStateChanged(auth, async (user) => {
-    if (!user) return;
-    
-    // 1. Load Zones for all dropdowns
-    const zoneSelects = document.querySelectorAll('#customerZoneSelect, #billsFilterZone, #areaZoneSelect');
-    zoneSelects.forEach(select => {
-        if (select && select.options.length <= 1) {
-            Object.keys(ZONE_AREAS).forEach(zone => {
-                const opt = document.createElement('option');
-                opt.value = zone;
-                opt.textContent = zone;
-                select.appendChild(opt);
-            });
-        }
+  // ISP Billing v13 - All Features Working
     });
     
     // 2. Zone -> Area Cascade for Add Customer
@@ -3856,9 +3825,7 @@ onAuthStateChanged(auth, async (user) => {
             const zone = this.value;
             customerArea.innerHTML = '<option value="">Select Area</option>';
             
-            if (zone && ZONE_AREAS[zone]) {
                 customerArea.disabled = false;
-                ZONE_AREAS[zone].forEach(area => {
                     const opt = document.createElement('option');
                     opt.value = area;
                     opt.textContent = area;
@@ -3927,9 +3894,7 @@ onAuthStateChanged(auth, async (user) => {
             const zone = this.value;
             billsFilterArea.innerHTML = '<option value="">All Areas</option>';
             
-            if (zone && ZONE_AREAS[zone]) {
                 billsFilterArea.disabled = false;
-                ZONE_AREAS[zone].forEach(area => {
                     const opt = document.createElement('option');
                     opt.value = area;
                     opt.textContent = area;
@@ -4006,6 +3971,17 @@ window.showStaffAccountDetails = showStaffAccountDetails;
 window.handleLogout = handleLogout;
 window.printMonthlyBills = printMonthlyBills;
 window.updateCommandPalette = updateCommandPalette;
+
+  // Role-based data loading
+  if (currentRole === 'customer') {
+      // Customers don't need users, salary_requests, staff_deposits
+      setupCustomerListeners();
+  } else if (currentRole === 'staff') {
+      setupStaffListeners();
+  } else {
+      setupAdminListeners();
+  }
+
 </script>
 </body>
 </html>
