@@ -3810,7 +3810,6 @@ const showInvoicePreview = (bill) => {
       closeMobileProfile();
       closeUserDropdown();
     }
-  });
 
 
   // ISP Billing v13 - All Features Working
@@ -3833,7 +3832,6 @@ const showInvoicePreview = (bill) => {
             } else {
                 customerArea.disabled = true;
             }
-        });
     }
     
     // 3. Invoice Generator - Auto-fill Package
@@ -3876,7 +3874,6 @@ const showInvoicePreview = (bill) => {
             } catch (err) {
                 console.error('Invoice auto-fill error:', err);
             }
-        });
     }
     
     // 4. Bills Page Filters
@@ -3915,7 +3912,6 @@ const showInvoicePreview = (bill) => {
                 opt.textContent = doc.data().name;
                 billsFilterStaff.appendChild(opt);
             });
-        });
     }
     
     // Filter change events
@@ -3956,7 +3952,6 @@ const showInvoicePreview = (bill) => {
             printWindow.print();
         });
     }
-});
 
 // Make functions globally accessible
 window.showCustomerForm = showCustomerForm;
