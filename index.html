@@ -1370,7 +1370,7 @@ function printMonthlyBills() {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <div class="flex items-center gap-4 mb-6">
           <img src="${userPhoto}" class="w-16 h-16 rounded-2xl">
           <div>
@@ -1780,7 +1780,7 @@ function printMonthlyBills() {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Customer ${currentRole === 'staff' ? '(Pending Approval)' : ''}</h3>
         <form id="customer-form">
           <div class="grid md:grid-cols-2 gap-4">
@@ -1797,7 +1797,7 @@ function printMonthlyBills() {
             <div><label class="text-sm font-medium mb-2 block">Package</label><select name="packageId" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Package</option>${appState.packages.map(p=>`<option value="${p.id}" ${customer?.packageId===p.id?'selected':''}>${p.name} - ${p.speed} - ${formatCurrency(p.price)}</option>`).join('')}</select></div>
             <div><label class="text-sm font-medium mb-2 block">Assigned Staff</label><select name="assignedStaff" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Staff</option>${staffList.map(s=>`<option value="${s.id}" ${customer?.assignedStaff===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
             <div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${customer?.address||''}</textarea></div>
-            ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+            ${!id ? `<div class="md:col-span-2"><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required placeholder="Enter password for customer login" class="w-full px-4 py-2 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
             <button type="submit" id="customer-submit-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-semibold">Save Customer</button>
@@ -1832,8 +1832,21 @@ function printMonthlyBills() {
       try {
         console.log('[Customer Create] Starting. Data:', data);
         // Validation: check required fields
-        if (!data.name || !data.email || !data.password) {
-          showToast('Name, Email and Password are required', 'error');
+        // Validation: check required fields
+        if (!data.name || !data.email) {
+          showToast('Name and Email are required', 'error');
+          submitBtn.classList.remove('btn-loading');
+          submitBtn.innerHTML = 'Save Customer';
+          return;
+        }
+        // Password only required for new customers
+        if (!id && !data.password) {
+          showToast('Password is required for new customers', 'error');
+          const passwordField = document.querySelector('input[name="password"]');
+          if (passwordField) {
+            passwordField.focus();
+            passwordField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
           submitBtn.classList.remove('btn-loading');
           submitBtn.innerHTML = 'Save Customer';
           return;
@@ -1900,7 +1913,7 @@ function printMonthlyBills() {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">Customer Details</h3>
         <div class="space-y-4">
           ${Object.entries(c).filter(([k,v])=>!['id','role','createdAt','password','status'].includes(k)&&v).map(([k,v])=>`
@@ -1987,7 +2000,7 @@ function printMonthlyBills() {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Staff</h3>
         <form id="staff-form">
           <div class="space-y-4">
@@ -1996,7 +2009,7 @@ function printMonthlyBills() {
             <div><label class="text-sm font-medium mb-2 block">Mobile *</label><input type="tel" name="mobile" value="${staff?.mobile||''}" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">WhatsApp Number *</label><input type="tel" name="whatsapp" value="${staff?.whatsapp||''}" required pattern="[0-9]{11,}" title="Valid WhatsApp number" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>
             <div><label class="text-sm font-medium mb-2 block">Address</label><textarea name="address" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">${staff?.address||''}</textarea></div>
-            ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
+            ${!id ? `<div><label class="text-sm font-medium mb-2 block">Password *</label><input type="password" name="password" required placeholder="Enter password for customer login" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div>` : ''}
             ${currentRole === 'admin' && id ? `<div><label class="text-sm font-medium mb-2 block">Status</label><select name="status" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="approved" ${staff?.status === 'approved' ? 'selected' : ''}>Approved</option><option value="pending" ${staff?.status === 'pending' ? 'selected' : ''}>Pending</option><option value="rejected" ${staff?.status === 'rejected' ? 'selected' : ''}>Rejected</option></select></div>` : ''}
           </div>
           <div class="flex gap-3 mt-6">
@@ -2138,7 +2151,7 @@ function printMonthlyBills() {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Package</h3>
         <form id="package-form">
           <div class="space-y-4">
@@ -2740,7 +2753,7 @@ service cloud.firestore {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Area</h3>
         <form id="area-form">
           <div>
@@ -2825,7 +2838,7 @@ service cloud.firestore {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">${id ? 'Edit' : 'Add'} Zone</h3>
         <form id="zone-form">
           <div>
@@ -3122,7 +3135,7 @@ service cloud.firestore {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">Deposit to Admin</h3>
         <form id="deposit-form" class="space-y-4">
           <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
@@ -3167,7 +3180,7 @@ service cloud.firestore {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">Request Salary</h3>
         <form id="salary-form" class="space-y-4">
           <div><label class="text-sm font-medium mb-2 block">Amount *</label><input type="number" name="amount" required min="1" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div><label class="text-sm font-medium mb-2 block">Reason (Optional)</label><textarea name="reason" rows="2" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></textarea></div><div class="flex gap-3 mt-6">
@@ -3292,7 +3305,7 @@ service cloud.firestore {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">Staff Account: ${staff?.name || '-'} <span class="badge ${staff.status === 'approved' ? 'bg-emerald-500/20 text-emerald-600' : staff.status === 'pending' ? 'bg-amber-500/20 text-amber-600' : 'bg-rose-500/20 text-rose-600'}">${staff.status || 'approved'}</span></h3>
         
         <div class="mb-6">
@@ -3364,7 +3377,7 @@ service cloud.firestore {
     };
     
         showModal(`
-      <div class="modal-content p-6">
+      <div class="modal-content p-6 max-h-[85vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-6">Pay Salary</h3>
         <form id="pay-salary-form" class="space-y-4">
           <div><label class="text-sm font-medium mb-2 block">Payment Method *</label><select name="method" required class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"><option value="">Select Method</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Cash">Cash</option><option value="Bank">Bank Transfer</option></select></div><label class="text-sm font-medium mb-2 block">Transaction ID</label><input type="text" name="trxId" class="w-full px-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]"></div><div class="flex gap-3 mt-6">
