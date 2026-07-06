@@ -754,8 +754,14 @@
       console.log('[Bills] STAFF VIEW - Bills:', list.length);
     }
     
-    // Apply month filter
+    // Apply ALL filters - Fixed v2
     const monthFilter = document.getElementById('billsFilterMonth')?.value;
+    const zoneFilter = document.getElementById('billsFilterZone')?.value;
+    const areaFilter = document.getElementById('billsFilterArea')?.value;
+    const staffFilter = document.getElementById('billsFilterStaff')?.value;
+    const customerFilter = document.getElementById('billsFilterCustomer')?.value?.toLowerCase().trim();
+    const searchFilter = document.getElementById('search-bill')?.value?.toLowerCase().trim();
+    
     if (monthFilter) {
       list = list.filter(b => {
         if (!b.createdAt?.toDate) return false;
@@ -764,6 +770,43 @@
         return d.getFullYear() == y && (d.getMonth() + 1) == parseInt(m);
       });
     }
+    
+    if (zoneFilter) {
+      list = list.filter(b => {
+        const customer = appState.customers.find(c => c.id === b.customerId);
+        return customer?.zone === zoneFilter;
+      });
+    }
+    
+    if (areaFilter) {
+      list = list.filter(b => {
+        const customer = appState.customers.find(c => c.id === b.customerId);
+        return customer?.area === areaFilter;
+      });
+    }
+    
+    if (staffFilter && isAdminView) {
+      list = list.filter(b => b.staffId === staffFilter);
+    }
+    
+    if (customerFilter) {
+      list = list.filter(b => {
+        const customer = appState.customers.find(c => c.id === b.customerId);
+        const nameMatch = (b.customerName || '').toLowerCase().includes(customerFilter);
+        const mobileMatch = (customer?.mobile || '').toLowerCase().includes(customerFilter);
+        return nameMatch || mobileMatch;
+      });
+    }
+    
+    if (searchFilter) {
+      list = list.filter(b => {
+        const invoice = (b.invoiceId || '').toLowerCase();
+        const customer = (b.customerName || '').toLowerCase();
+        const amount = String(b.amount || '');
+        return invoice.includes(searchFilter) || customer.includes(searchFilter) || amount.includes(searchFilter);
+      });
+    }
+
 
     // CUSTOMER VIEW: ONLY Search + Month + Print
     if (isCustomerView) {
@@ -940,6 +983,32 @@
       `;
     }
     
+    
+function printMonthlyBills() {
+    const month = document.getElementById('billsFilterMonth')?.value;
+    if (!month) {
+        showToast('Please select a month first', 'error');
+        return;
+    }
+    const bills = getFilteredBills().filter(b => b.billingMonth === month);
+    if (bills.length === 0) {
+        showToast('No bills found for ' + month, 'warning');
+        return;
+    }
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write('<!DOCTYPE html><html><head><title>Monthly Bills - ' + month + '</title>');
+    printWindow.document.write('<style>body{font-family:Arial;padding:20px;} table{width:100%;border-collapse:collapse;margin-top:20px;} th,td{border:1px solid #ddd;padding:12px;text-align:left;} th{background:#0ea5e9;color:white;} h1{color:#0ea5e9;}</style>');
+    printWindow.document.write('</head><body><h1>Monthly Bills Report - ' + month + '</h1>');
+    printWindow.document.write('<p><strong>Total Bills:</strong> ' + bills.length + '</p>');
+    printWindow.document.write('<table><thead><tr><th>Invoice No</th><th>Customer Name</th><th>Amount</th><th>Status</th><th>Paid Date</th></tr></thead><tbody>');
+    bills.forEach(b => {
+        printWindow.document.write(`<tr><td>${b.invoiceNo || '-'}</td><td>${b.customerName || '-'}</td><td>৳${b.amount || 0}</td><td>${b.status || '-'}</td><td>${b.paidDate || '-'}</td></tr>`);
+    });
+    printWindow.document.write('</tbody></table></body></html>');
+    printWindow.document.close();
+    printWindow.print();
+}
+
     setTimeout(() => {
       document.getElementById('search-bill')?.addEventListener('input', () => reRenderCurrentView());
       document.getElementById('billsFilterZone')?.addEventListener('change', () => reRenderCurrentView());
@@ -1209,7 +1278,7 @@
           </footer>
 
           <footer id="footer-mobile" class="md:hidden glass border-t border-[rgb(var(--border))] px-4 py-2.5 text-center text-[11px] text-slate-500 no-print">
-            Copyright © 2026 OwnsBill. All rights reserved | Developed by: P.M.Monir
+            Copyright©2026 OwnsBill.All rights reserved | Developed by: P.M.Monir
           </footer>
         </div>
       </div>
@@ -1291,8 +1360,7 @@
 
   window.showProfileMenu = () => {
     const userPhoto = currentUserData?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=0ea5e9&color=fff`;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -1702,8 +1770,7 @@
     const areaOptions = (appState.areas || []).map(a => `<option value="${a.name}" ${customer?.area===a.name?'selected':''}>${a.name}</option>`).join('');
     const zoneOptions = (appState.zones || []).map(z => `<option value="${z.name}" ${customer?.zone===z.name?'selected':''}>${z.name}</option>`).join('');
     
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -1823,8 +1890,7 @@
   window.viewCustomer = (id) => {
     const c = appState.users.find(u => u.id === id);
     const bills = appState.bills.filter(b => b.customerId === id);
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -1911,8 +1977,7 @@
 
   window.showStaffForm = (id = null) => {
     const staff = id ? appState.users.find(u => u.id === id) : null;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -2063,8 +2128,7 @@
 
   window.showPackageForm = (id = null) => {
     const pkg = id ? appState.packages.find(p => p.id === id) : null;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -2223,8 +2287,7 @@
     const customerName = customer?.name || bill.customerName || 'N/A';
     const customerPhone = customer?.mobile || bill.customerPhone || 'N/A';
     
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -2667,8 +2730,7 @@ service cloud.firestore {
 
   window.showAreaForm = (id = null) => {
     const area = id ? appState.areas.find(a => a.id === id) : null;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -2753,8 +2815,7 @@ service cloud.firestore {
 
   window.showZoneForm = (id = null) => {
     const zone = id ? appState.zones.find(z => z.id === id) : null;
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -3051,8 +3112,7 @@ service cloud.firestore {
   };
 
   window.showDepositForm = () => {
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -3097,8 +3157,7 @@ service cloud.firestore {
   };
 
   window.showSalaryRequestForm = () => {
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -3223,8 +3282,7 @@ service cloud.firestore {
     const deposits = appState.staffDeposits.filter(d => d.staffId === staffId);
     const salaries = appState.salaryRequests.filter(s => s.staffId === staffId);
     
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -3296,8 +3354,7 @@ service cloud.firestore {
   };
 
   window.paySalary = (id) => {
-    const staffUser = appState.users.find(u => u.id === bill.staffId);
-    const staffName = staffUser?.name || 'N/A';
+    // Removed: bill not defined in this scope
     
     const formatBillingMonth = (value) => {
       if (!value) return 'N/A';
@@ -3697,7 +3754,7 @@ const showInvoicePreview = (bill) => {
     $('#modal-container').innerHTML = '';
   };
 
-  const updateCommandPalette = () => {
+  function updateCommandPalette() {
     const commands = {
       admin: [
         { label: 'Dashboard', action: () => showView('dashboard'), icon: 'layout-dashboard' },
@@ -3759,7 +3816,7 @@ const showInvoicePreview = (bill) => {
   window.showInvoicePreview = showInvoicePreview;
 </script>
 <script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})();</script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+
 
 
 
@@ -3774,7 +3831,7 @@ const ZONE_AREAS = {
 };
 
 // Wait for Firebase and DOM
-firebase.auth().onAuthStateChanged(async (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (!user) return;
     
     // 1. Load Zones for all dropdowns
@@ -3825,7 +3882,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             if (!customerId) return;
             
             try {
-                const doc = await firebase.firestore().collection('customers').doc(customerId).get();
+                const doc = await collection(db, 'customers').doc(customerId).get();
                 if (doc.exists) {
                     const data = doc.data();
                     
@@ -3836,7 +3893,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     
                     // Fill amount from package
                     if (data.package && invoiceAmount) {
-                        const pkgSnap = await firebase.firestore().collection('packages').where('name', '==', data.package).limit(1).get();
+                        const pkgSnap = await collection(db, 'packages').where('name', '==', data.package).limit(1).get();
                         if (!pkgSnap.empty) {
                             invoiceAmount.value = pkgSnap.docs[0].data().price || '';
                         }
@@ -3887,7 +3944,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
     
     // Load staff for filter
     if (billsFilterStaff) {
-        firebase.firestore().collection('staff').get().then(snap => {
+        collection(db, 'staff').get().then(snap => {
             snap.forEach(doc => {
                 const opt = document.createElement('option');
                 opt.value = doc.id;
@@ -3921,12 +3978,34 @@ firebase.auth().onAuthStateChanged(async (user) => {
                     body { font-family: Arial; padding: 20px; }
                     table { width: 100%; border-collapse: collapse; }
                     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background: #f0f0f0; }
-                    h1 { text-align: center; }
+                    th { background: #0ea5e9; color: white; }
+                    h1 { text-align: center; color: #0ea5e9; }
                 </style>
                 </head>
-                <body class="overflow-x-hidden">
+                <body>
                     <h1>Monthly Bills Report - ${month}</h1>
                     ${billsTable}
                 </body>
                 </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        });
+    }
+});
+
+// Make functions globally accessible
+window.showCustomerForm = showCustomerForm;
+window.viewCustomer = viewCustomer;
+window.showStaffForm = showStaffForm;
+window.showPackageForm = showPackageForm;
+window.showAreaForm = showAreaForm;
+window.showZoneForm = showZoneForm;
+window.viewBillDetails = viewBillDetails;
+window.showStaffAccountDetails = showStaffAccountDetails;
+window.handleLogout = handleLogout;
+window.printMonthlyBills = printMonthlyBills;
+window.updateCommandPalette = updateCommandPalette;
+</script>
+</body>
+</html>
