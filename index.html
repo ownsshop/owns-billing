@@ -731,7 +731,15 @@
 
   const reRenderCurrentView = () => {
     
-  window.updateBillFilter = (key, value) => {
+    if (key === 'search' || key === 'customer') {
+    filterBillsTableOnly();
+  } else {
+    renderBills();
+  }
+};
+
+// === Bill Filter Functions - Moved to top to prevent ReferenceError ===
+window.updateBillFilter = (key, value) => {
   appState.billFilters[key] = value;
   if (key === 'search' || key === 'customer') {
     filterBillsTableOnly();
@@ -740,10 +748,64 @@
   }
 };
 
+function handleBillSearch(value) {
+  window.updateBillFilter('search', value);
+}
 
+function handleCustomerSearch(value) {
+  window.updateBillFilter('customer', value);
+}
 
+function filterBillsTableOnly() {
+  const tbody = document.querySelector('#bills-table tbody');
+  if (!tbody) return;
 
+  const rows = tbody.querySelectorAll('tr');
+  const { search, customer, zone, area, staff } = appState.billFilters;
+
+  rows.forEach(row => {
+    const invoice = row.children[0]?.textContent.toLowerCase() || '';
+    const customerName = row.children[1]?.textContent.toLowerCase() || '';
+    const zoneData = row.dataset.zone || '';
+    const areaData = row.dataset.area || '';
+    const staffData = row.dataset.staff || '';
+
+    const matchSearch = !search || invoice.includes(search.toLowerCase()) || customerName.includes(search.toLowerCase());
+    const matchCustomer = !customer || customerName.includes(customer.toLowerCase());
+    const matchZone = !zone || zoneData === zone;
+    const matchArea = !area || areaData === area;
+    const matchStaff = !staff || staffData === staff;
+
+    row.style.display = (matchSearch && matchCustomer && matchZone && matchArea && matchStaff) ? '' : 'none';
+  });
+}
+
+function getFilteredBills() {
+  const { search, customer, zone, area, staff, month } = appState.billFilters;
+  return appState.bills.filter(bill => {
+    const customerData = appState.users.find(u => u.uid === bill.customerId) || {};
+    const matchSearch = !search ||
+      bill.invoiceId?.toLowerCase().includes(search.toLowerCase()) ||
+      customerData.name?.toLowerCase().includes(search.toLowerCase());
+    const matchCustomer = !customer ||
+      customerData.name?.toLowerCase().includes(customer.toLowerCase()) ||
+      customerData.mobile?.includes(customer);
+    const matchZone = !zone || customerData.zone === zone;
+    const matchArea = !area || customerData.area === area;
+    const matchStaff = !staff || bill.staffId === staff;
+    const matchMonth = !month || bill.date?.startsWith(month);
+
+    return matchSearch && matchCustomer && matchZone && matchArea && matchStaff && matchMonth;
+  });
+}
 window.getFilteredBills = getFilteredBills;
+// === End Bill Filter Functions ===
+
+
+
+
+
+
   
   window.debounce = (func, wait) => {
     let timeout;
@@ -2236,9 +2298,7 @@ function printMonthlyBills() {
   };
 
   
-  window.updateBillFilter = (key, value) => {
-  appState.billFilters[key] = value;
-  if (key === 'search' || key === 'customer') {
+    if (key === 'search' || key === 'customer') {
     filterBillsTableOnly();
   } else {
     renderBills();
@@ -2248,7 +2308,6 @@ function printMonthlyBills() {
 
 
 
-window.getFilteredBills = getFilteredBills;
   
   window.debounce = (func, wait) => {
     let timeout;
@@ -2332,9 +2391,7 @@ window.getFilteredBills = getFilteredBills;
   };
 
   
-  window.updateBillFilter = (key, value) => {
-  appState.billFilters[key] = value;
-  if (key === 'search' || key === 'customer') {
+    if (key === 'search' || key === 'customer') {
     filterBillsTableOnly();
   } else {
     renderBills();
@@ -2344,7 +2401,6 @@ window.getFilteredBills = getFilteredBills;
 
 
 
-window.getFilteredBills = getFilteredBills;
   
   window.debounce = (func, wait) => {
     let timeout;
