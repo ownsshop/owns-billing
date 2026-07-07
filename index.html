@@ -732,9 +732,47 @@
   const reRenderCurrentView = () => {
     
   window.updateBillFilter = (key, value) => {
-    appState.billFilters[key] = value;
-    renderBills();
-  };
+  appState.billFilters[key] = value;
+  // Search আর Customer টাইপ করার সময় পুরো রেন্ডার করব না
+  if (key === 'search' || key === 'customer') {
+    filterBillsTableOnly();
+  } else {
+    renderBills(); // Zone, Area, Staff, Month এর জন্য পুরো রেন্ডার ঠিক আছে
+  }
+};
+
+// এই 3টা ফাংশন লাইন 738 এর আগে পেস্ট করেন
+function handleBillSearch(value) {
+  updateBillFilter('search', value);
+}
+
+function handleCustomerSearch(value) {
+  updateBillFilter('customer', value);
+}
+
+function filterBillsTableOnly() {
+  const tbody = document.querySelector('#bills-table tbody');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+  const { search, customer, zone, area, staff } = appState.billFilters;
+
+  rows.forEach(row => {
+    const invoice = row.children[0]?.textContent.toLowerCase() || '';
+    const customerName = row.children[1]?.textContent.toLowerCase() || '';
+    const zoneData = row.dataset.zone || '';
+    const areaData = row.dataset.area || '';
+    const staffData = row.dataset.staff || '';
+
+    const matchSearch =!search || invoice.includes(search.toLowerCase()) || customerName.includes(search.toLowerCase());
+    const matchCustomer =!customer || customerName.includes(customer.toLowerCase());
+    const matchZone =!zone || zoneData === zone;
+    const matchArea =!area || areaData === area;
+    const matchStaff =!staff || staffData === staff;
+
+    row.style.display = (matchSearch && matchCustomer && matchZone && matchArea && matchStaff)? '' : 'none';
+  });
+}
   
   window.debounce = (func, wait) => {
     let timeout;
