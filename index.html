@@ -833,9 +833,9 @@
               <input id="search-bill" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <input type="month" id="billsFilterMonth" onchange="updateBillFilter('month', this.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <button type="button" class="billsPrintMonthly px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2" onclick="printMonthlyBills()">
-  <i data-lucide="printer" class="w-4 h-4"></i> Print
-</button>
+            <button type="button" id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2" onclick="printMonthlyBills()"
+              <i data-lucide="printer" class="w-4 h-4"></i> Print
+            </button>
           </div>
           <div class="glass rounded-2xl overflow-hidden border border-[rgb(var(--border))]">
             <div class="overflow-x-auto">
@@ -878,7 +878,7 @@
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input class="search-bill-input" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <select id="billsFilterZone" onchange="updateBillFilter('zone', this.value)" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
               <option value="">All Zones</option>
@@ -889,10 +889,10 @@
               ${(appState.areas || []).map(a => `<option value="${a.name}" ${appState.billFilters.area === a.name ? "selected" : ""}>${a.name}</option>`).join('')}
             </select>
             <input type="text" id="billsFilterCustomer" oninput="debounce(() => updateBillFilter('customer', document.getElementById('billsFilterCustomer').value), 300)()" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <input type="month" class="billsFilterMonth-input" onchange="updateBillFilter('month', event.target.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <button type="button" class="billsPrintMonthly px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2" onclick="printMonthlyBills()">
-  <i data-lucide="printer" class="w-4 h-4"></i> Print
-</button>
+            <input type="month" id="billsFilterMonth" onchange="updateBillFilter('month', this.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            <button type="button" id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2" onclick="printMonthlyBills()"
+              <i data-lucide="printer" class="w-4 h-4"></i> Print
+            </button>
             <button onclick="exportBillsCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
               <i data-lucide="download" class="w-4 h-4"></i> Export CSV
             </button>
@@ -939,7 +939,7 @@
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input class="search-bill-input" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <select id="billsFilterZone" onchange="updateBillFilter('zone', this.value)" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
               <option value="">All Zones</option>
@@ -953,11 +953,11 @@
               <option value="">All Staff</option>
               ${appState.users.filter(u => u.role === 'staff').map(s => `<option value="${s.id}" ${appState.billFilters.staff === s.id ? "selected" : ""}>${s.name}</option>`).join('')}
             </select>
-            <input type="text" class="billsFilterCustomer-input" oninput="debounce(() => updateBillFilter('customer', document.getElementById('billsFilterCustomer').value), 300)()" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <input type="month" class="billsFilterMonth-input" onchange="updateBillFilter('month', event.target.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
-            <button type="button" class="billsPrintMonthly px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2" onclick="printMonthlyBills()">
-  <i data-lucide="printer" class="w-4 h-4"></i> Print
-</button>
+            <input type="text" id="billsFilterCustomer" oninput="debounce(() => updateBillFilter('customer', document.getElementById('billsFilterCustomer').value), 300)()" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            <input type="month" id="billsFilterMonth" onchange="updateBillFilter('month', this.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            <button type="button" id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2" onclick="printMonthlyBills()"
+              <i data-lucide="printer" class="w-4 h-4"></i> Print
+            </button>
             <button onclick="exportBillsCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
               <i data-lucide="download" class="w-4 h-4"></i> Export CSV
             </button>
@@ -2254,7 +2254,7 @@ function printMonthlyBills() {
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input class="search-bill-input" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <input id="search-bill" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
     <select id="billsFilterZone" onchange="updateBillFilter('zone', this.value)" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
@@ -2266,9 +2266,9 @@ function printMonthlyBills() {
     <select id="billsFilterStaff" onchange="updateBillFilter('staff', this.value)" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
         <option value="">All Staff</option>
     </select>
-    <input type="text" class="billsFilterCustomer-input" oninput="debounce(() => updateBillFilter('customer', document.getElementById('billsFilterCustomer').value), 300)()" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <input type="month" class="billsFilterMonth-input" onchange="updateBillFilter('month', event.target.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
-    <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+    <input type="text" id="billsFilterCustomer" oninput="debounce(() => updateBillFilter('customer', document.getElementById('billsFilterCustomer').value), 300)()" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    <input type="month" id="billsFilterMonth" onchange="updateBillFilter('month', this.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    <button type="button" id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2" onclick="printMonthlyBills()"
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
         Print Monthly
     </button>
@@ -4074,6 +4074,67 @@ window.showStaffAccountDetails = showStaffAccountDetails;
 window.handleLogout = handleLogout;
 window.printMonthlyBills = printMonthlyBills;
 window.updateCommandPalette = updateCommandPalette;
+
+function filterAndRenderBillsTable() {
+    const searchTerm = (appState.billFilters.search || '').toLowerCase();
+    const customerTerm = (appState.billFilters.customer || '').toLowerCase();
+    const monthFilter = appState.billFilters.month;
+    const zoneFilter = appState.billFilters.zone;
+    const areaFilter = appState.billFilters.area;
+    const staffFilter = appState.billFilters.staff;
+    
+    let filtered = appState.bills.filter(bill => {
+        const matchSearch = !searchTerm || 
+            bill.invoiceNo.toLowerCase().includes(searchTerm) ||
+            bill.customerName.toLowerCase().includes(searchTerm) ||
+            bill.customerMobile.includes(searchTerm);
+            
+        const matchCustomer = !customerTerm || 
+            bill.customerName.toLowerCase().includes(customerTerm) ||
+            bill.customerMobile.includes(customerTerm);
+            
+        const billDate = new Date(bill.createdAt);
+        const billMonth = billDate.getFullYear() + '-' + String(billDate.getMonth() + 1).padStart(2, '0');
+        const matchMonth = !monthFilter || billMonth === monthFilter;
+        
+        const matchZone = !zoneFilter || bill.zone === zoneFilter;
+        const matchArea = !areaFilter || bill.area === areaFilter;
+        const matchStaff = !staffFilter || bill.staffId === staffFilter;
+        
+        return matchSearch && matchCustomer && matchMonth && matchZone && matchArea && matchStaff;
+    });
+    
+    // Update only the table body
+    const tbody = document.querySelector('#billsTable tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = filtered.map(bill => `
+        <tr class="border-b border-[rgb(var(--border))]">
+            <td class="px-4 py-3">${bill.invoiceNo}</td>
+            <td class="px-4 py-3">${bill.customerName}</td>
+            <td class="px-4 py-3">${bill.amount}</td>
+            <td class="px-4 py-3">${bill.paymentMethod}</td>
+            <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs ${bill.status === 'paid' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-rose-500/20 text-rose-500'}">${bill.status}</span></td>
+            <td class="px-4 py-3">${new Date(bill.createdAt).toLocaleDateString()}</td>
+            <td class="px-4 py-3">
+                <button onclick="viewBill('${bill.id}')" class="text-sky-500 hover:text-sky-600">
+                    <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    lucide.createIcons();
+}
+
+
+// Prevent form submission on Enter key in filter inputs
+document.addEventListener('keydown', function(e) {
+    if ((e.target.id === 'search-bill' || e.target.id === 'billsFilterCustomer') && e.key === 'Enter') {
+        e.preventDefault();
+    }
+});
+
 </script>
 </body>
 </html>
