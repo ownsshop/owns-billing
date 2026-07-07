@@ -733,15 +733,13 @@
     
   window.updateBillFilter = (key, value) => {
   appState.billFilters[key] = value;
-  // Search আর Customer টাইপ করার সময় পুরো রেন্ডার করব না
   if (key === 'search' || key === 'customer') {
     filterBillsTableOnly();
   } else {
-    renderBills(); // Zone, Area, Staff, Month এর জন্য পুরো রেন্ডার ঠিক আছে
+    renderBills();
   }
 };
 
-// এই 3টা ফাংশন লাইন 738 এর আগে পেস্ট করেন
 function handleBillSearch(value) {
   updateBillFilter('search', value);
 }
@@ -764,15 +762,35 @@ function filterBillsTableOnly() {
     const areaData = row.dataset.area || '';
     const staffData = row.dataset.staff || '';
 
-    const matchSearch =!search || invoice.includes(search.toLowerCase()) || customerName.includes(search.toLowerCase());
-    const matchCustomer =!customer || customerName.includes(customer.toLowerCase());
-    const matchZone =!zone || zoneData === zone;
-    const matchArea =!area || areaData === area;
-    const matchStaff =!staff || staffData === staff;
+    const matchSearch = !search || invoice.includes(search.toLowerCase()) || customerName.includes(search.toLowerCase());
+    const matchCustomer = !customer || customerName.includes(customer.toLowerCase());
+    const matchZone = !zone || zoneData === zone;
+    const matchArea = !area || areaData === area;
+    const matchStaff = !staff || staffData === staff;
 
-    row.style.display = (matchSearch && matchCustomer && matchZone && matchArea && matchStaff)? '' : 'none';
+    row.style.display = (matchSearch && matchCustomer && matchZone && matchArea && matchStaff) ? '' : 'none';
   });
 }
+
+function getFilteredBills() {
+  const { search, customer, zone, area, staff, month } = appState.billFilters;
+  return appState.bills.filter(bill => {
+    const customerData = appState.users.find(u => u.uid === bill.customerId) || {};
+    const matchSearch = !search ||
+      bill.invoiceId?.toLowerCase().includes(search.toLowerCase()) ||
+      customerData.name?.toLowerCase().includes(search.toLowerCase());
+    const matchCustomer = !customer ||
+      customerData.name?.toLowerCase().includes(customer.toLowerCase()) ||
+      customerData.mobile?.includes(customer);
+    const matchZone = !zone || customerData.zone === zone;
+    const matchArea = !area || customerData.area === area;
+    const matchStaff = !staff || bill.staffId === staff;
+    const matchMonth = !month || bill.date?.startsWith(month);
+
+    return matchSearch && matchCustomer && matchZone && matchArea && matchStaff && matchMonth;
+  });
+}
+window.getFilteredBills = getFilteredBills;
   
   window.debounce = (func, wait) => {
     let timeout;
@@ -868,7 +886,7 @@ function filterBillsTableOnly() {
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill-input" type="text" oninput="debounce(handleBillSearch, 300)(this.value)" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <input type="month" id="billsFilterMonth" onchange="updateBillFilter('month', this.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
@@ -916,7 +934,7 @@ function filterBillsTableOnly() {
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill-input" type="text" oninput="debounce(handleBillSearch, 300)(this.value)" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <select id="billsFilterZone" onchange="updateBillFilter('zone', this.value)" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
               <option value="">All Zones</option>
@@ -926,7 +944,7 @@ function filterBillsTableOnly() {
               <option value="">All Areas</option>
               ${(appState.areas || []).map(a => `<option value="${a.name}" ${appState.billFilters.area === a.name ? "selected" : ""}>${a.name}</option>`).join('')}
             </select>
-            <input type="text" id="billsFilterCustomer" oninput="debounce(() => updateBillFilter('customer', document.getElementById('billsFilterCustomer').value), 300)()" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            <input type="text" id="billsFilterCustomer" oninput="debounce(handleCustomerSearch, 300)(this.value)" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <input type="month" id="billsFilterMonth" onchange="updateBillFilter('month', this.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
               <i data-lucide="printer" class="w-4 h-4"></i> Print
@@ -977,7 +995,7 @@ function filterBillsTableOnly() {
           <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-              <input id="search-bill" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+              <input id="search-bill-input" type="text" oninput="debounce(handleBillSearch, 300)(this.value)" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
             </div>
             <select id="billsFilterZone" onchange="updateBillFilter('zone', this.value)" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
               <option value="">All Zones</option>
@@ -991,7 +1009,7 @@ function filterBillsTableOnly() {
               <option value="">All Staff</option>
               ${appState.users.filter(u => u.role === 'staff').map(s => `<option value="${s.id}" ${appState.billFilters.staff === s.id ? "selected" : ""}>${s.name}</option>`).join('')}
             </select>
-            <input type="text" id="billsFilterCustomer" oninput="debounce(() => updateBillFilter('customer', document.getElementById('billsFilterCustomer').value), 300)()" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
+            <input type="text" id="billsFilterCustomer" oninput="debounce(handleCustomerSearch, 300)(this.value)" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <input type="month" id="billsFilterMonth" onchange="updateBillFilter('month', this.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-[rgb(var(--card))] border border-[rgb(var(--border))] rounded-lg text-sm">
             <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2">
               <i data-lucide="printer" class="w-4 h-4"></i> Print
@@ -2266,9 +2284,65 @@ function printMonthlyBills() {
 
   
   window.updateBillFilter = (key, value) => {
-    appState.billFilters[key] = value;
+  appState.billFilters[key] = value;
+  if (key === 'search' || key === 'customer') {
+    filterBillsTableOnly();
+  } else {
     renderBills();
-  };
+  }
+};
+
+function handleBillSearch(value) {
+  updateBillFilter('search', value);
+}
+
+function handleCustomerSearch(value) {
+  updateBillFilter('customer', value);
+}
+
+function filterBillsTableOnly() {
+  const tbody = document.querySelector('#bills-table tbody');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+  const { search, customer, zone, area, staff } = appState.billFilters;
+
+  rows.forEach(row => {
+    const invoice = row.children[0]?.textContent.toLowerCase() || '';
+    const customerName = row.children[1]?.textContent.toLowerCase() || '';
+    const zoneData = row.dataset.zone || '';
+    const areaData = row.dataset.area || '';
+    const staffData = row.dataset.staff || '';
+
+    const matchSearch = !search || invoice.includes(search.toLowerCase()) || customerName.includes(search.toLowerCase());
+    const matchCustomer = !customer || customerName.includes(customer.toLowerCase());
+    const matchZone = !zone || zoneData === zone;
+    const matchArea = !area || areaData === area;
+    const matchStaff = !staff || staffData === staff;
+
+    row.style.display = (matchSearch && matchCustomer && matchZone && matchArea && matchStaff) ? '' : 'none';
+  });
+}
+
+function getFilteredBills() {
+  const { search, customer, zone, area, staff, month } = appState.billFilters;
+  return appState.bills.filter(bill => {
+    const customerData = appState.users.find(u => u.uid === bill.customerId) || {};
+    const matchSearch = !search ||
+      bill.invoiceId?.toLowerCase().includes(search.toLowerCase()) ||
+      customerData.name?.toLowerCase().includes(search.toLowerCase());
+    const matchCustomer = !customer ||
+      customerData.name?.toLowerCase().includes(customer.toLowerCase()) ||
+      customerData.mobile?.includes(customer);
+    const matchZone = !zone || customerData.zone === zone;
+    const matchArea = !area || customerData.area === area;
+    const matchStaff = !staff || bill.staffId === staff;
+    const matchMonth = !month || bill.date?.startsWith(month);
+
+    return matchSearch && matchCustomer && matchZone && matchArea && matchStaff && matchMonth;
+  });
+}
+window.getFilteredBills = getFilteredBills;
   
   window.debounce = (func, wait) => {
     let timeout;
@@ -2292,7 +2366,7 @@ function printMonthlyBills() {
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input id="search-bill" type="text" oninput="debounce(() => updateBillFilter('search', document.getElementById('search-bill').value), 300)()" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
+            <input id="search-bill-input" type="text" oninput="debounce(handleBillSearch, 300)(this.value)" value="${appState.billFilters.search}" placeholder="Search bills..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--card))]">
           </div>
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="billsAdvancedFilters">
     <select id="billsFilterZone" onchange="updateBillFilter('zone', this.value)" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
@@ -2304,7 +2378,7 @@ function printMonthlyBills() {
     <select id="billsFilterStaff" onchange="updateBillFilter('staff', this.value)" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
         <option value="">All Staff</option>
     </select>
-    <input type="text" id="billsFilterCustomer" oninput="debounce(() => updateBillFilter('customer', document.getElementById('billsFilterCustomer').value), 300)()" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
+    <input type="text" id="billsFilterCustomer" oninput="debounce(handleCustomerSearch, 300)(this.value)" value="${appState.billFilters.customer}" placeholder="Customer name/mobile" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
     <input type="month" id="billsFilterMonth" onchange="updateBillFilter('month', this.value)" value="${appState.billFilters.month}" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm">
     <button id="billsPrintMonthly" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
@@ -2353,9 +2427,65 @@ function printMonthlyBills() {
 
   
   window.updateBillFilter = (key, value) => {
-    appState.billFilters[key] = value;
+  appState.billFilters[key] = value;
+  if (key === 'search' || key === 'customer') {
+    filterBillsTableOnly();
+  } else {
     renderBills();
-  };
+  }
+};
+
+function handleBillSearch(value) {
+  updateBillFilter('search', value);
+}
+
+function handleCustomerSearch(value) {
+  updateBillFilter('customer', value);
+}
+
+function filterBillsTableOnly() {
+  const tbody = document.querySelector('#bills-table tbody');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+  const { search, customer, zone, area, staff } = appState.billFilters;
+
+  rows.forEach(row => {
+    const invoice = row.children[0]?.textContent.toLowerCase() || '';
+    const customerName = row.children[1]?.textContent.toLowerCase() || '';
+    const zoneData = row.dataset.zone || '';
+    const areaData = row.dataset.area || '';
+    const staffData = row.dataset.staff || '';
+
+    const matchSearch = !search || invoice.includes(search.toLowerCase()) || customerName.includes(search.toLowerCase());
+    const matchCustomer = !customer || customerName.includes(customer.toLowerCase());
+    const matchZone = !zone || zoneData === zone;
+    const matchArea = !area || areaData === area;
+    const matchStaff = !staff || staffData === staff;
+
+    row.style.display = (matchSearch && matchCustomer && matchZone && matchArea && matchStaff) ? '' : 'none';
+  });
+}
+
+function getFilteredBills() {
+  const { search, customer, zone, area, staff, month } = appState.billFilters;
+  return appState.bills.filter(bill => {
+    const customerData = appState.users.find(u => u.uid === bill.customerId) || {};
+    const matchSearch = !search ||
+      bill.invoiceId?.toLowerCase().includes(search.toLowerCase()) ||
+      customerData.name?.toLowerCase().includes(search.toLowerCase());
+    const matchCustomer = !customer ||
+      customerData.name?.toLowerCase().includes(customer.toLowerCase()) ||
+      customerData.mobile?.includes(customer);
+    const matchZone = !zone || customerData.zone === zone;
+    const matchArea = !area || customerData.area === area;
+    const matchStaff = !staff || bill.staffId === staff;
+    const matchMonth = !month || bill.date?.startsWith(month);
+
+    return matchSearch && matchCustomer && matchZone && matchArea && matchStaff && matchMonth;
+  });
+}
+window.getFilteredBills = getFilteredBills;
   
   window.debounce = (func, wait) => {
     let timeout;
